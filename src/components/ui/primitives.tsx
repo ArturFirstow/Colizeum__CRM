@@ -22,7 +22,9 @@ export function PageHeader({
           </div>
         )}
         <div>
-          <h1 className="text-2xl font-bold text-ink-50">{title}</h1>
+          <h1 className="font-display text-2xl font-semibold uppercase tracking-wide text-ink-50">
+            {title}
+          </h1>
           {subtitle && <p className="mt-0.5 text-sm text-ink-300">{subtitle}</p>}
         </div>
       </div>
@@ -94,7 +96,7 @@ export function StatCard({
       className={`card card-hover p-5 ${accent ? "!border-brand/40 !bg-brand/[0.06]" : ""}`}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-ink-400">{label}</div>
-      <div className={`mt-2 text-3xl font-bold ${accent ? "text-brand" : "text-ink-50"}`}>
+      <div className={`mt-2 font-display text-3xl font-semibold ${accent ? "text-brand" : "text-ink-50"}`}>
         {value}
       </div>
       {sub && <div className="mt-1 text-xs text-ink-400">{sub}</div>}

@@ -1,41 +1,48 @@
-// Логотип Colizeum: мотив «ХО» (X + O) в брендовых чёрном и жёлтом.
+// Логотип Colizeum Agency.
+// Фирменный знак по брендбуку: жёлтый круг-«маска» с глазами X и O.
 
 export function XoMark({ className = "h-9 w-9" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={className} aria-hidden="true">
-      <rect x="0.5" y="0.5" width="39" height="39" rx="11" fill="#FFDD00" />
-      {/* X */}
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      <defs>
+        <clipPath id="xo-face">
+          <circle cx="24" cy="24" r="22.5" />
+        </clipPath>
+      </defs>
+
+      {/* жёлтое «лицо» */}
+      <circle cx="24" cy="24" r="22.5" fill="#FCDF3B" stroke="#141414" strokeWidth="1.5" />
+
+      {/* тёмная маска-полоса + «нос» */}
+      <g clipPath="url(#xo-face)">
+        <rect x="0" y="17" width="48" height="11.4" fill="#1A1A1A" />
+        <path d="M20 28.4 L27 28.4 L23.5 33.4 Z" fill="#1A1A1A" />
+      </g>
+
+      {/* левый глаз — X */}
       <path
-        d="M8 8 L17 17 M17 8 L8 17"
-        stroke="#0B0B0D"
-        strokeWidth="2.6"
+        d="M13 20 L18.6 25.6 M18.6 20 L13 25.6"
+        stroke="#FFFFFF"
+        strokeWidth="2.4"
         strokeLinecap="round"
       />
-      {/* O */}
-      <circle cx="27.5" cy="12.5" r="5" stroke="#0B0B0D" strokeWidth="2.6" fill="none" />
-      {/* нижняя «X» контурная — фирменная сетка */}
-      <path
-        d="M9 24 L31 24 M9 31 L31 31"
-        stroke="#0B0B0D"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
+      {/* правый глаз — O */}
+      <circle cx="31" cy="22.8" r="3.4" fill="none" stroke="#FFFFFF" strokeWidth="2.6" />
     </svg>
   );
 }
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-3">
-      <XoMark />
+    <div className="flex items-center gap-2.5">
+      <XoMark className="h-9 w-9" />
       {!compact && (
         <div className="leading-none">
-          <div className="text-[15px] font-extrabold uppercase tracking-tight text-ink-50">
+          <div className="font-display text-[17px] font-bold uppercase tracking-[0.13em] text-ink-50">
             Colizeum
           </div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand">
-            Workspace
+          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.36em] text-brand">
+            Agency
           </div>
         </div>
       )}

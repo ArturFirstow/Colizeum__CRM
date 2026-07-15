@@ -1,8 +1,9 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Фирменный стиль Colizeum: чёрный + жёлтый, мотив «ХО».
- * Палитра построена вокруг глубоких «чернил» (ink) и брендового жёлтого (brand).
+ * Фирменный стиль Colizeum Agency (по брендбуку 2025).
+ * Палитра: точные значения из брендбука — жёлтый (#FCDF3B / #FFE665 / #FFE97C)
+ * и нейтральные «графитовые» серые (#1F1F1F / #2B2B2B / #202020, светлые #F1F1F1 / #ECECEC).
  */
 const config: Config = {
   content: [
@@ -13,47 +14,51 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Брендовый жёлтый.
         brand: {
-          DEFAULT: "#FFDD00",
-          50: "#FFFBE5",
-          100: "#FFF4B8",
-          200: "#FFEC80",
-          300: "#FFE44D",
-          400: "#FFDD00",
-          500: "#F5CE00",
-          600: "#D9B300",
-          700: "#A88A00",
-          800: "#6E5A00",
-          900: "#3D3200",
+          DEFAULT: "#FCDF3B",
+          50: "#FFFCE6",
+          100: "#FFF6B8",
+          200: "#FFE97C", // брендбук: светлый жёлтый
+          300: "#FFE665", // брендбук: мягкий жёлтый
+          400: "#FCDF3B", // брендбук: основной жёлтый
+          500: "#EACB25",
+          600: "#C9AD1E",
+          700: "#8F7B15",
+          800: "#5E5010",
+          900: "#332C08",
         },
+        // Нейтральные графитовые тона (без синего оттенка — как в брендбуке).
         ink: {
-          DEFAULT: "#0B0B0D",
-          950: "#060608",
-          900: "#0B0B0D",
-          850: "#111116",
-          800: "#16161C",
-          700: "#1E1E26",
-          600: "#282833",
-          500: "#3A3A47",
-          400: "#5A5A68",
-          300: "#8A8A97",
-          200: "#B8B8C2",
-          100: "#E3E3E8",
-          50: "#F5F5F7",
+          DEFAULT: "#141416",
+          950: "#0E0E0F",
+          900: "#151516",
+          850: "#1A1A1B",
+          800: "#1F1F1F", // брендбук
+          700: "#2B2B2B", // брендбук
+          600: "#3A3A3B",
+          500: "#4E4E50",
+          400: "#6E6E70",
+          300: "#9A9A9C",
+          200: "#C6C6C7",
+          100: "#E6E6E6",
+          50: "#F1F1F1", // брендбук: светло-серый
         },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       boxShadow: {
         card: "0 1px 2px rgba(0,0,0,0.06), 0 8px 24px -12px rgba(0,0,0,0.18)",
-        "card-dark": "0 1px 2px rgba(0,0,0,0.5), 0 12px 32px -16px rgba(0,0,0,0.7)",
-        glow: "0 0 0 1px rgba(255,221,0,0.35), 0 8px 30px -8px rgba(255,221,0,0.25)",
+        "card-dark": "0 1px 2px rgba(0,0,0,0.5), 0 14px 40px -20px rgba(0,0,0,0.8)",
+        glow: "0 0 0 1px rgba(252,223,59,0.35), 0 10px 34px -10px rgba(252,223,59,0.3)",
       },
       backgroundImage: {
         "xo-grid":
-          "radial-gradient(circle at 1px 1px, rgba(255,221,0,0.10) 1px, transparent 0)",
+          "radial-gradient(circle at 1px 1px, rgba(252,223,59,0.06) 1px, transparent 0)",
+        "brand-gradient": "linear-gradient(135deg, #1A1A1B 0%, #FCDF3B 160%)",
       },
       borderRadius: {
         xl2: "1rem",

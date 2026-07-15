@@ -44,11 +44,14 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <XoMark className="h-16 w-16" />
-          <h1 className="mt-5 text-2xl font-extrabold uppercase tracking-tight text-ink-50">
-            Colizeum Workspace
+          <h1 className="mt-5 font-display text-3xl font-bold uppercase tracking-[0.12em] text-ink-50">
+            Colizeum
           </h1>
-          <p className="mt-1.5 text-sm text-ink-400">
-            Приватный сервис менеджера рекламных проектов
+          <div className="mt-1 text-sm font-semibold uppercase tracking-[0.42em] text-brand">
+            Agency
+          </div>
+          <p className="mt-3 text-sm text-ink-400">
+            Сервис менеджера рекламных проектов
           </p>
         </div>
 
