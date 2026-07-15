@@ -35,8 +35,21 @@ export const advertiserCreateSchema = z.object({
   status: optionalString,
   goals: optionalString,
   notes: optionalString,
+  // реквизиты контрагента
+  address: optionalString,
+  bankName: optionalString,
+  bankAccount: optionalString,
+  bik: optionalString,
+  signatory: optionalString,
 });
 export const advertiserUpdateSchema = advertiserCreateSchema.partial();
+
+export const agencyClientCreateSchema = z.object({
+  name: z.string().trim().min(1, "Укажите клиента"),
+  brand: optionalString,
+  inn: optionalString,
+  notes: optionalString,
+});
 
 export const contactCreateSchema = z.object({
   fio: z.string().trim().min(1, "Укажите ФИО"),

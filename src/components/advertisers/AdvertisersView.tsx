@@ -7,6 +7,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { TypeBadge } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
 import { ADVERTISER_TYPES } from "@/lib/enums";
+import { hasWarningFlag } from "@/lib/ui-tokens";
 
 type Advertiser = {
   id: string;
@@ -85,14 +86,17 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
             <Link key={a.id} href={`/advertisers/${a.id}`} className="card card-hover p-5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-base font-bold text-ink-50">{a.nameRu}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-base font-bold text-ink-50">{a.nameRu}</span>
+                    {hasWarningFlag(a.notes) && <span title="На выверку">⚠️</span>}
+                  </div>
                   {a.legalEntity && (
                     <div className="mt-0.5 truncate text-xs text-ink-400">{a.legalEntity}</div>
                   )}
                 </div>
                 <TypeBadge type={a.type} />
               </div>
-              {a.notes && <p className="mt-3 line-clamp-2 text-sm text-ink-400">{a.notes}</p>}
+              {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику. */}
               <div className="mt-4 flex items-center gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
                 <span>⑂ {a._count.deals} сделок</span>
                 <span>❐ {a._count.documents} док.</span>

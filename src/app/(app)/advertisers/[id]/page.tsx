@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, TypeBadge, StageBadge, Field, EmptyState, WarningFlag } from "@/components/ui/primitives";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
+import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
+import { AgencyClients } from "@/components/advertisers/AgencyClients";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { formatMoney } from "@/lib/format";
@@ -18,8 +20,11 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
       contacts: { orderBy: { isPrimary: "desc" } },
       deals: { orderBy: { updatedAt: "desc" } },
       documents: { include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } }, orderBy: { type: "asc" } },
+      agencyClients: { orderBy: { createdAt: "asc" } },
     },
   });
+
+  const isAgency = advertiser?.type === "Агентство";
   if (!advertiser) notFound();
 
   return (
@@ -34,10 +39,11 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
         actions={
           <>
             <TypeBadge type={advertiser.type} />
+            <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
             <DeleteButton
               endpoint={`/api/advertisers/${advertiser.id}`}
-              what={`рекламодателя «${advertiser.nameRu}» со всеми сделками и документами`}
+              what={`контрагента «${advertiser.nameRu}» со всеми сделками и документами`}
               redirectTo="/advertisers"
               variant="button"
             />
@@ -85,6 +91,11 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
             )}
           </section>
 
+          {/* Клиенты агентства (если контрагент = Агентство) */}
+          {isAgency && (
+            <AgencyClients advertiserId={advertiser.id} clients={advertiser.agencyClients} />
+          )}
+
           {/* Документы */}
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
@@ -114,7 +125,10 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
         {/* Реквизиты + контакты */}
         <div className="space-y-6">
           <section className="card p-5">
-            <h2 className="mb-4 text-lg font-bold text-ink-50">Реквизиты</h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink-50">Реквизиты</h2>
+              <EditAdvertiserButton advertiser={advertiser} />
+            </div>
             <div className="space-y-3">
               <Field label="Юрлицо">{advertiser.legalEntity}</Field>
               <div className="grid grid-cols-2 gap-3">
@@ -122,6 +136,17 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                 <Field label="КПП">{advertiser.kpp}</Field>
               </div>
               <Field label="ОГРН">{advertiser.ogrn}</Field>
+              <Field label="Юр. адрес">{advertiser.address}</Field>
+              {(advertiser.bankName || advertiser.bankAccount) && (
+                <>
+                  <Field label="Банк">{advertiser.bankName}</Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Р/с">{advertiser.bankAccount}</Field>
+                    <Field label="БИК">{advertiser.bik}</Field>
+                  </div>
+                </>
+              )}
+              <Field label="Подписант">{advertiser.signatory}</Field>
               <Field label="Статус">{advertiser.status}</Field>
               {advertiser.goals && <Field label="Цели">{advertiser.goals}</Field>}
             </div>
