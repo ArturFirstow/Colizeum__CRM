@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink-950 text-ink-100 antialiased;
+    font-family: var(--font-sans);
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 221, 0, 0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    min-height: 100vh;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #282833 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #282833;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #3a3a47;
+    background-clip: content-box;
+  }
+  ::selection {
+    background: rgba(255, 221, 0, 0.3);
+    color: #fff;
+  }
+  h1, h2, h3 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  /* Поверхности */
+  .card {
+    @apply rounded-2xl border border-ink-700/70 bg-ink-850/80 shadow-card-dark backdrop-blur-sm;
+  }
+  .card-hover {
+    @apply transition-all duration-150 hover:border-ink-600 hover:bg-ink-800;
+  }
+  .surface {
+    @apply rounded-xl border border-ink-700/60 bg-ink-900/60;
+  }
+
+  /* Кнопки */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
+      transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand text-ink-950 hover:bg-brand-300 active:bg-brand-500 shadow-glow;
+  }
+  .btn-ghost {
+    @apply border border-ink-700 bg-ink-800/60 text-ink-100 hover:bg-ink-700 hover:border-ink-600;
+  }
+  .btn-danger {
+    @apply border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs rounded-lg;
+  }
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ink-700
+      bg-ink-800/60 text-ink-200 transition hover:bg-ink-700;
+  }
+
+  /* Поля ввода */
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-ink-300;
+  }
+  .input {
+    @apply w-full rounded-xl border border-ink-700 bg-ink-900/80 px-3.5 py-2.5 text-sm text-ink-100
+      placeholder:text-ink-400 transition
+      focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/25;
+  }
+  select.input {
+    @apply appearance-none bg-ink-900;
+  }
+  textarea.input {
+    @apply min-h-[90px] resize-y leading-relaxed;
+  }
+
+  /* Бейджи и пилюли */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+  }
+  .badge-brand {
+    @apply bg-brand/15 text-brand-200 ring-1 ring-inset ring-brand/25;
+  }
+  .badge-muted {
+    @apply bg-ink-700/60 text-ink-200 ring-1 ring-inset ring-ink-600/60;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  }
+
+  /* Навигация в сайдбаре */
+  .nav-link {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-300
+      transition-all duration-150 hover:bg-ink-800 hover:text-ink-100;
+  }
+  .nav-link-active {
+    @apply bg-ink-800 text-brand;
+  }
+  .nav-link-active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand;
+  }
+
+  .stat-chip {
+    @apply flex items-center gap-1.5 rounded-lg bg-ink-800/60 px-2.5 py-1 text-xs text-ink-300;
+  }
+}
+
+/* Таблицы контента (markdown из базы знаний) */
+.prose-kb table {
+  @apply my-3 w-full border-collapse overflow-hidden rounded-lg text-sm;
+}
+.prose-kb th {
+  @apply border border-ink-700 bg-ink-800 px-3 py-2 text-left font-semibold text-ink-100;
+}
+.prose-kb td {
+  @apply border border-ink-700/70 px-3 py-2 text-ink-200 align-top;
+}
+.prose-kb h2 {
+  @apply mt-4 mb-2 text-lg font-bold text-ink-50;
+}
+.prose-kb p {
+  @apply my-2 leading-relaxed text-ink-200;
+}
+.prose-kb ul {
+  @apply my-2 ml-5 list-disc space-y-1 text-ink-200;
+}
+.prose-kb strong {
+  @apply font-semibold text-ink-50;
+}
+.prose-kb code {
+  @apply rounded bg-ink-800 px-1.5 py-0.5 font-mono text-xs text-brand-200;
+}

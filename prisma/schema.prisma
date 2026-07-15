@@ -1,0 +1,365 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Colizeum Workspace — схема данных (блупринт, раздел 5).
+//
+// Заводим ВСЕ сущности сразу, даже те, что наполним в поздних фазах (v1/v2),
+// чтобы не переписывать модель позже.
+//
+// dev: SQLite. prod: PostgreSQL (см. раздел 13). SQLite не поддерживает native
+// enum и scalar-list, поэтому перечисления храним как String с зафиксированным
+// набором значений (валидация — Zod на границе API, значения — в src/lib/enums.ts).
+// При переезде на Postgres поля-строки можно заменить на enum без потери данных.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ── Пользователи сервиса ─────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("Manager") // Owner | Manager (см. enums.ts)
+  createdAt    DateTime @default(now())
+
+  ownedDeals       Deal[]            @relation("DealOwner")
+  assignedDeals    Deal[]            @relation("DealAssignee")
+  assignedTasks    Task[]            @relation("TaskAssignee")
+  uploadedVersions DocumentVersion[] @relation("VersionUploader")
+}
+
+// ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
+model Advertiser {
+  id          String   @id @default(cuid())
+  nameRu      String
+  nameEn      String?
+  legalEntity String? // юрлицо целиком, напр. АО «ТБанк»
+  inn         String?
+  kpp         String?
+  ogrn        String?
+  type        String   @default("Рекламодатель") // Рекламодатель | Агентство | Арендатор | Кросс-промо
+  status      String   @default("Активный")
+  goals       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contacts  Contact[]
+  deals     Deal[]
+  documents Document[]
+  tasks     Task[]
+}
+
+// ── Контакт у рекламодателя ──────────────────────────────────────────────────
+model Contact {
+  id           String  @id @default(cuid())
+  advertiserId String
+  fio          String
+  role         String?
+  email        String?
+  phone        String?
+  telegram     String?
+  isPrimary    Boolean @default(false)
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  @@index([advertiserId])
+}
+
+// ── Сделка / проект ──────────────────────────────────────────────────────────
+model Deal {
+  id                   String    @id @default(cuid())
+  advertiserId         String
+  title                String
+  contractConstruction String? // A | B | C | D (справочник конструкций договоров)
+  stage                String    @default("Лид / квалификация") // 11 стадий, см. enums.ts
+  urgency              String? // Низкая | Средняя | Высокая | Критичная
+  ownerId              String?
+  assigneeId           String?
+  amount               Float?
+  vatIncluded          Boolean   @default(true)
+  currency             String    @default("RUB")
+  periodText           String? // срок как ТЕКСТ, не жёсткие даты (правило блупринта)
+  paymentTerms         String?
+  contractNumber       String?
+  contractDate         DateTime?
+  legalResponsible     String? // юрист
+  blocker              String?
+  nextStep             String?
+  decisionPending      String? // непустое → попадает в блок «Решения ждут вас»
+  notes                String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  advertiser  Advertiser   @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  owner       User?        @relation("DealOwner", fields: [ownerId], references: [id])
+  assignee    User?        @relation("DealAssignee", fields: [assigneeId], references: [id])
+  documents   Document[]
+  tasks       Task[]
+  mediaPlans  MediaPlan[]
+  invoices    Invoice[]
+  closingDocs ClosingDoc[]
+  ordMarkings OrdMarking[]
+  promoBatches PromoBatch[]
+
+  @@index([advertiserId])
+  @@index([stage])
+}
+
+// ── Логический документ (напр. «Договор Т-Банк») ─────────────────────────────
+model Document {
+  id               String   @id @default(cuid())
+  dealId           String?
+  advertiserId     String
+  type             String // см. DocumentType в enums.ts
+  title            String
+  currentVersionId String? // id актуальной DocumentVersion
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  advertiser Advertiser        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  versions   DocumentVersion[]
+
+  @@index([advertiserId])
+  @@index([dealId])
+}
+
+// ── Конкретная версия-файл документа (иммутабельна) ──────────────────────────
+model DocumentVersion {
+  id           String   @id @default(cuid())
+  documentId   String
+  versionNo    Int
+  storageKey   String // ключ объекта в StorageProvider
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  sha256       String
+  uploadedById String?
+  changeNote   String?
+  createdAt    DateTime @default(now())
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy User?    @relation("VersionUploader", fields: [uploadedById], references: [id])
+
+  @@unique([documentId, versionNo])
+  @@index([documentId])
+  @@index([sha256])
+}
+
+// ── Задача (юрист / дизайн / менеджер / бухгалтерия / ОРД) ───────────────────
+model Task {
+  id           String    @id @default(cuid())
+  dealId       String?
+  advertiserId String?
+  title        String
+  kind         String    @default("Менеджер") // Юрист | Дизайн | Менеджер | Бухгалтерия | ОРД | Прочее
+  assigneeId   String?
+  status       String    @default("Открыта") // Открыта | В работе | Ждёт | Готова
+  dueDate      DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
+  assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  @@index([dealId])
+  @@index([status])
+}
+
+// ── Медиаплан сделки ─────────────────────────────────────────────────────────
+model MediaPlan {
+  id          String   @id @default(cuid())
+  dealId      String
+  version     Int      @default(1)
+  totalAmount Float?
+  vatRate     Int? // 20 | 22 (по дате документа)
+  reachTotal  Int?
+  cpv         Float?
+  cpu         Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  deal  Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  lines MediaPlanLine[]
+
+  @@index([dealId])
+}
+
+model MediaPlanLine {
+  id          String  @id @default(cuid())
+  mediaPlanId String
+  formatCode  String?
+  formatName  String
+  qty         Int?
+  period      String?
+  unitPrice   Float?
+  sum         Float?
+  reach       Int?
+  geo         String?
+
+  mediaPlan MediaPlan @relation(fields: [mediaPlanId], references: [id], onDelete: Cascade)
+
+  @@index([mediaPlanId])
+}
+
+// ── Счёт на оплату ───────────────────────────────────────────────────────────
+model Invoice {
+  id             String    @id @default(cuid())
+  dealId         String
+  number         String
+  basis          String? // Приложение №… к Договору
+  service        String?
+  amount         Float?
+  vatRate        Int?
+  ourBankAccount String? // ⚠️ основной …48430 vs Самокат-fest …55743
+  issuedAt       DateTime?
+  appendixNo     String?
+  createdAt      DateTime  @default(now())
+
+  deal     Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([dealId])
+}
+
+// ── Факт оплаты (платёжное поручение) ───────────────────────────────────────
+model Payment {
+  id        String    @id @default(cuid())
+  invoiceId String
+  number    String?
+  payer     String?
+  payee     String?
+  purpose   String?
+  amount    Float?
+  paidAt    DateTime?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+// ── Закрывающий документ (УПД / Отчёт / Акт сверки) ─────────────────────────
+model ClosingDoc {
+  id          String    @id @default(cuid())
+  dealId      String
+  kind        String // УПД | Отчёт | АктСверки
+  number      String?
+  appendixNo  String?
+  upDStatus   Int? // 1 | 2
+  periodStart DateTime?
+  periodEnd   DateTime?
+  amount      Float?
+  storageKey  String?
+  createdAt   DateTime  @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+}
+
+// ── Маркировка ЕРИД / ОРД ────────────────────────────────────────────────────
+model OrdMarking {
+  id            String    @id @default(cuid())
+  dealId        String
+  erid          String?
+  role          String // Рекламораспространитель | Рекламодатель | Агентство
+  finalClient   String? // конечный заказчик при агентстве
+  platform      String? // соцсети | моб.приложение | пуши
+  status        String    @default("Активна")
+  markedAt      DateTime?
+  expiresAt     DateTime? // посты живут до 1 мес
+  monthlyClosing Boolean  @default(true) // акты закрываются каждый месяц
+  createdAt     DateTime  @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+}
+
+// ── Партия промокодов ────────────────────────────────────────────────────────
+model PromoBatch {
+  id           String   @id @default(cuid())
+  dealId       String
+  mechanic     String // Performance | Acquisition
+  nominal      Float?
+  qty          Int?
+  vatOnUsed    Boolean  @default(true) // +22% на использованные
+  delayHours   Int      @default(12) // отсрочка выдачи ≥ 12 ч
+  monetization String   @default("Деньги") // Деньги | Бартер
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+}
+
+// ── Статья базы знаний ───────────────────────────────────────────────────────
+model KnowledgeArticle {
+  id           String   @id @default(cuid())
+  category     String // см. KnowledgeCategory в enums.ts
+  title        String
+  bodyMarkdown String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+}
+
+// ── Директория ролей (кто за что отвечает) ──────────────────────────────────
+model Person {
+  id        String   @id @default(cuid())
+  role      String
+  name      String
+  telegram  String?
+  email     String?
+  scope     String? // напр. «чек B2C», «маркировка», «клубы 50+»
+  createdAt DateTime @default(now())
+}
+
+// ── Запись дневного журнала (EOD / транскрипт) ──────────────────────────────
+model JournalEntry {
+  id               String   @id @default(cuid())
+  date             DateTime @default(now())
+  source           String // EOD | Транскрипт | Чат
+  rawText          String
+  parsedSummary    String?
+  routedTo         String? // Трекер | База | Архив
+  linkedDealIds    String? // JSON-массив id (SQLite не поддерживает scalar-list)
+  linkedArticleIds String? // JSON-массив id
+  createdAt        DateTime @default(now())
+}
+
+// ── Аудит-лог (v2) ───────────────────────────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  before     String? // JSON
+  after      String? // JSON
+  createdAt  DateTime @default(now())
+}
+
+// ── Фоновая задача AI-парсинга (v2) ─────────────────────────────────────────
+model Job {
+  id        String   @id @default(cuid())
+  type      String
+  payload   String? // JSON
+  status    String   @default("pending") // pending | running | done | error
+  result    String? // JSON
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
