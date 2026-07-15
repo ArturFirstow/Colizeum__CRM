@@ -109,11 +109,18 @@ export const TASK_STATUSES = ["Открыта", "В работе", "Ждёт", "
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const ORD_ROLES = [
+  "Агентство",
+  "Клиент",
   "Рекламораспространитель",
   "Рекламодатель",
-  "Агентство",
 ] as const;
 export type OrdRole = (typeof ORD_ROLES)[number];
+
+export const PLANNED_PAYMENT_STATUSES = ["План", "Оплачено", "Просрочено"] as const;
+export type PlannedPaymentStatus = (typeof PLANNED_PAYMENT_STATUSES)[number];
+
+export const PLACEMENT_STATUSES = ["Забронировано", "Активно", "Завершено"] as const;
+export type PlacementStatus = (typeof PLACEMENT_STATUSES)[number];
 
 export const PROMO_MECHANICS = ["Performance", "Acquisition"] as const;
 export type PromoMechanic = (typeof PROMO_MECHANICS)[number];

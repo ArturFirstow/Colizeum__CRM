@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { TASK_KINDS, TASK_STATUSES } from "@/lib/enums";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
@@ -151,18 +152,21 @@ function TaskCard({ task }: { task: Task }) {
             <span className={overdue ? "text-red-300" : ""}>{formatDate(task.dueDate)}</span>
           )}
         </div>
-        <select
-          className="rounded-lg border border-ink-700 bg-ink-900 px-2 py-1 text-xs text-ink-200"
-          value={task.status}
-          disabled={busy}
-          onChange={(e) => changeStatus(e.target.value)}
-        >
-          {TASK_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-1.5">
+          <select
+            className="rounded-lg border border-ink-700 bg-ink-900 px-2 py-1 text-xs text-ink-200"
+            value={task.status}
+            disabled={busy}
+            onChange={(e) => changeStatus(e.target.value)}
+          >
+            {TASK_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <DeleteButton endpoint={`/api/tasks/${task.id}`} what="задачу" />
+        </div>
       </div>
     </div>
   );

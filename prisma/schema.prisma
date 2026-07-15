@@ -43,17 +43,43 @@ model Advertiser {
   inn         String?
   kpp         String?
   ogrn        String?
-  type        String   @default("Рекламодатель") // Рекламодатель | Агентство | Арендатор | Кросс-промо
+  type        String   @default("Рекламодатель") // Рекламодатель | Агентство (см. enums.ts)
   status      String   @default("Активный")
   goals       String?
   notes       String?
+  // Реквизиты для карточки контрагента.
+  address       String?
+  bankAccount   String?
+  bankName      String?
+  bik           String?
+  signatory     String? // подписант
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  contacts  Contact[]
-  deals     Deal[]
-  documents Document[]
-  tasks     Task[]
+  contacts        Contact[]
+  deals           Deal[]
+  documents       Document[]
+  tasks           Task[]
+  agencyClients   AgencyClient[] // если контрагент = Агентство
+  plannedPayments PlannedPayment[]
+  placements      Placement[]
+  dailyStatuses   DailyStatus[]
+  promoBatches    PromoBatch[]
+}
+
+// ── Клиент агентства (если контрагент = Агентство) ──────────────────────────
+model AgencyClient {
+  id           String   @id @default(cuid())
+  advertiserId String // агентство-владелец
+  name         String
+  brand        String?
+  inn          String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  @@index([advertiserId])
 }
 
 // ── Контакт у рекламодателя ──────────────────────────────────────────────────
@@ -82,7 +108,8 @@ model Deal {
   urgency              String? // Низкая | Средняя | Высокая | Критичная
   ownerId              String?
   assigneeId           String?
-  amount               Float?
+  amount               Float? // сумма из МП (текущая)
+  contractTotal        Float? // сумма по договору за весь период сотрудничества
   vatIncluded          Boolean   @default(true)
   currency             String    @default("RUB")
   periodText           String? // срок как ТЕКСТ, не жёсткие даты (правило блупринта)
@@ -100,13 +127,16 @@ model Deal {
   advertiser  Advertiser   @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   owner       User?        @relation("DealOwner", fields: [ownerId], references: [id])
   assignee    User?        @relation("DealAssignee", fields: [assigneeId], references: [id])
-  documents   Document[]
-  tasks       Task[]
-  mediaPlans  MediaPlan[]
-  invoices    Invoice[]
-  closingDocs ClosingDoc[]
-  ordMarkings OrdMarking[]
-  promoBatches PromoBatch[]
+  documents       Document[]
+  tasks           Task[]
+  mediaPlans      MediaPlan[]
+  invoices        Invoice[]
+  closingDocs     ClosingDoc[]
+  ordMarkings     OrdMarking[]
+  promoBatches    PromoBatch[]
+  plannedPayments PlannedPayment[]
+  placements      Placement[]
+  dailyStatuses   DailyStatus[]
 
   @@index([advertiserId])
   @@index([stage])
@@ -268,17 +298,25 @@ model ClosingDoc {
 
 // ── Маркировка ЕРИД / ОРД ────────────────────────────────────────────────────
 model OrdMarking {
-  id            String    @id @default(cuid())
-  dealId        String
-  erid          String?
-  role          String // Рекламораспространитель | Рекламодатель | Агентство
-  finalClient   String? // конечный заказчик при агентстве
-  platform      String? // соцсети | моб.приложение | пуши
-  status        String    @default("Активна")
-  markedAt      DateTime?
-  expiresAt     DateTime? // посты живут до 1 мес
-  monthlyClosing Boolean  @default(true) // акты закрываются каждый месяц
-  createdAt     DateTime  @default(now())
+  id             String    @id @default(cuid())
+  dealId         String
+  erid           String?
+  role           String // Агентство | Клиент (и др., см. enums.ts)
+  finalClient    String? // конечный заказчик при агентстве
+  platform       String? // соцсети | моб.приложение | пуши
+  status         String    @default("Активна")
+  markedAt       DateTime?
+  placementStart DateTime? // дата размещения маркировки
+  placementEnd   DateTime?
+  expiresAt      DateTime? // посты живут до 1 мес
+  monthlyClosing Boolean   @default(true) // акты закрываются каждый месяц
+  urgent         Boolean   @default(false) // срочно снять креатив / сдать акт
+  // Файлы: креатив (картинка) и закрывающий акт (PDF) — метаданные в БД, файл в StorageProvider.
+  creativeStorageKey String?
+  creativeFileName   String?
+  actStorageKey      String?
+  actFileName        String?
+  createdAt      DateTime  @default(now())
 
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
@@ -287,19 +325,26 @@ model OrdMarking {
 
 // ── Партия промокодов ────────────────────────────────────────────────────────
 model PromoBatch {
-  id           String   @id @default(cuid())
-  dealId       String
-  mechanic     String // Performance | Acquisition
-  nominal      Float?
-  qty          Int?
-  vatOnUsed    Boolean  @default(true) // +22% на использованные
-  delayHours   Int      @default(12) // отсрочка выдачи ≥ 12 ч
-  monetization String   @default("Деньги") // Деньги | Бартер
-  notes        String?
-  createdAt    DateTime @default(now())
+  id             String    @id @default(cuid())
+  advertiserId   String? // карточки промокодов по рекламодателю
+  dealId         String?
+  mechanic       String // Performance | Acquisition
+  nominal        Float?
+  qty            Int?
+  vatOnUsed      Boolean   @default(true) // +22% на использованные
+  delayHours     Int       @default(12) // отсрочка выдачи ≥ 12 ч
+  monetization   String    @default("Деньги") // Деньги | Бартер
+  validFrom      DateTime? // срок действия
+  validTo        DateTime?
+  commercialTerms String? // коммерческие условия
+  settlement     String? // взаиморасчёт по промокодам
+  notes          String?
+  createdAt      DateTime  @default(now())
 
-  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
+  @@index([advertiserId])
   @@index([dealId])
 }
 
@@ -338,6 +383,62 @@ model JournalEntry {
   linkedDealIds    String? // JSON-массив id (SQLite не поддерживает scalar-list)
   linkedArticleIds String? // JSON-массив id
   createdAt        DateTime @default(now())
+}
+
+// ── Плановый платёж по месяцам (финансовый календарь) ───────────────────────
+model PlannedPayment {
+  id           String   @id @default(cuid())
+  advertiserId String
+  dealId       String?
+  periodMonth  String // «YYYY-MM» — месяц платежа
+  amount       Float
+  status       String   @default("План") // План | Оплачено | Просрочено
+  paidAt       DateTime?
+  note         String?
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([advertiserId])
+  @@index([periodMonth])
+}
+
+// ── Бронь размещения (календарь размещений, Gantt) ──────────────────────────
+model Placement {
+  id           String   @id @default(cuid())
+  advertiserId String
+  dealId       String?
+  title        String
+  channel      String? // формат/канал размещения
+  startDate    DateTime
+  endDate      DateTime
+  status       String   @default("Забронировано") // Забронировано | Активно | Завершено
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([advertiserId])
+  @@index([startDate])
+}
+
+// ── Ежедневный статус по проекту/рекламодателю (для «Сегодня» → отчёт) ──────
+model DailyStatus {
+  id           String   @id @default(cuid())
+  date         DateTime @default(now())
+  advertiserId String
+  dealId       String?
+  text         String
+  authorId     String? // id пользователя (без жёсткой связи)
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([advertiserId])
+  @@index([date])
 }
 
 // ── Аудит-лог (v2) ───────────────────────────────────────────────────────────

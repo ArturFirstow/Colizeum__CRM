@@ -48,6 +48,10 @@ function writeVersionFile(
 async function main() {
   console.log("🌱 Очистка таблиц…");
   // Порядок: от зависимых к корневым.
+  await prisma.dailyStatus.deleteMany();
+  await prisma.placement.deleteMany();
+  await prisma.plannedPayment.deleteMany();
+  await prisma.agencyClient.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.closingDoc.deleteMany();
@@ -382,11 +386,29 @@ async function main() {
       status: "Активна",
       monthlyClosing: true,
       markedAt: new Date("2026-06-20"),
+      placementStart: new Date("2026-06-20"),
+      placementEnd: new Date("2026-07-20"),
       expiresAt: new Date("2026-07-20"),
+    },
+  });
+  await prisma.ordMarking.create({
+    data: {
+      dealId: dealKiberadvert.id,
+      role: "Клиент",
+      finalClient: "ОККО",
+      platform: "моб.приложение",
+      status: "Активна",
+      monthlyClosing: true,
+      urgent: true, // срочно снять креатив и сдать акт
+      markedAt: new Date("2026-06-25"),
+      placementStart: new Date("2026-06-25"),
+      placementEnd: new Date("2026-07-15"),
+      expiresAt: new Date("2026-07-15"),
     },
   });
   await prisma.promoBatch.create({
     data: {
+      advertiserId: tbank.id,
       dealId: dealTbankAds.id,
       mechanic: "Acquisition",
       nominal: 500,
@@ -394,8 +416,80 @@ async function main() {
       vatOnUsed: true,
       delayHours: 12,
       monetization: "Деньги",
-      notes: "Отсрочка выдачи ≥12 ч. +22% НДС на использованные. Учёт передачи — через УПД.",
+      validFrom: new Date("2026-07-01"),
+      validTo: new Date("2026-09-30"),
+      commercialTerms: "Выдача при регистрации в клубе.",
+      settlement: "Взаиморасчёт по факту использованных (+22% НДС), учёт через УПД.",
+      notes: "Отсрочка выдачи ≥12 ч.",
     },
+  });
+  await prisma.promoBatch.create({
+    data: {
+      advertiserId: maccoffee.id,
+      mechanic: "Performance",
+      nominal: 300,
+      qty: 500,
+      vatOnUsed: true,
+      delayHours: 24,
+      monetization: "Бартер",
+      commercialTerms: "Бартер: продукция MacCoffee в клубы.",
+      settlement: "Бартерный акт.",
+    },
+  });
+
+  // ── Клиенты агентства (Киберадверт = агентство) ────────────────────────────
+  console.log("🏛 Клиенты агентства…");
+  await prisma.agencyClient.createMany({
+    data: [
+      { advertiserId: kiberadvert.id, name: "Т2", brand: "MIXX Play Pro", notes: "Спецификации №3–4." },
+      { advertiserId: kiberadvert.id, name: "ОККО", brand: "OKKO", notes: "Спецификации №5–6." },
+    ],
+  });
+
+  // ── Финансовый календарь: плановые платежи по месяцам ──────────────────────
+  console.log("📅 Плановые платежи…");
+  await prisma.deal.update({ where: { id: dealAlabuga.id }, data: { contractTotal: 9_955_200 } });
+  const alabugaMonthly = 1_659_200;
+  const alabugaMonths = ["2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"];
+  await prisma.plannedPayment.createMany({
+    data: alabugaMonths.map((m, i) => ({
+      advertiserId: alabuga.id,
+      dealId: dealAlabuga.id,
+      periodMonth: m,
+      amount: alabugaMonthly,
+      status: i === 0 ? "Оплачено" : "План",
+      note: i === 0 ? "Предоплата за первый месяц" : undefined,
+    })),
+  });
+  await prisma.plannedPayment.create({
+    data: { advertiserId: mts.id, dealId: dealMts.id, periodMonth: "2026-07", amount: 7_979_200, status: "Оплачено", note: "Предоплата 40%" },
+  });
+  await prisma.plannedPayment.create({
+    data: { advertiserId: mts.id, dealId: dealMts.id, periodMonth: "2026-08", amount: 5_984_400, status: "План" },
+  });
+  await prisma.plannedPayment.create({
+    data: { advertiserId: samokat.id, dealId: dealSamokat.id, periodMonth: "2026-06", amount: 2_440_000, status: "Оплачено", note: "CF2026" },
+  });
+
+  // ── Календарь размещений (брони) ────────────────────────────────────────────
+  console.log("🗓 Размещения…");
+  await prisma.placement.createMany({
+    data: [
+      { advertiserId: mts.id, dealId: dealMts.id, title: "МТС — заставки на ПК", channel: "Заставки на свободных ПК", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-31"), status: "Забронировано" },
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, title: "Алабуга — баннер в ЛК", channel: "Баннер в ЛК", startDate: new Date("2026-07-01"), endDate: new Date("2026-12-31"), status: "Активно" },
+      { advertiserId: kiberadvert.id, dealId: dealKiberadvert.id, title: "Киберадверт — посты Т2", channel: "Соцсети", startDate: new Date("2026-06-20"), endDate: new Date("2026-07-20"), status: "Активно" },
+      { advertiserId: samokat.id, dealId: dealSamokat.id, title: "Самокат — CF2026", channel: "Фестиваль", startDate: new Date("2026-06-21"), endDate: new Date("2026-06-21"), status: "Завершено" },
+    ],
+  });
+
+  // ── Ежедневные статусы (для «Сегодня» → недельный отчёт) ────────────────────
+  console.log("📝 Ежедневные статусы…");
+  await prisma.dailyStatus.createMany({
+    data: [
+      { advertiserId: mts.id, dealId: dealMts.id, text: "Получили предоплату 40% по Приложению №1, двигаем к размещению.", authorId: owner.id, date: new Date("2026-07-14") },
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, text: "Готовим ДС на уточнение суммы. Размещение идёт.", authorId: owner.id, date: new Date("2026-07-14") },
+      { advertiserId: tbank.id, dealId: dealTbankAds.id, text: "Ждём подписания Приложения №1, дизайн на согласовании.", authorId: manager.id, date: new Date("2026-07-14") },
+    ],
   });
 
   // ── Задачи ─────────────────────────────────────────────────────────────────

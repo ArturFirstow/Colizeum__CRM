@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/client";
 import { FormError } from "@/components/ui/Modal";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { JOURNAL_SOURCES, JOURNAL_ROUTES } from "@/lib/enums";
 import { formatDateTime } from "@/lib/format";
 
@@ -109,6 +110,7 @@ export function JournalView({ entries }: { entries: Entry[] }) {
                   <span className="badge badge-muted">{e.source}</span>
                   {e.routedTo && <span className="badge badge-brand">→ {e.routedTo}</span>}
                   <span className="ml-auto">{formatDateTime(e.date)}</span>
+                  <DeleteButton endpoint={`/api/journal/${e.id}`} what="запись журнала" />
                 </div>
                 {e.parsedSummary && (
                   <p className="mb-2 rounded-lg bg-ink-900/60 px-3 py-2 text-sm text-brand-100">

@@ -6,6 +6,7 @@ import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { DecisionButton } from "@/components/deals/DecisionButton";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { formatMoney, formatDate } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 import {
@@ -53,6 +54,12 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           <>
             <UrgencyBadge urgency={deal.urgency} />
             <EditDealButton deal={deal} />
+            <DeleteButton
+              endpoint={`/api/deals/${deal.id}`}
+              what={`сделку «${deal.title}»`}
+              redirectTo="/deals"
+              variant="button"
+            />
           </>
         }
       />

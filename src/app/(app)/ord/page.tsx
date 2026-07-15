@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -33,15 +34,23 @@ export default async function OrdPage() {
                 <th className="px-4 py-3 font-medium">ЕРИД</th>
                 <th className="px-4 py-3 font-medium">Живёт до</th>
                 <th className="px-4 py-3 font-medium">Акты</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-800">
               {markings.map((m) => (
                 <tr key={m.id} className="hover:bg-ink-800/40">
                   <td className="px-4 py-3">
-                    <Link href={`/deals/${m.dealId}`} className="text-ink-100 hover:text-brand">
-                      {m.deal.title}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/deals/${m.dealId}`} className="text-ink-100 hover:text-brand">
+                        {m.deal.title}
+                      </Link>
+                      {m.urgent && (
+                        <span className="badge bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-500/30">
+                          🔴 срочно
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-ink-500">{m.deal.advertiser.nameRu}</div>
                   </td>
                   <td className="px-4 py-3">
@@ -57,6 +66,9 @@ export default async function OrdPage() {
                     ) : (
                       <span className="text-xs text-ink-500">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <DeleteButton endpoint={`/api/ord/${m.id}`} what="запись ОРД" />
                   </td>
                 </tr>
               ))}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, TypeBadge, StageBadge, Field, EmptyState, WarningFlag } from "@/components/ui/primitives";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
 import { NewDealButton } from "@/components/deals/NewDealButton";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { formatMoney } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 
@@ -34,6 +35,12 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           <>
             <TypeBadge type={advertiser.type} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
+            <DeleteButton
+              endpoint={`/api/advertisers/${advertiser.id}`}
+              what={`рекламодателя «${advertiser.nameRu}» со всеми сделками и документами`}
+              redirectTo="/advertisers"
+              variant="button"
+            />
           </>
         }
       />

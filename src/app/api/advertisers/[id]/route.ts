@@ -25,3 +25,11 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     return ok(advertiser);
   });
 }
+
+export async function DELETE(_req: NextRequest, ctx: Ctx) {
+  return withSession(async () => {
+    const { id } = await ctx.params;
+    await prisma.advertiser.delete({ where: { id } });
+    return ok({ ok: true });
+  });
+}

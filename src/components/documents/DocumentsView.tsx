@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DOCUMENT_TYPES } from "@/lib/enums";
 import { formatBytes, formatDateTime } from "@/lib/format";
@@ -199,6 +200,7 @@ function DocumentCard({ doc, onUpload }: { doc: Doc; onUpload: () => void }) {
           <button className="btn btn-primary btn-sm" onClick={onUpload}>
             ↑ Версия
           </button>
+          <DeleteButton endpoint={`/api/documents/${doc.id}`} what={`документ «${doc.title}»`} />
         </div>
       </div>
 
