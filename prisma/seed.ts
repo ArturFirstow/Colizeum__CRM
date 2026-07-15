@@ -471,14 +471,34 @@ async function main() {
     data: { advertiserId: samokat.id, dealId: dealSamokat.id, periodMonth: "2026-06", amount: 2_440_000, status: "Оплачено", note: "CF2026" },
   });
 
-  // ── Календарь размещений (брони) ────────────────────────────────────────────
+  // ── Календарь размещений (брони по слотам, из рабочей таблицы клиента) ───────
   console.log("🗓 Размещения…");
+  const d = (s: string) => new Date(s);
   await prisma.placement.createMany({
     data: [
-      { advertiserId: mts.id, dealId: dealMts.id, title: "МТС — заставки на ПК", channel: "Заставки на свободных ПК", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-31"), status: "Забронировано" },
-      { advertiserId: alabuga.id, dealId: dealAlabuga.id, title: "Алабуга — баннер в ЛК", channel: "Баннер в ЛК", startDate: new Date("2026-07-01"), endDate: new Date("2026-12-31"), status: "Активно" },
-      { advertiserId: kiberadvert.id, dealId: dealKiberadvert.id, title: "Киберадверт — посты Т2", channel: "Соцсети", startDate: new Date("2026-06-20"), endDate: new Date("2026-07-20"), status: "Активно" },
-      { advertiserId: samokat.id, dealId: dealSamokat.id, title: "Самокат — CF2026", channel: "Фестиваль", startDate: new Date("2026-06-21"), endDate: new Date("2026-06-21"), status: "Завершено" },
+      // Слот 1 — VOLT почти весь год
+      { slot: "Слот 1 (ПК ТВ + слайдер + ЛК)", brandLabel: "VOLT", responsible: "Марина Янюк", startDate: d("2026-01-01"), endDate: d("2026-09-30"), status: "Подписан" },
+      // Слот 2 — цепочка брендов
+      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", brandLabel: "DeepCool", responsible: "Марина / Катя", startDate: d("2026-01-01"), endDate: d("2026-01-14"), status: "На подписании" },
+      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", brandLabel: "ARENA BREAKOUT", responsible: "Марина / Катя", startDate: d("2026-01-15"), endDate: d("2026-02-28"), status: "Подписан" },
+      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", advertiserId: mts.id, dealId: dealMts.id, responsible: "Марина / Катя", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      // Слот 3
+      { slot: "Слот 3 (ПК ТВ + слайдер + ЛК)", brandLabel: "Делимобиль", responsible: "Артур Фирстов", startDate: d("2026-06-01"), endDate: d("2026-08-20"), status: "На подписании" },
+      // Слот 6
+      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", brandLabel: "Т2 (3 слота)", responsible: "Артур Фирстов", startDate: d("2026-02-15"), endDate: d("2026-03-31"), status: "Подписан" },
+      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", advertiserId: samokat.id, dealId: dealSamokat.id, responsible: "Артур Фирстов", startDate: d("2026-06-15"), endDate: d("2026-07-15"), status: "Подписан" },
+      // Слот 8 — Алабуга
+      { slot: "Слот 8 (ПК ТВ + слайдер + ЛК)", advertiserId: alabuga.id, dealId: dealAlabuga.id, responsible: "Катя Туринова", startDate: d("2026-06-15"), endDate: d("2026-12-15"), status: "Подписан" },
+      // Слот 10 — Т-Банк (в схеме слоты 1-6, добавим отдельно)
+      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", advertiserId: tbank.id, dealId: dealTbankAds.id, responsible: "Марина", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      // Баннер в мобильном приложении
+      { slot: "Баннер в мобильном приложении", brandLabel: "Банка пэй", responsible: "—", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
+      { slot: "Баннер в мобильном приложении", brandLabel: "МТС оплата", responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      { slot: "Баннер в мобильном приложении", advertiserId: maccoffee.id, responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-07-28"), status: "Ожидание" },
+      // Автозапуск в браузере
+      { slot: "Автозапуск в браузере", brandLabel: "Winline", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
+      // Ярлык на рабочем столе
+      { slot: "Ярлык на рабочем столе", brandLabel: "Банка пэй", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-11-15"), status: "Подписан" },
     ],
   });
 

@@ -9,6 +9,7 @@ import {
   KNOWLEDGE_CATEGORIES,
   MONETIZATIONS,
   ORD_ROLES,
+  PLACEMENT_STATUSES,
   PLANNED_PAYMENT_STATUSES,
   PROMO_MECHANICS,
   TASK_KINDS,
@@ -184,6 +185,32 @@ export const plannedPaymentUpdateSchema = z.object({
   amount: z.number().nonnegative().optional(),
   status: inSet(PLANNED_PAYMENT_STATUSES).optional(),
   note: optionalString,
+});
+
+export const placementCreateSchema = z
+  .object({
+    advertiserId: optionalString,
+    brandLabel: optionalString,
+    dealId: optionalString,
+    slot: z.string().trim().min(1, "Укажите слот/формат"),
+    responsible: optionalString,
+    startDate: z.string().min(1, "Дата начала"),
+    endDate: z.string().min(1, "Дата конца"),
+    status: inSet(PLACEMENT_STATUSES).optional(),
+    notes: optionalString,
+  })
+  .refine((d) => d.advertiserId || d.brandLabel, {
+    message: "Укажите рекламодателя или бренд",
+    path: ["brandLabel"],
+  });
+
+export const placementUpdateSchema = z.object({
+  slot: z.string().trim().min(1).optional(),
+  responsible: optionalString,
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  status: inSet(PLACEMENT_STATUSES).optional(),
+  notes: optionalString,
 });
 
 export const promoStandaloneCreateSchema = promoCreateSchema.extend({

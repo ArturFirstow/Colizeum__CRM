@@ -138,8 +138,23 @@ export type OrdRole = (typeof ORD_ROLES)[number];
 export const PLANNED_PAYMENT_STATUSES = ["План", "Оплачено", "Просрочено"] as const;
 export type PlannedPaymentStatus = (typeof PLANNED_PAYMENT_STATUSES)[number];
 
-export const PLACEMENT_STATUSES = ["Забронировано", "Активно", "Завершено"] as const;
+// Статусы брони как в рабочей Google-таблице клиента.
+export const PLACEMENT_STATUSES = ["Ожидание", "На подписании", "Подписан", "Завершено"] as const;
 export type PlacementStatus = (typeof PLACEMENT_STATUSES)[number];
+
+// Типовые слоты/форматы (строки календаря) — из рабочей таблицы клиента.
+export const PLACEMENT_SLOTS = [
+  "Слот 1 (ПК ТВ + слайдер + ЛК)",
+  "Слот 2 (ПК ТВ + слайдер + ЛК)",
+  "Слот 3 (ПК ТВ + слайдер + ЛК)",
+  "Слот 4 (ПК ТВ + слайдер + ЛК)",
+  "Слот 5 (ПК ТВ + слайдер + ЛК)",
+  "Слот 6 (ПК ТВ + слайдер + ЛК)",
+  "Турнирный календарь",
+  "Баннер в мобильном приложении",
+  "Автозапуск в браузере",
+  "Ярлык на рабочем столе",
+] as const;
 
 export const PROMO_MECHANICS = ["Performance", "Acquisition"] as const;
 export type PromoMechanic = (typeof PROMO_MECHANICS)[number];

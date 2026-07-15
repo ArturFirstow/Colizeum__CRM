@@ -405,20 +405,22 @@ model PlannedPayment {
 }
 
 // ── Бронь размещения (календарь размещений, Gantt) ──────────────────────────
+// Строка = слот/формат (slot), ячейка = бренд на период (по неделям).
 model Placement {
-  id           String   @id @default(cuid())
-  advertiserId String
+  id           String    @id @default(cuid())
+  advertiserId String? // если бренд заведён как контрагент
+  brandLabel   String? // свободное имя бренда (для разовых, без карточки)
   dealId       String?
-  title        String
-  channel      String? // формат/канал размещения
+  slot         String // формат/слот размещения (строка календаря)
+  responsible  String? // ответственный менеджер
   startDate    DateTime
   endDate      DateTime
-  status       String   @default("Забронировано") // Забронировано | Активно | Завершено
+  status       String    @default("Ожидание") // Ожидание | На подписании | Подписан | Завершено
   notes        String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
-  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
-  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
+  deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([advertiserId])
   @@index([startDate])

@@ -28,6 +28,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Финансы и реклама",
     items: [
       { href: "/finances", label: "Финансы", icon: "₽" },
+      { href: "/placements", label: "Календарь размещений", icon: "▦" },
       { href: "/ord", label: "ОРД / маркировка", icon: "❖" },
       { href: "/promo", label: "Промокоды", icon: "%" },
     ],
