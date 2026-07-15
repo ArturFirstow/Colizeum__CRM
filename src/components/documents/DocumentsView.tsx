@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch, ApiError } from "@/lib/client";
-import { DOCUMENT_TYPES } from "@/lib/enums";
+import { DOCUMENT_TYPES, DOCUMENT_SECTIONS, sectionForDocType } from "@/lib/enums";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { advertiserTypeStyle } from "@/lib/ui-tokens";
 
@@ -41,8 +41,14 @@ export function DocumentsView({
       : advertisers[0]?.id ?? "",
   );
   const [newDocOpen, setNewDocOpen] = useState(false);
+  const [newDocSection, setNewDocSection] = useState<string | undefined>(undefined);
   const [uploadDoc, setUploadDoc] = useState<Doc | null>(null);
   const [q, setQ] = useState("");
+
+  function openNewDoc(section?: string) {
+    setNewDocSection(section);
+    setNewDocOpen(true);
+  }
 
   const selected = advertisers.find((a) => a.id === selectedId);
 
@@ -52,15 +58,13 @@ export function DocumentsView({
     return advertisers.filter((a) => a.nameRu.toLowerCase().includes(query));
   }, [advertisers, q]);
 
-  // Группировка документов по типу.
-  const grouped = useMemo(() => {
-    const map = new Map<string, Doc[]>();
-    for (const d of selected?.documents ?? []) {
-      const arr = map.get(d.type) ?? [];
-      arr.push(d);
-      map.set(d.type, arr);
-    }
-    return [...map.entries()];
+  // Раскладка по фиксированным подразделам (показываем ВСЕ, даже пустые).
+  const sections = useMemo(() => {
+    const docs = selected?.documents ?? [];
+    return DOCUMENT_SECTIONS.map((sec) => ({
+      key: sec.key,
+      docs: docs.filter((d) => sectionForDocType(d.type) === sec.key),
+    }));
   }, [selected]);
 
   return (
@@ -77,7 +81,7 @@ export function DocumentsView({
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setNewDocOpen(true)} disabled={!selected}>
+        <button className="btn btn-primary" onClick={() => openNewDoc()} disabled={!selected}>
           + Документ
         </button>
       </div>
@@ -125,34 +129,33 @@ export function DocumentsView({
                 </span>
               </div>
 
-              {grouped.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-900/40 px-6 py-14 text-center">
-                  <div className="mb-2 text-4xl">❐</div>
-                  <div className="font-semibold text-ink-100">Документов пока нет</div>
-                  <div className="mt-1 text-sm text-ink-400">
-                    Создайте документ и загрузите первую версию файла.
-                  </div>
-                  <button className="btn btn-primary mt-4" onClick={() => setNewDocOpen(true)}>
-                    + Документ
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {grouped.map(([type, docs]) => (
-                    <div key={type}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="badge badge-brand">{type}</span>
-                        <span className="text-xs text-ink-500">{docs.length}</span>
+              <div className="space-y-5">
+                {sections.map((sec) => (
+                  <div key={sec.key} className="surface p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="badge badge-brand">{sec.key}</span>
+                      <span className="text-xs text-ink-500">{sec.docs.length}</span>
+                      <button
+                        onClick={() => openNewDoc(sec.key)}
+                        className="ml-auto text-xs text-ink-400 transition hover:text-brand"
+                      >
+                        + Добавить
+                      </button>
+                    </div>
+                    {sec.docs.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-ink-800 py-4 text-center text-xs text-ink-600">
+                        пусто
                       </div>
+                    ) : (
                       <div className="space-y-2">
-                        {docs.map((doc) => (
+                        {sec.docs.map((doc) => (
                           <DocumentCard key={doc.id} doc={doc} onUpload={() => setUploadDoc(doc)} />
                         ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    )}
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>
@@ -164,6 +167,7 @@ export function DocumentsView({
           onClose={() => setNewDocOpen(false)}
           advertiserId={selected.id}
           advertiserName={selected.nameRu}
+          presetSection={newDocSection}
         />
       )}
       <UploadVersionModal doc={uploadDoc} onClose={() => setUploadDoc(null)} />
@@ -248,17 +252,33 @@ function NewDocumentModal({
   onClose,
   advertiserId,
   advertiserName,
+  presetSection,
 }: {
   open: boolean;
   onClose: () => void;
   advertiserId: string;
   advertiserName: string;
+  presetSection?: string;
 }) {
   const router = useRouter();
-  const [type, setType] = useState<string>(DOCUMENT_TYPES[0]);
+  const [section, setSection] = useState<string>(presetSection ?? DOCUMENT_SECTIONS[0].key);
+  const currentSection = DOCUMENT_SECTIONS.find((s) => s.key === section) ?? DOCUMENT_SECTIONS[0];
+  const typesInSection = currentSection.types as readonly string[];
+  const [type, setType] = useState<string>(typesInSection[0]);
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Синхронизируем раздел с пресетом при открытии.
+  useEffect(() => {
+    if (open) {
+      const sec = presetSection ?? DOCUMENT_SECTIONS[0].key;
+      setSection(sec);
+      const secTypes =
+        (DOCUMENT_SECTIONS.find((s) => s.key === sec)?.types as readonly string[]) ?? DOCUMENT_TYPES;
+      setType(secTypes[0]);
+    }
+  }, [open, presetSection]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -282,15 +302,38 @@ function NewDocumentModal({
   return (
     <Modal open={open} onClose={onClose} title="Новый документ" subtitle={advertiserName} size="sm">
       <form onSubmit={submit} className="space-y-4">
-        <div>
-          <label className="label">Тип документа</label>
-          <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-            {DOCUMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Раздел</label>
+            <select
+              className="input"
+              value={section}
+              onChange={(e) => {
+                const sec = e.target.value;
+                setSection(sec);
+                const secTypes =
+                  (DOCUMENT_SECTIONS.find((s) => s.key === sec)?.types as readonly string[]) ??
+                  DOCUMENT_TYPES;
+                setType(secTypes[0]);
+              }}
+            >
+              {DOCUMENT_SECTIONS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.key}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Тип документа</label>
+            <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
+              {typesInSection.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
           <label className="label">Название</label>

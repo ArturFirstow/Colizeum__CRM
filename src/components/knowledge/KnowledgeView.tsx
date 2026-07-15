@@ -40,6 +40,16 @@ export function KnowledgeView({ articles }: { articles: Article[] }) {
 
   const selected = filtered.find((a) => a.id === selectedId) ?? filtered[0];
   const categories = useMemo(() => [...new Set(articles.map((a) => a.category))], [articles]);
+  const clientMaterials = useMemo(
+    () => articles.filter((a) => a.category === "Материалы для клиента"),
+    [articles],
+  );
+
+  function openArticle(id: string, category: string) {
+    setCat(category);
+    setQ("");
+    setSelectedId(id);
+  }
 
   return (
     <div>
@@ -57,6 +67,31 @@ export function KnowledgeView({ articles }: { articles: Article[] }) {
           + Статья
         </button>
       </div>
+
+      {/* Материалы, которые отправляются рекламодателю — на видном месте */}
+      {clientMaterials.length > 0 && !q && cat === "" && (
+        <section className="mb-6 rounded-2xl border border-brand/25 bg-brand/[0.05] p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-lg">📮</span>
+            <h2 className="font-display text-base font-semibold uppercase tracking-wide text-brand-200">
+              Материалы для клиента
+            </h2>
+            <span className="text-xs text-ink-400">— отправляем рекламодателю</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {clientMaterials.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => openArticle(m.id, m.category)}
+                className="rounded-xl border border-ink-700/70 bg-ink-900/60 px-3.5 py-3 text-left transition hover:border-brand/40 hover:bg-ink-800"
+              >
+                <div className="text-sm font-semibold text-ink-100">{m.title}</div>
+                {m.notes && <div className="mt-0.5 truncate text-xs text-ink-500">{m.notes}</div>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <input
         className="input mb-4"

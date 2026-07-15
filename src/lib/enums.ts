@@ -95,6 +95,25 @@ export const DOCUMENT_TYPES = [
 ] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
+// Жёсткая иерархия подразделов хранилища (ТЗ, раздел 6).
+// Показываем ВСЕ разделы всегда, даже пустые (допускается неполный комплект).
+export const DOCUMENT_SECTIONS = [
+  { key: "Договоры", types: ["Договор"] },
+  { key: "Приложения к договору", types: ["Приложение", "Спецификация", "Заказ"] },
+  { key: "Доп. соглашения", types: ["ДС"] },
+  { key: "Счета и УПД", types: ["Счёт", "УПД", "Платёжное поручение", "Акт сверки"] },
+  { key: "Медиапланы и КП", types: ["Медиаплан", "КП"] },
+  { key: "Креативы и макеты", types: ["Креатив", "NDA/Согласие"] },
+  { key: "Отчёты", types: ["Отчёт об оказанных услугах"] },
+  { key: "Прочее", types: ["Правила акции", "Прочее"] },
+] as const;
+export type DocumentSection = (typeof DOCUMENT_SECTIONS)[number]["key"];
+
+export function sectionForDocType(type: string): DocumentSection {
+  const s = DOCUMENT_SECTIONS.find((sec) => (sec.types as readonly string[]).includes(type));
+  return (s?.key ?? "Прочее") as DocumentSection;
+}
+
 export const TASK_KINDS = [
   "Юрист",
   "Дизайн",
@@ -139,6 +158,7 @@ export type JournalRoute = (typeof JOURNAL_ROUTES)[number];
 
 // Категории базы знаний (блупринт 5.2).
 export const KNOWLEDGE_CATEGORIES = [
+  "Материалы для клиента",
   "Профиль",
   "Форматы",
   "Цены/скидки",
