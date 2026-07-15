@@ -1,26 +1,28 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
-import { formatMoney, formatDate } from "@/lib/format";
+import { PaymentCalendar } from "@/components/finances/PaymentCalendar";
+import { formatMoney } from "@/lib/format";
 import { ORG } from "@/lib/org";
 
 export const dynamic = "force-dynamic";
 
 export default async function FinancesPage() {
-  const deals = await prisma.deal.findMany({
-    where: {
-      OR: [
-        { invoices: { some: {} } },
-        { closingDocs: { some: {} } },
-      ],
-    },
-    include: {
-      advertiser: { select: { nameRu: true } },
-      invoices: { include: { payments: true } },
-      closingDocs: true,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const [deals, advertisers, plannedPayments] = await Promise.all([
+    prisma.deal.findMany({
+      where: {
+        OR: [{ invoices: { some: {} } }, { closingDocs: { some: {} } }],
+      },
+      include: {
+        advertiser: { select: { nameRu: true } },
+        invoices: { include: { payments: true } },
+        closingDocs: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.advertiser.findMany({ select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+    prisma.plannedPayment.findMany({ orderBy: { periodMonth: "asc" } }),
+  ]);
 
   const totalInvoiced = deals.reduce(
     (s, d) => s + d.invoices.reduce((a, i) => a + (i.amount ?? 0), 0),
@@ -52,6 +54,11 @@ export default async function FinancesPage() {
           <div className="text-xs uppercase tracking-wide text-ink-400">Остаток</div>
           <div className="mt-2 text-2xl font-bold text-amber-300">{formatMoney(totalInvoiced - totalPaid)}</div>
         </div>
+      </div>
+
+      {/* Помесячный календарь платежей */}
+      <div className="mb-6">
+        <PaymentCalendar advertisers={advertisers} payments={plannedPayments} />
       </div>
 
       {/* Наши р/с — точка на выверку */}

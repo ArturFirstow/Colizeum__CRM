@@ -10,6 +10,7 @@ type Deal = {
   id: string;
   urgency: string | null;
   amount: number | null;
+  contractTotal: number | null;
   paymentTerms: string | null;
   periodText: string | null;
   legalResponsible: string | null;
@@ -27,6 +28,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
   const [f, setF] = useState({
     urgency: deal.urgency ?? "Средняя",
     amount: deal.amount?.toString() ?? "",
+    contractTotal: deal.contractTotal?.toString() ?? "",
     paymentTerms: deal.paymentTerms ?? "",
     periodText: deal.periodText ?? "",
     legalResponsible: deal.legalResponsible ?? "",
@@ -50,6 +52,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
         body: JSON.stringify({
           urgency: f.urgency,
           amount: f.amount ? Number(f.amount) : undefined,
+          contractTotal: f.contractTotal ? Number(f.contractTotal) : undefined,
           paymentTerms: f.paymentTerms,
           periodText: f.periodText,
           legalResponsible: f.legalResponsible,
@@ -90,6 +93,16 @@ export function EditDealButton({ deal }: { deal: Deal }) {
               <label className="label">Сумма (₽)</label>
               <input className="input" type="number" value={f.amount} onChange={(e) => set("amount", e.target.value)} />
             </div>
+          </div>
+          <div>
+            <label className="label">Сумма по договору за весь период (₽)</label>
+            <input
+              className="input"
+              type="number"
+              value={f.contractTotal}
+              onChange={(e) => set("contractTotal", e.target.value)}
+              placeholder="общая сумма сотрудничества"
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

@@ -1,23 +1,31 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
-import { DeleteButton } from "@/components/ui/DeleteButton";
+import { NewOrdButton, OrdRowActions } from "@/components/ord/OrdControls";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdPage() {
-  const markings = await prisma.ordMarking.findMany({
-    include: { deal: { include: { advertiser: { select: { nameRu: true } } } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [markings, deals] = await Promise.all([
+    prisma.ordMarking.findMany({
+      include: { deal: { include: { advertiser: { select: { nameRu: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.deal.findMany({
+      include: { advertiser: { select: { nameRu: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+  const dealOptions = deals.map((d) => ({ id: d.id, title: d.title, advertiserName: d.advertiser.nameRu }));
 
   return (
     <div>
       <PageHeader
         title="ОРД / маркировка"
-        subtitle="Реестр ЕРИД. В договорах с маркировкой акты закрываются каждый месяц, посты живут до 1 месяца."
+        subtitle="Реестр ЕРИД. Акты закрываются каждый месяц, посты живут до 1 месяца."
         icon="❖"
+        actions={<NewOrdButton deals={dealOptions} />}
       />
 
       {markings.length === 0 ? (
@@ -68,7 +76,7 @@ export default async function OrdPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <DeleteButton endpoint={`/api/ord/${m.id}`} what="запись ОРД" />
+                    <OrdRowActions ord={m} />
                   </td>
                 </tr>
               ))}

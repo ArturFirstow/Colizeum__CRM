@@ -2,18 +2,22 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { DeleteButton } from "@/components/ui/DeleteButton";
+import { NewPromoButton } from "@/components/promo/NewPromoButton";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function PromoPage() {
-  const batches = await prisma.promoBatch.findMany({
-    include: {
-      advertiser: { select: { id: true, nameRu: true } },
-      deal: { include: { advertiser: { select: { id: true, nameRu: true } } } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [batches, advertisers] = await Promise.all([
+    prisma.promoBatch.findMany({
+      include: {
+        advertiser: { select: { id: true, nameRu: true } },
+        deal: { include: { advertiser: { select: { id: true, nameRu: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.advertiser.findMany({ select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+  ]);
 
   return (
     <div>
@@ -21,6 +25,7 @@ export default async function PromoPage() {
         title="Промокоды"
         subtitle="Карточки по рекламодателям: номиналы, количество, сроки, условия, взаиморасчёт."
         icon="%"
+        actions={<NewPromoButton advertisers={advertisers} />}
       />
 
       {batches.length === 0 ? (

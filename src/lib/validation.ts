@@ -9,6 +9,7 @@ import {
   KNOWLEDGE_CATEGORIES,
   MONETIZATIONS,
   ORD_ROLES,
+  PLANNED_PAYMENT_STATUSES,
   PROMO_MECHANICS,
   TASK_KINDS,
   TASK_STATUSES,
@@ -69,6 +70,7 @@ export const dealCreateSchema = z.object({
   ownerId: optionalString,
   assigneeId: optionalString,
   amount: z.number().nonnegative().optional(),
+  contractTotal: z.number().nonnegative().optional(),
   vatIncluded: z.boolean().optional(),
   periodText: optionalString,
   paymentTerms: optionalString,
@@ -168,6 +170,28 @@ export const invoiceCreateSchema = z.object({
   vatRate: z.number().int().optional(),
   ourBankAccount: optionalString,
   appendixNo: optionalString,
+});
+
+export const plannedPaymentCreateSchema = z.object({
+  advertiserId: z.string().min(1, "Выберите рекламодателя"),
+  dealId: optionalString,
+  periodMonth: z.string().regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ"),
+  amount: z.number().nonnegative(),
+  status: inSet(PLANNED_PAYMENT_STATUSES).optional(),
+  note: optionalString,
+});
+export const plannedPaymentUpdateSchema = z.object({
+  amount: z.number().nonnegative().optional(),
+  status: inSet(PLANNED_PAYMENT_STATUSES).optional(),
+  note: optionalString,
+});
+
+export const promoStandaloneCreateSchema = promoCreateSchema.extend({
+  advertiserId: z.string().min(1, "Выберите рекламодателя"),
+});
+
+export const ordStandaloneCreateSchema = ordCreateSchema.extend({
+  dealId: z.string().min(1, "Выберите сделку"),
 });
 
 export const closingCreateSchema = z.object({
