@@ -173,6 +173,12 @@ export const invoiceCreateSchema = z.object({
   appendixNo: optionalString,
 });
 
+export const dailyStatusCreateSchema = z.object({
+  advertiserId: z.string().min(1, "Выберите проект/рекламодателя"),
+  dealId: optionalString,
+  text: z.string().trim().min(1, "Пустой статус"),
+});
+
 export const plannedPaymentCreateSchema = z.object({
   advertiserId: z.string().min(1, "Выберите рекламодателя"),
   dealId: optionalString,

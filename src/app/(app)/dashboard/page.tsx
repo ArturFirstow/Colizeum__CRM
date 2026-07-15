@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
+import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 
@@ -12,7 +13,9 @@ export default async function DashboardPage() {
   const session = await getSession();
   const now = new Date();
 
-  const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts] = await Promise.all([
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts, advertisers, dealOpts, todayStatuses] = await Promise.all([
     prisma.deal.findMany({
       where: { decisionPending: { not: null } },
       include: { advertiser: true },
@@ -45,6 +48,13 @@ export default async function DashboardPage() {
       prisma.document.count(),
       prisma.task.count({ where: { status: { not: "Готова" } } }),
     ]),
+    prisma.advertiser.findMany({ select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+    prisma.deal.findMany({ select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
+    prisma.dailyStatus.findMany({
+      where: { date: { gte: todayStart } },
+      include: { advertiser: { select: { nameRu: true } }, deal: { select: { title: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const [dealCount, advCount, docCount, activeTasks] = counts;
@@ -65,6 +75,11 @@ export default async function DashboardPage() {
         <StatCard label="Рекламодатели" value={advCount} href="/advertisers" />
         <StatCard label="Задачи в работе" value={activeTasks} href="/tasks" accent={activeTasks > 0} />
         <StatCard label="Документы" value={docCount} href="/documents" />
+      </div>
+
+      {/* Статус дня по проектам + недельный отчёт */}
+      <div className="mb-8">
+        <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
 
       {/* Решения, которые ждут */}

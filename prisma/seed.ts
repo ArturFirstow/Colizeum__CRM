@@ -506,9 +506,9 @@ async function main() {
   console.log("📝 Ежедневные статусы…");
   await prisma.dailyStatus.createMany({
     data: [
-      { advertiserId: mts.id, dealId: dealMts.id, text: "Получили предоплату 40% по Приложению №1, двигаем к размещению.", authorId: owner.id, date: new Date("2026-07-14") },
-      { advertiserId: alabuga.id, dealId: dealAlabuga.id, text: "Готовим ДС на уточнение суммы. Размещение идёт.", authorId: owner.id, date: new Date("2026-07-14") },
-      { advertiserId: tbank.id, dealId: dealTbankAds.id, text: "Ждём подписания Приложения №1, дизайн на согласовании.", authorId: manager.id, date: new Date("2026-07-14") },
+      { advertiserId: mts.id, dealId: dealMts.id, text: "Получили предоплату 40% по Приложению №1, двигаем к размещению.", authorId: owner.id, date: new Date() },
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, text: "Готовим ДС на уточнение суммы. Размещение идёт.", authorId: owner.id, date: new Date() },
+      { advertiserId: tbank.id, dealId: dealTbankAds.id, text: "Ждём подписания Приложения №1, дизайн на согласовании.", authorId: manager.id, date: new Date() },
     ],
   });
 
