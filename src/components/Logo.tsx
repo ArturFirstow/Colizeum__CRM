@@ -11,23 +11,23 @@ export function XoMark({ className = "h-9 w-9" }: { className?: string }) {
       </defs>
 
       {/* жёлтое «лицо» */}
-      <circle cx="24" cy="24" r="22.5" fill="#FCDF3B" stroke="#141414" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="22.5" fill="#FCDF3B" stroke="#141414" strokeWidth="1.4" />
 
-      {/* тёмная маска-полоса + «нос» */}
+      {/* широкая тёмная маска-полоса + маленький «нос»-треугольник по центру */}
       <g clipPath="url(#xo-face)">
-        <rect x="0" y="17" width="48" height="11.4" fill="#1A1A1A" />
-        <path d="M20 28.4 L27 28.4 L23.5 33.4 Z" fill="#1A1A1A" />
+        <rect x="0" y="14.6" width="48" height="16.2" fill="#1A1A1A" />
+        <path d="M21 30.8 L27 30.8 L24 34 Z" fill="#1A1A1A" />
       </g>
 
-      {/* левый глаз — X */}
+      {/* левый глаз — X (у левого края маски) */}
       <path
-        d="M13 20 L18.6 25.6 M18.6 20 L13 25.6"
+        d="M11 19.2 L18 26.2 M18 19.2 L11 26.2"
         stroke="#FFFFFF"
-        strokeWidth="2.4"
+        strokeWidth="2.7"
         strokeLinecap="round"
       />
-      {/* правый глаз — O */}
-      <circle cx="31" cy="22.8" r="3.4" fill="none" stroke="#FFFFFF" strokeWidth="2.6" />
+      {/* правый глаз — O (правее центра, широкий зазор) */}
+      <circle cx="35" cy="22.7" r="5" fill="none" stroke="#FFFFFF" strokeWidth="2.7" />
     </svg>
   );
 }
