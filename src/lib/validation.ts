@@ -44,7 +44,20 @@ export const advertiserCreateSchema = z.object({
   bik: optionalString,
   signatory: optionalString,
 });
-export const advertiserUpdateSchema = advertiserCreateSchema.partial();
+export const advertiserUpdateSchema = advertiserCreateSchema.partial().extend({
+  archived: z.boolean().optional(),
+});
+
+export const creativeCreateSchema = z.object({
+  title: z.string().trim().min(1, "Название макета"),
+  size: optionalString,
+  status: z.enum(["В работе", "На согласовании", "Согласован", "Отклонён"]).optional(),
+  dealId: optionalString,
+  notes: optionalString,
+});
+export const creativeUpdateSchema = z.object({
+  status: z.enum(["В работе", "На согласовании", "Согласован", "Отклонён"]).optional(),
+});
 
 export const agencyClientCreateSchema = z.object({
   name: z.string().trim().min(1, "Укажите клиента"),
@@ -62,10 +75,14 @@ export const contactCreateSchema = z.object({
   isPrimary: z.boolean().optional().default(false),
 });
 
+const dealDate = z.string().optional().or(z.literal("").transform(() => undefined));
+
 export const dealCreateSchema = z.object({
   advertiserId: z.string().min(1),
   title: z.string().trim().min(1, "Укажите название сделки"),
-  contractConstruction: z.enum(["A", "B", "C", "D"]).optional(),
+  dealType: optionalString,
+  finalBrand: optionalString,
+  contractConstruction: z.enum(["A", "B", "C", "D", "E"]).optional(),
   stage: inSet(DEAL_STAGES).optional(),
   urgency: inSet(URGENCIES).optional(),
   ownerId: optionalString,
@@ -74,11 +91,14 @@ export const dealCreateSchema = z.object({
   contractTotal: z.number().nonnegative().optional(),
   vatIncluded: z.boolean().optional(),
   periodText: optionalString,
+  launchDate: dealDate,
   paymentTerms: optionalString,
   contractNumber: optionalString,
   legalResponsible: optionalString,
   blocker: optionalString,
+  situational: optionalString,
   nextStep: optionalString,
+  nextStepDate: dealDate,
   decisionPending: optionalString,
   notes: optionalString,
 });

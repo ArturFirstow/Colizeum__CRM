@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, TypeBadge, StageBadge, Field, EmptyState, WarningFlag } from "@/components/ui/primitives";
+import { PageHeader, TypeBadge, StageBadge, UrgencyBadge, Field, EmptyState } from "@/components/ui/primitives";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
 import { AgencyClients } from "@/components/advertisers/AgencyClients";
+import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
+import { Creatives } from "@/components/advertisers/Creatives";
 import { NewDealButton } from "@/components/deals/NewDealButton";
-import { DeleteButton } from "@/components/ui/DeleteButton";
 import { formatMoney } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 
@@ -21,6 +22,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
       deals: { orderBy: { updatedAt: "desc" } },
       documents: { include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } }, orderBy: { type: "asc" } },
       agencyClients: { orderBy: { createdAt: "asc" } },
+      creatives: { orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -38,15 +40,12 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
         subtitle={advertiser.legalEntity ?? undefined}
         actions={
           <>
+            {advertiser.archived && <span className="badge badge-muted">🗄 В архиве</span>}
             <TypeBadge type={advertiser.type} />
             <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
-            <DeleteButton
-              endpoint={`/api/advertisers/${advertiser.id}`}
-              what={`контрагента «${advertiser.nameRu}» со всеми сделками и документами`}
-              redirectTo="/advertisers"
-              variant="button"
-            />
+            {/* «Удаление» карточки = перемещение в Архив (v2, п.1.2), данные не теряются. */}
+            <ArchiveButton advertiserId={advertiser.id} archived={advertiser.archived} />
           </>
         }
       />
@@ -58,14 +57,18 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
         </div>
       )}
 
+      {/* Фиксированный порядок блоков (v2, п.1.3): Информация и контекст → Документы → Креативы */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* Сделки */}
+          {/* 1. Информация и контекст */}
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-ink-50">Сделки</h2>
-              <span className="badge badge-muted">{advertiser.deals.length}</span>
+              <h2 className="text-lg font-bold text-ink-50">Информация и контекст</h2>
+              <span className="badge badge-muted">{advertiser.deals.length} сделок</span>
             </div>
+            {advertiser.goals && (
+              <p className="mb-3 text-sm text-ink-300">{advertiser.goals}</p>
+            )}
             {advertiser.deals.length === 0 ? (
               <EmptyState icon="⑂" title="Сделок пока нет" />
             ) : (
@@ -74,17 +77,31 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                   <Link
                     key={d.id}
                     href={`/deals/${d.id}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3 transition hover:border-ink-600 hover:bg-ink-800"
+                    className="block rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3 transition hover:border-ink-600 hover:bg-ink-800"
                   >
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-ink-100">{d.title}</div>
-                      {d.amount != null && (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-ink-100">{d.title}</div>
                         <div className="mt-0.5 text-xs text-ink-400">
-                          {formatMoney(d.amount)} {d.vatIncluded ? "с НДС" : "без НДС"}
+                          {d.finalBrand ? `бренд: ${d.finalBrand} · ` : ""}
+                          {d.dealType ? `${d.dealType} · ` : ""}
+                          {d.amount != null ? `${formatMoney(d.amount)} ${d.vatIncluded ? "с НДС" : "без НДС"}` : ""}
                         </div>
-                      )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <UrgencyBadge urgency={d.urgency} />
+                        <StageBadge stage={d.stage} />
+                      </div>
                     </div>
-                    <StageBadge stage={d.stage} />
+                    {/* Ситуативные блокеры и срочные задачи — отдельное поле, в базу знаний не уходит (v2, п.1.3). */}
+                    {d.situational && (
+                      <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-200">
+                        ⚡ {d.situational}
+                      </div>
+                    )}
+                    {d.nextStep && (
+                      <div className="mt-1.5 text-xs text-ink-400">→ {d.nextStep}</div>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -96,7 +113,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
             <AgencyClients advertiserId={advertiser.id} clients={advertiser.agencyClients} />
           )}
 
-          {/* Документы */}
+          {/* 2. Документы */}
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-ink-50">Документы</h2>
@@ -120,6 +137,9 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
               </div>
             )}
           </section>
+
+          {/* 3. Креативы */}
+          <Creatives advertiserId={advertiser.id} creatives={advertiser.creatives} />
         </div>
 
         {/* Реквизиты + контакты */}
@@ -148,7 +168,6 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
               )}
               <Field label="Подписант">{advertiser.signatory}</Field>
               <Field label="Статус">{advertiser.status}</Field>
-              {advertiser.goals && <Field label="Цели">{advertiser.goals}</Field>}
             </div>
           </section>
 

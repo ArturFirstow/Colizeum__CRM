@@ -92,10 +92,24 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             <p className="text-sm text-red-100">{deal.blocker}</p>
           </div>
         )}
+        {/* Ситуативные блокеры — отдельное временное поле, в базу знаний не уходит (v2, п.1.3). */}
+        {deal.situational && (
+          <div className="card p-4 !border-orange-500/30">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-orange-300">
+              ⚡ Ситуативные блокеры и срочные задачи
+            </div>
+            <p className="whitespace-pre-wrap text-sm text-orange-100">{deal.situational}</p>
+          </div>
+        )}
         {deal.nextStep && (
           <div className="card p-4">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-400">→ Следующий шаг</div>
-            <p className="text-sm text-ink-100">{deal.nextStep}</p>
+            <p className="text-sm text-ink-100">
+              {deal.nextStep}
+              {deal.nextStepDate && (
+                <span className="text-ink-400"> · до {formatDate(deal.nextStepDate)}</span>
+              )}
+            </p>
           </div>
         )}
       </div>
@@ -291,6 +305,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           <section className="card p-5">
             <h2 className="mb-4 text-lg font-bold text-ink-50">Карточка сделки</h2>
             <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Тип сделки">{deal.dealType}</Field>
+                <Field label="Конечный бренд">{deal.finalBrand}</Field>
+              </div>
               <Field label="Конструкция договора">
                 {construction ? `${construction.code} — ${construction.label}` : "—"}
               </Field>
@@ -304,7 +322,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   "—"
                 )}
               </Field>
-              <Field label="Срок">{deal.periodText}</Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Дата запуска">{deal.launchDate ? formatDate(deal.launchDate) : null}</Field>
+                <Field label="Срок">{deal.periodText}</Field>
+              </div>
               <Field label="Схема оплаты">{deal.paymentTerms}</Field>
               <Field label="Номер договора">{deal.contractNumber}</Field>
               <Field label="Юрист">{deal.legalResponsible}</Field>

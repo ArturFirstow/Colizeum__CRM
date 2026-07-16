@@ -18,6 +18,7 @@ type Advertiser = {
   type: string;
   status: string;
   notes: string | null;
+  archived: boolean;
   _count: { deals: number; documents: number; contacts: number };
 };
 
@@ -25,18 +26,24 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
+  const [showArchive, setShowArchive] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const archivedCount = useMemo(() => initial.filter((a) => a.archived).length, [initial]);
+
+  // Архивные карточки не показываются в основном списке, но доступны
+  // через поиск и раздел «Архив» (v2, п.1.2).
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return initial.filter((a) => {
+      if (!query && a.archived !== showArchive) return false;
       if (typeFilter && a.type !== typeFilter) return false;
       if (!query) return true;
       return [a.nameRu, a.nameEn, a.legalEntity, a.inn]
         .filter(Boolean)
         .some((v) => v!.toLowerCase().includes(query));
     });
-  }, [initial, q, typeFilter]);
+  }, [initial, q, typeFilter, showArchive]);
 
   return (
     <div>
@@ -73,6 +80,9 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
               {t}
             </FilterChip>
           ))}
+          <FilterChip active={showArchive} onClick={() => setShowArchive((v) => !v)}>
+            🗄 Архив ({archivedCount})
+          </FilterChip>
         </div>
       </div>
 
@@ -89,6 +99,7 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
                   <div className="flex items-center gap-2">
                     <span className="truncate text-base font-bold text-ink-50">{a.nameRu}</span>
                     {hasWarningFlag(a.notes) && <span title="На выверку">⚠️</span>}
+                    {a.archived && <span className="badge badge-muted shrink-0">архив</span>}
                   </div>
                   {a.legalEntity && (
                     <div className="mt-0.5 truncate text-xs text-ink-400">{a.legalEntity}</div>

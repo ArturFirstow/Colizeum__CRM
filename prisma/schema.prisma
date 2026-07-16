@@ -45,6 +45,7 @@ model Advertiser {
   ogrn        String?
   type        String   @default("Рекламодатель") // Рекламодатель | Агентство (см. enums.ts)
   status      String   @default("Активный")
+  archived    Boolean  @default(false) // в Архиве (v2, п.1.2)
   goals       String?
   notes       String?
   // Реквизиты для карточки контрагента.
@@ -60,11 +61,29 @@ model Advertiser {
   deals           Deal[]
   documents       Document[]
   tasks           Task[]
+  creatives       Creative[]
   agencyClients   AgencyClient[] // если контрагент = Агентство
   plannedPayments PlannedPayment[]
   placements      Placement[]
   dailyStatuses   DailyStatus[]
   promoBatches    PromoBatch[]
+}
+
+// ── Креатив (макет) — блок «Креативы» в карточке клиента (v2, п.1.3) ─────────
+model Creative {
+  id           String   @id @default(cuid())
+  advertiserId String
+  dealId       String?
+  title        String
+  size         String? // напр. 1080×1080, 1920×1080
+  status       String   @default("В работе") // В работе | На согласовании | Согласован | Отклонён
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([advertiserId])
 }
 
 // ── Клиент агентства (если контрагент = Агентство) ──────────────────────────
@@ -103,9 +122,11 @@ model Deal {
   id                   String    @id @default(cuid())
   advertiserId         String
   title                String
-  contractConstruction String? // A | B | C | D (справочник конструкций договоров)
-  stage                String    @default("Лид / квалификация") // 11 стадий, см. enums.ts
-  urgency              String? // Низкая | Средняя | Высокая | Критичная
+  dealType             String? // прямой | агентство | технический (v2, п.1.3)
+  finalBrand           String? // конечный бренд (при агентстве/цепочке)
+  contractConstruction String? // A..E (справочник конструкций договоров, v2 п.3.5)
+  stage                String    @default("Лид") // 9 стадий (v2, п.1.1)
+  urgency              String? // Максимальная | Высокая | Средняя | Низкая | По запросу | Разово
   ownerId              String?
   assigneeId           String?
   amount               Float? // сумма из МП (текущая)
@@ -113,12 +134,15 @@ model Deal {
   vatIncluded          Boolean   @default(true)
   currency             String    @default("RUB")
   periodText           String? // срок как ТЕКСТ, не жёсткие даты (правило блупринта)
+  launchDate           DateTime? // дата запуска
   paymentTerms         String?
   contractNumber       String?
   contractDate         DateTime?
   legalResponsible     String? // юрист
   blocker              String?
+  situational          String? // «Ситуативные блокеры и срочные задачи» (v2, п.1.3) — НЕ в базу знаний
   nextStep             String?
+  nextStepDate         DateTime?
   decisionPending      String? // непустое → попадает в блок «Решения ждут вас»
   notes                String?
   createdAt            DateTime  @default(now())
@@ -129,6 +153,7 @@ model Deal {
   assignee    User?        @relation("DealAssignee", fields: [assigneeId], references: [id])
   documents       Document[]
   tasks           Task[]
+  creatives       Creative[]
   mediaPlans      MediaPlan[]
   invoices        Invoice[]
   closingDocs     ClosingDoc[]

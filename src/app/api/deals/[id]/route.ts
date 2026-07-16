@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async () => {
     const { id } = await ctx.params;
-    const { confirm, ...data } = dealUpdateSchema.parse(await req.json());
+    const { confirm, launchDate, nextStepDate, ...data } = dealUpdateSchema.parse(await req.json());
 
     const existing = await prisma.deal.findUnique({ where: { id } });
     if (!existing) return fail("not_found", "Сделка не найдена", 404);
@@ -39,7 +39,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       }
     }
 
-    const deal = await prisma.deal.update({ where: { id }, data });
+    const deal = await prisma.deal.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(launchDate !== undefined ? { launchDate: launchDate ? new Date(launchDate) : null } : {}),
+        ...(nextStepDate !== undefined ? { nextStepDate: nextStepDate ? new Date(nextStepDate) : null } : {}),
+      },
+    });
     return ok(deal);
   });
 }

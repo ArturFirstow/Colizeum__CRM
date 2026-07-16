@@ -6,8 +6,12 @@ import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
+import { VERIFY_FLAGS } from "@/lib/enums";
 
 const STUCK_DAYS = 7;
+
+// Архивные проекты не участвуют в панелях дашборда (v2, п.1.2).
+const notArchived = { advertiser: { archived: false } };
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -17,12 +21,12 @@ export default async function DashboardPage() {
 
   const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts, advertisers, dealOpts, todayStatuses] = await Promise.all([
     prisma.deal.findMany({
-      where: { decisionPending: { not: null } },
+      where: { decisionPending: { not: null }, ...notArchived },
       include: { advertiser: true },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.deal.findMany({
-      where: { blocker: { not: null } },
+      where: { blocker: { not: null }, ...notArchived },
       include: { advertiser: true },
       orderBy: { urgency: "desc" },
     }),
@@ -35,7 +39,8 @@ export default async function DashboardPage() {
     prisma.deal.findMany({
       where: {
         updatedAt: { lt: new Date(now.getTime() - STUCK_DAYS * 86400000) },
-        stage: { not: "Закрывающие" },
+        stage: { not: "Закрытие" },
+        ...notArchived,
       },
       include: { advertiser: true },
       orderBy: { updatedAt: "asc" },
@@ -43,13 +48,13 @@ export default async function DashboardPage() {
     }),
     prisma.journalEntry.findMany({ orderBy: { date: "desc" }, take: 4 }),
     Promise.all([
-      prisma.deal.count(),
-      prisma.advertiser.count(),
+      prisma.deal.count({ where: notArchived }),
+      prisma.advertiser.count({ where: { archived: false } }),
       prisma.document.count(),
       prisma.task.count({ where: { status: { not: "Готова" } } }),
     ]),
-    prisma.advertiser.findMany({ select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
-    prisma.deal.findMany({ select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
+    prisma.advertiser.findMany({ where: { archived: false }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+    prisma.deal.findMany({ where: notArchived, select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
     prisma.dailyStatus.findMany({
       where: { date: { gte: todayStart } },
       include: { advertiser: { select: { nameRu: true } }, deal: { select: { title: true } } },
@@ -81,6 +86,24 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
+
+      {/* На выверку — ровно 4 актуальных флага (v2, п.1.7) */}
+      <section className="mb-8">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
+          <span>⚠️</span> На выверку
+        </h2>
+        <div className="grid gap-2 md:grid-cols-2">
+          {VERIFY_FLAGS.map((flag) => (
+            <div
+              key={flag}
+              className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-sm text-amber-100"
+            >
+              <span className="shrink-0">⚠️</span>
+              <span>{flag}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Решения, которые ждут */}
       <section className="mb-8">

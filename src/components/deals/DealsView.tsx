@@ -5,7 +5,7 @@ import Link from "next/link";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { formatMoney } from "@/lib/format";
-import { KANBAN_BUCKETS, STAGE_TO_BUCKET, type DealStage } from "@/lib/enums";
+import { DEAL_STAGES } from "@/lib/enums";
 import { stageStyle } from "@/lib/ui-tokens";
 
 type Deal = {
@@ -39,12 +39,11 @@ export function DealsView({
     );
   }, [deals, q]);
 
-  const byBucket = useMemo(() => {
+  const byStage = useMemo(() => {
     const map: Record<string, Deal[]> = {};
-    for (const b of KANBAN_BUCKETS) map[b] = [];
+    for (const s of DEAL_STAGES) map[s] = [];
     for (const d of filtered) {
-      const bucket = STAGE_TO_BUCKET[d.stage as DealStage] ?? KANBAN_BUCKETS[0];
-      (map[bucket] ??= []).push(d);
+      (map[d.stage] ??= []).push(d);
     }
     return map;
   }, [filtered]);
@@ -90,19 +89,19 @@ export function DealsView({
       {view === "kanban" ? (
         <div className="-mx-4 overflow-x-auto px-4 pb-4">
           <div className="flex gap-4" style={{ minWidth: "min-content" }}>
-            {KANBAN_BUCKETS.map((bucket) => (
-              <div key={bucket} className="w-72 shrink-0">
+            {DEAL_STAGES.map((stage) => (
+              <div key={stage} className="w-72 shrink-0">
                 <div className="mb-3 flex items-center justify-between px-1">
-                  <span className="text-sm font-semibold text-ink-200">{bucket}</span>
+                  <span className="text-sm font-semibold text-ink-200">{stage}</span>
                   <span className="rounded-md bg-ink-800 px-2 py-0.5 text-xs text-ink-400">
-                    {byBucket[bucket].length}
+                    {byStage[stage].length}
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {byBucket[bucket].map((d) => (
+                  {byStage[stage].map((d) => (
                     <KanbanCard key={d.id} deal={d} />
                   ))}
-                  {byBucket[bucket].length === 0 && (
+                  {byStage[stage].length === 0 && (
                     <div className="rounded-xl border border-dashed border-ink-800 py-6 text-center text-xs text-ink-600">
                       пусто
                     </div>

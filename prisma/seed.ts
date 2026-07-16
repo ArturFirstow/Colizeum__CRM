@@ -1,10 +1,8 @@
 /**
- * Сид первичного наполнения (блупринт, раздел 15).
- * Запуск: npm run db:seed  (или npm run setup).
- * Идемпотентен: чистит таблицы и наполняет заново.
+ * Сид первичного наполнения — редакция v2 (пакет изменений владельца).
+ * Запуск: npm run db:seed (или npm run setup). Идемпотентен.
  *
- * Пишет несколько placeholder-файлов в локальное хранилище, чтобы во вкладке
- * «Документы» сразу были документы с версиями и рабочим скачиванием.
+ * 5 активных проектов (раздел 2), Архив (п.1.6), база знаний (разделы 3.1–3.15).
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -14,40 +12,33 @@ import path from "node:path";
 
 const prisma = new PrismaClient();
 const STORAGE_DIR = process.env.STORAGE_LOCAL_DIR ?? "./storage";
+const hash = (p: string) => bcrypt.hashSync(p, 10);
+const sanitize = (n: string) =>
+  n.replace(/[/\\]/g, "_").replace(/[^\p{L}\p{N}._ -]/gu, "_").slice(0, 200) || "file";
 
-function hash(plain: string) {
-  return bcrypt.hashSync(plain, 10);
-}
-
-function sanitize(name: string) {
-  return name.replace(/[/\\]/g, "_").replace(/[^\p{L}\p{N}._ -]/gu, "_").slice(0, 200) || "file";
-}
-
-// Пишет placeholder-файл версии в хранилище, возвращает метаданные для БД.
-function writeVersionFile(
-  advertiserId: string,
-  documentId: string,
-  versionNo: number,
-  fileName: string,
-  content: string,
-) {
-  const key = `advertisers/${advertiserId}/documents/${documentId}/v${versionNo}/${sanitize(fileName)}`;
+function writeVersionFile(advertiserId: string, documentId: string, v: number, fileName: string, content: string) {
+  const key = `advertisers/${advertiserId}/documents/${documentId}/v${v}/${sanitize(fileName)}`;
   const full = path.resolve(process.cwd(), STORAGE_DIR, key);
   mkdirSync(path.dirname(full), { recursive: true });
   const buf = Buffer.from(content, "utf-8");
   writeFileSync(full, buf);
-  return {
-    storageKey: key,
-    fileName,
-    mimeType: "text/plain",
-    sizeBytes: buf.length,
-    sha256: createHash("sha256").update(buf).digest("hex"),
-  };
+  return { storageKey: key, fileName, mimeType: "text/plain", sizeBytes: buf.length, sha256: createHash("sha256").update(buf).digest("hex") };
+}
+
+async function seedDoc(advertiserId: string, dealId: string, title: string, type: string, versions: { note: string; fileName: string; body: string }[]) {
+  const doc = await prisma.document.create({ data: { advertiserId, dealId, type, title } });
+  let currentId = "";
+  for (let i = 0; i < versions.length; i++) {
+    const meta = writeVersionFile(advertiserId, doc.id, i + 1, versions[i].fileName, versions[i].body);
+    const created = await prisma.documentVersion.create({ data: { documentId: doc.id, versionNo: i + 1, changeNote: versions[i].note, ...meta } });
+    currentId = created.id;
+  }
+  await prisma.document.update({ where: { id: doc.id }, data: { currentVersionId: currentId } });
 }
 
 async function main() {
-  console.log("🌱 Очистка таблиц…");
-  // Порядок: от зависимых к корневым.
+  console.log("🌱 Очистка…");
+  await prisma.creative.deleteMany();
   await prisma.dailyStatus.deleteMany();
   await prisma.placement.deleteMany();
   await prisma.plannedPayment.deleteMany();
@@ -70,763 +61,319 @@ async function main() {
   await prisma.journalEntry.deleteMany();
   await prisma.user.deleteMany();
 
-  // ── Пользователи (2 аккаунта, блупринт 3, 11) ──────────────────────────────
   console.log("👤 Пользователи…");
   const owner = await prisma.user.create({
-    data: {
-      email: (process.env.SEED_OWNER_EMAIL ?? "owner@colizeum.ru").toLowerCase(),
-      name: "Ведущий менеджер",
-      role: "Owner",
-      passwordHash: hash(process.env.SEED_OWNER_PASSWORD ?? "colizeum"),
-    },
+    data: { email: (process.env.SEED_OWNER_EMAIL ?? "owner@colizeum.ru").toLowerCase(), name: "Ведущий менеджер", role: "Owner", passwordHash: hash(process.env.SEED_OWNER_PASSWORD ?? "colizeum") },
   });
   const manager = await prisma.user.create({
-    data: {
-      email: (process.env.SEED_MANAGER_EMAIL ?? "manager@colizeum.ru").toLowerCase(),
-      name: "Младший менеджер",
-      role: "Manager",
-      passwordHash: hash(process.env.SEED_MANAGER_PASSWORD ?? "colizeum"),
-    },
+    data: { email: (process.env.SEED_MANAGER_EMAIL ?? "manager@colizeum.ru").toLowerCase(), name: "Младший менеджер", role: "Manager", passwordHash: hash(process.env.SEED_MANAGER_PASSWORD ?? "colizeum") },
   });
 
-  // ── Директория людей (блупринт 15) ─────────────────────────────────────────
-  console.log("🧑‍💼 Директория людей…");
+  // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────
+  console.log("🧑‍💼 Люди…");
   await prisma.person.createMany({
     data: [
-      { role: "Директор по маркетингу", name: "Рома Измайлов", telegram: "@izovsehsil13", scope: "чек B2C ⚠️ хендл выверить" },
-      { role: "Арт-директор", name: "Милана Умерова", scope: "дизайн" },
-      { role: "Баннер-менеджер", name: "Милана", telegram: "@melscrim", scope: "запуск размещений ⚠️ две «Миланы»" },
-      { role: "Размещение / согласование", name: "Александр Иванушкин", telegram: "@alexandr_ivanushkin" },
-      { role: "Передача на размещение", name: "Милана Захарова" },
-      { role: "Операционный директор", name: "Руслан", scope: "чек B2B" },
-      { role: "Руководитель СММ", name: "Аня", telegram: "@danna35" },
-      { role: "Юрист — договоры", name: "Екатерина", scope: "маршрут согласования" },
-      { role: "Юрист — маркировка/ОРД", name: "Полина", telegram: "@ppachkova_law" },
-      { role: "Главный бухгалтер", name: "Ольга", scope: "финансы, порог 3 млн → СЕО" },
-      { role: "УПД по промокодам", name: "Ирина" },
-      { role: "Рассылки промокодов", name: "Анна Дамер" },
-      { role: "Снабжение / склад", name: "Андрей Листратов", telegram: "@Listratov92" },
-      { role: "Управляющий клуба (Афимолл)", name: "Галина", telegram: "@aphrodiiite" },
-      { role: "Управляющий клуба (Шелепиха)", name: "Марат", telegram: "@PM_Marat_Colizeum", scope: "обкатка T-Pay" },
-      { role: "Управляющий (клубы 50+)", name: "Люба", telegram: "@sushintseva" },
+      { role: "Юрист — договоры", name: "Екатерина", scope: "маршрут: юрист → главбух" },
+      { role: "Главный бухгалтер", name: "Ольга", scope: "финансы, календарь оплат" },
+      { role: "Арт-директор", name: "Милана Умерова", scope: "креативы (внутр. апрув авто)" },
+      { role: "Директор по маркетингу", name: "Рома Измайлов", telegram: "@izovsehsil13", scope: "⚠️ хендл выверить" },
+      { role: "Баннер-менеджер", name: "Милана", telegram: "@melscrim", scope: "скрины для отчётов ⚠️ две «Миланы»" },
+      { role: "Проект-менеджер", name: "❓", scope: "фотоотчёты" },
+      { role: "Юрист ОРД (аутсорс)", name: "❓", scope: "ERID-токены, квартальная сводка" },
+      { role: "Управляющий клуба (Шелепиха)", name: "Марат", telegram: "@PM_Marat_Colizeum", scope: "обкатка эквайринга" },
     ],
   });
 
-  // ── Рекламодатели + сделки + контакты (блупринт 15) ────────────────────────
-  console.log("🏢 Рекламодатели и сделки…");
+  // ── 5 активных проектов (раздел 2) ─────────────────────────────────────────
+  console.log("🏢 Активные проекты…");
 
-  const tbank = await prisma.advertiser.create({
+  // 2.1 Т-Банк — основная интеграция
+  const tbankMain = await prisma.advertiser.create({
     data: {
-      nameRu: "Т-Банк",
-      nameEn: "T-Bank",
-      legalEntity: "АО «ТБанк»",
-      type: "Рекламодатель",
-      status: "Активный",
-      goals: "Реклама в клубах, эквайринг T-Pay, партнёрство Colizeum Fest.",
-      notes: "Многотрековый клиент. Приложения к договору согласуются строго по очереди через бухгалтерию.",
-      contacts: {
-        create: [
-          { fio: "Дарья Гурьева", role: "Colizeum Fest / запуск", isPrimary: true },
-        ],
-      },
+      nameRu: "Т-Банк — основная интеграция", legalEntity: "АО «ТБанк»", type: "Рекламодатель", status: "Активный",
+      goals: "Основная рекламная интеграция в клубах.",
+      notes: "Тип: прямой, на бумаге клиента. Приложения согласуются строго последовательно через бухгалтерию клиента. Сопутствующее: NDA на ПДн, письма-согласия, договор адаптации ПО.",
+      signatory: "Парамонов Д.С. (МЧД)",
+      contacts: { create: [{ fio: "Парамонов Д.С.", role: "Подписант (МЧД)", isPrimary: true }] },
     },
   });
-
-  const mts = await prisma.advertiser.create({
+  const dealTbankMain = await prisma.deal.create({
     data: {
-      nameRu: "МТС",
-      nameEn: "MTS",
-      legalEntity: "ПАО «МТС»",
-      inn: "7740000076",
-      type: "Рекламодатель",
-      status: "Активный",
-      goals: "Рамочный договор + Заказы. Номер D260183187.",
-      notes: "⚠️ КПП в документах разный: 770901001 / 997750001. Подписант Белоусова Н.А. по МЧД.",
-      contacts: { create: [{ fio: "Белоусова Н.А.", role: "Подписант (МЧД)", isPrimary: true }] },
+      advertiserId: tbankMain.id, title: "Т-Банк — основная интеграция", dealType: "прямой",
+      contractConstruction: "A", stage: "Приложение / спец.", urgency: "Средняя",
+      amount: 17_400_000, vatIncluded: false, contractTotal: 17_400_000,
+      contractNumber: "Т-ЦСД-ТО-156-2026 от 15.06.2026", legalResponsible: "Екатерина", ownerId: owner.id,
+      nextStep: "Согласовать Приложение №1 через бухгалтерию клиента.",
+      situational: "Приложения строго последовательно. Ждём NDA на ПДн, письма-согласия, договор адаптации ПО.",
+      notes: "17,4 млн ₽ без НДС (НДС 22% сверху), 2 приложения.",
     },
   });
-
-  const alabuga = await prisma.advertiser.create({
-    data: {
-      nameRu: "Алабуга",
-      legalEntity: "АО «ОЭЗ ППТ Алабуга»",
-      type: "Рекламодатель",
-      status: "Активный",
-      goals: "Размещение по договору 10/06/2026-РИМ (их номер ОЭЗ-12426/26).",
-      notes: "Тело договора править НЕЛЬЗЯ — только через ДС. ⚠️ сумма 9 955 200 vs 9 555 200 в тексте ДС (опечатка).",
-    },
+  await prisma.creative.createMany({
+    data: [
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, title: "«Т — в твоей игре» — квадрат", size: "1080×1080", status: "На согласовании" },
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, title: "«Т — в твоей игре» — экран (QR/кнопка)", size: "1920×1080", status: "На согласовании" },
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, title: "Баннер в ЛК", size: "766×473", status: "В работе" },
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, title: "Баннер в мобильном приложении", size: "960×372", status: "В работе" },
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, title: "Merch T-Pay × Colizeum", status: "В работе" },
+    ],
   });
 
-  const samokat = await prisma.advertiser.create({
+  // 2.2 Т-Банк — эквайринг T-Pay + ЕББ
+  const tbankPay = await prisma.advertiser.create({
     data: {
-      nameRu: "Самокат",
-      legalEntity: "ООО «Умный ритейл»",
-      type: "Рекламодатель",
-      status: "Активный",
-      goals: "Партнёр Colizeum Fest 2026.",
-      notes: "Договор 09/06/2026-РМ-fest. Счета/УПД через ИП Сараева. ⚠️ р/с Самокат-fest …55743.",
+      nameRu: "Т-Банк — эквайринг T-Pay + ЕББ", legalEntity: "АО «ТБанк»", type: "Рекламодатель", status: "Активный",
+      goals: "Технический трек: эквайринг T-Pay + единый бонусный баланс (ЕББ) через Langame.",
+      notes: "ЕББ — единый бонусный баланс: компенсация «кэшбека» бонусами на игровой баланс за оплату картой Т-Банка. Обкатка эквайринга — КиберАрена Шелепиха (клуб под УК, без франчайзи). Ждём КП по эквайрингу и контакты банка.",
     },
   });
-
-  const kiberadvert = await prisma.advertiser.create({
-    data: {
-      nameRu: "Киберадверт",
-      legalEntity: "ООО «КИБЕРАДВЕРТ»",
-      type: "Агентство",
-      status: "Активный",
-      goals: "Рамочный 26/09/2025-РИМ + Спецификации №3–6.",
-      notes: "Конечные клиенты: Т2 (MIXX Play Pro), ОККО. Типовая цена поста 195 200 ₽ с НДС, сплит-оплата.",
-      contacts: { create: [{ fio: "Менеджер Киберадверт", role: "Агентский контакт" }] },
-    },
-  });
-
-  const maccoffee = await prisma.advertiser.create({
-    data: {
-      nameRu: "MacCoffee",
-      type: "Рекламодатель",
-      status: "Активный",
-      goals: "Пакеты стандарт/продвинутый, амбассадорство стримеров под TI 2026.",
-      notes: "Скидка 15%.",
-    },
-  });
-
-  const saraeva = await prisma.advertiser.create({
-    data: {
-      nameRu: "ИП Сараева Диана Сергеевна",
-      legalEntity: "ИП Сараева Д.С.",
-      type: "Арендатор",
-      status: "Активный",
-      goals: "Сервисный/промежуточный исполнитель.",
-      notes: "Счета/УПД в адрес УК за техподготовку и размещение партнёров CF2026.",
-    },
-  });
-
-  // Стартовые сделки — расставлены по стадиям, чтобы канбан был живым.
-  const dealTbankAds = await prisma.deal.create({
-    data: {
-      advertiserId: tbank.id,
-      title: "Т-Банк — реклама в клубах (Прил. 1/2)",
-      contractConstruction: "B",
-      stage: "Согласование приложений / ЭДО",
-      urgency: "Высокая",
-      ownerId: owner.id,
-      amount: 3_200_000,
-      vatIncluded: true,
-      periodText: "старт после согласования Прил. №1",
-      legalResponsible: "Екатерина",
-      blocker: "Приложения согласуются строго по очереди через бухгалтерию.",
-      nextStep: "Дождаться подписания Приложения №1, затем №2.",
-      decisionPending: "Утвердить макеты для Приложения №1.",
-    },
-  });
-
-  const dealTbankPay = await prisma.deal.create({
-    data: {
-      advertiserId: tbank.id,
-      title: "Т-Банк — эквайринг T-Pay (обкатка Шелепиха)",
-      contractConstruction: "D",
-      stage: "Интеграция / тех. подключение",
-      urgency: "Критичная",
-      ownerId: owner.id,
-      assigneeId: manager.id,
-      periodText: "обкатка на КиберАрене Шелепиха",
-      blocker: "Смена ИП на клубе сдвигает интеграцию эквайринга.",
-      nextStep: "Получить API-токен, передать в ИТ-отдел.",
-    },
-  });
-
-  const dealMts = await prisma.deal.create({
-    data: {
-      advertiserId: mts.id,
-      title: "МТС — рамочный + Заказы (D260183187)",
-      contractConstruction: "A",
-      stage: "Оплата / предоплата",
-      urgency: "Высокая",
-      ownerId: owner.id,
-      amount: 19_948_000,
-      vatIncluded: false,
-      periodText: "старт после предоплаты 40%",
-      paymentTerms: "предоплата 40%",
-      legalResponsible: "Екатерина",
-      contractNumber: "D260183187",
-      nextStep: "Согласовать схему оплаты с закупщиком → снять блокер правок договора.",
-      decisionPending: "Подтвердить сумму МП v.7 (со скидкой 19 948 000 без НДС).",
-    },
-  });
-
-  const dealAlabuga = await prisma.deal.create({
-    data: {
-      advertiserId: alabuga.id,
-      title: "Алабуга — размещение (ОЭЗ-12426/26)",
-      contractConstruction: "B",
-      stage: "Размещение / оказание услуг",
-      urgency: "Средняя",
-      ownerId: owner.id,
-      amount: 9_955_200,
-      vatIncluded: true,
-      periodText: "6 месяцев, ежемесячно",
-      paymentTerms: "предоплата 1 659 200 + по 1 659 200 ежемесячно (6 мес)",
-      contractNumber: "10/06/2026-РИМ / ОЭЗ-12426/26",
-      legalResponsible: "Екатерина",
-      blocker: "Изменения только через ДС — тело договора не правим.",
-    },
-  });
-
-  const dealSamokat = await prisma.deal.create({
-    data: {
-      advertiserId: samokat.id,
-      title: "Самокат — партнёрство CF2026",
-      contractConstruction: "B",
-      stage: "Закрывающие",
-      urgency: "Низкая",
-      ownerId: owner.id,
-      amount: 2_440_000,
-      vatIncluded: true,
-      periodText: "CF2026 прошёл 21.06.2026",
-      contractNumber: "09/06/2026-РМ-fest",
-      nextStep: "Закрыть УПД через ИП Сараева.",
-    },
-  });
-
-  const dealKiberadvert = await prisma.deal.create({
-    data: {
-      advertiserId: kiberadvert.id,
-      title: "Киберадверт — Спецификации №3–6",
-      contractConstruction: "C",
-      stage: "Маркировка и отчётность",
-      urgency: "Средняя",
-      ownerId: owner.id,
-      assigneeId: manager.id,
-      amount: 195_200,
-      vatIncluded: true,
-      periodText: "посты живут до 1 мес",
-      contractNumber: "26/09/2025-РИМ",
-      legalResponsible: "Полина",
-      nextStep: "Ежемесячное закрытие актов по маркировке.",
-    },
-  });
-
-  const dealMaccoffee = await prisma.deal.create({
-    data: {
-      advertiserId: maccoffee.id,
-      title: "MacCoffee — пакет + амбассадорство (TI 2026)",
-      contractConstruction: "D",
-      stage: "МП и КП",
-      urgency: "Средняя",
-      ownerId: manager.id,
-      periodText: "под TI 2026",
-      nextStep: "Собрать КП с пакетом и скидкой 15%.",
-      decisionPending: "Выбрать пакет: стандарт или продвинутый.",
-    },
-  });
-
   await prisma.deal.create({
     data: {
-      advertiserId: maccoffee.id,
-      title: "MacCoffee — новый лид на квалификации",
-      stage: "Лид / квалификация",
-      ownerId: manager.id,
-      nextStep: "Квалифицировать бюджет и цели.",
+      advertiserId: tbankPay.id, title: "Т-Банк — эквайринг T-Pay + ЕББ", dealType: "технический",
+      stage: "Договор", urgency: "Средняя", legalResponsible: "Екатерина", ownerId: owner.id,
+      nextStep: "Получить условия банка → API-токен → ИТ настраивает онлайн-оплату (обкатка Шелепиха).",
+      situational: "Ждём КП по эквайрингу и контакты банка.",
+      notes: "Разрабатывается отдельным треком на уровне Langame.",
     },
   });
 
-  // ── Медиаплан МТС (пример v1) ──────────────────────────────────────────────
-  console.log("📊 Медиаплан…");
-  await prisma.mediaPlan.create({
+  // 2.3 МТС Оплата (ООО «МРБ»)
+  const mtsPay = await prisma.advertiser.create({
     data: {
-      dealId: dealMts.id,
-      version: 7,
-      totalAmount: 19_948_000,
-      vatRate: 22,
-      notes: "v.7, со скидкой. Без НДS: 23 078 000; со скидкой: 19 948 000.",
-      lines: {
-        create: [
-          { formatCode: "banner-lk", formatName: "Баннер в личном кабинете (766×473)", qty: 1, period: "1 мес", unitPrice: 5_000_000, sum: 5_000_000 },
-          { formatCode: "splash-pc", formatName: "Заставки на свободных ПК (1920×1080)", qty: 1, period: "1 мес", unitPrice: 8_000_000, sum: 8_000_000 },
-          { formatCode: "tv65", formatName: "Реклама на TV 65 (1920×1080)", qty: 1, period: "1 мес", unitPrice: 6_948_000, sum: 6_948_000 },
-        ],
-      },
+      nameRu: "МТС Оплата", legalEntity: "ООО «Мурманский расчётный банк» (МРБ)", type: "Рекламодатель", status: "Активный",
+      goals: "Рост пополнений Steam без комиссии по промокоду COLIZEUM.",
+      notes: "Бренд «МТС Оплата». НЕ путать с ПАО «МТС» — разные юрлица и проекты.",
+    },
+  });
+  const dealMtsPay = await prisma.deal.create({
+    data: {
+      advertiserId: mtsPay.id, title: "МТС Оплата — размещение", dealType: "прямой", finalBrand: "МТС Оплата",
+      contractConstruction: "A", stage: "Договор", urgency: "Высокая",
+      amount: 16_644_174, vatIncluded: true, contractTotal: 16_644_174,
+      contractNumber: "❓/06/2026-РИМ от 08.06.2026", ownerId: owner.id,
+      paymentTerms: "Предоплата 40% + 3 платежа: декабрь 2026, январь 2027, февраль 2027 (утверждено).",
+      nextStep: "Подписание → печать 150 ковриков.",
+      situational: "Коврики (150, Шелепиха) — в печать только после подписания.",
+      notes: "Клубы+коврики 14 021 174 + интернет 2 623 000 = 16 644 174 ₽ с НДС.",
+    },
+  });
+  await prisma.creative.createMany({
+    data: [
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, title: "Баннеры на экраны", size: "1920×1080", status: "В работе" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, title: "Ярлык ПК + виджет", status: "В работе" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, title: "Пуши + ТГ + кнопка пополнения Steam", status: "В работе" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, title: "150 ковриков (кастом, Шелепиха)", status: "В работе", notes: "В печать только после подписания." },
+    ],
+  });
+
+  // 2.4 МТС (ПАО)
+  const mtsPao = await prisma.advertiser.create({
+    data: {
+      nameRu: "МТС (ПАО)", legalEntity: "ПАО «МТС»", inn: "7740000076", kpp: "770901001", type: "Рекламодатель", status: "Активный",
+      goals: "Рамочная модель с заказами (специфика клиента).",
+      notes: "Номер D260183187; подписант Белоусова Н.А. (МЧД); претензии pretbuz@mts.ru. ⚠️ КПП МТС (ПАО) разный в документах: 770901001 / 997750001 — сверять по документу.",
+    },
+  });
+  const dealMtsPao = await prisma.deal.create({
+    data: {
+      advertiserId: mtsPao.id, title: "МТС (ПАО) — рамочный + заказы", dealType: "прямой",
+      contractConstruction: "E", stage: "Договор", urgency: "Средняя",
+      contractNumber: "D260183187", legalResponsible: "Екатерина", ownerId: owner.id,
+      nextStep: "Юрист вносит правки в договор тестирования.",
+      situational: "Треки: договор тестирования (форма согласована учредителем, правки юриста); договор по закупке (другой юрист); концессия/пилот — расширенное NDA (Салон + Киберклуб).",
     },
   });
 
-  // ── Счёт + оплата (МТС) для демонстрации финансовой цепочки ────────────────
+  // 2.5 Алабуга
+  const alabuga = await prisma.advertiser.create({
+    data: {
+      nameRu: "Алабуга", legalEntity: "АО «ОЭЗ ППТ «Алабуга»", type: "Рекламодатель", status: "Активный",
+      goals: "6-мес. продвинутый пакет; ВК-посты с маркировкой, пуши, брендинг календаря на 2 мес.",
+      notes: "Договор 10/06/2026-РИМ → их номер ОЭЗ-12426/26 от 13.07.2026; подписанты Морозов М.Ю. + Курылёва Е.А. Регламент клиента → изменения только через ДС. ⚠️ Алабуга: канон суммы 9 955 200 ₽; в старых текстах опечатки 9 995 200 / 9 555 200 — проследить в финальном ДС.",
+      signatory: "Морозов М.Ю. + Курылёва Е.А.",
+    },
+  });
+  const dealAlabuga = await prisma.deal.create({
+    data: {
+      advertiserId: alabuga.id, title: "Алабуга — размещение (ОЭЗ-12426/26)", dealType: "прямой",
+      contractConstruction: "D", stage: "Договор", urgency: "Максимальная",
+      amount: 9_955_200, vatIncluded: true, contractTotal: 9_955_200,
+      contractNumber: "10/06/2026-РИМ / ОЭЗ-12426/26 от 13.07.2026", legalResponsible: "Екатерина", ownerId: owner.id,
+      paymentTerms: "Предоплата 1 659 200 + ежемесячно до 10 числа по 1 659 200 (6 мес).",
+      nextStep: "Подписать ДС на уменьшение стоимости.",
+      situational: "Юрист готовит ДС на уменьшение стоимости. Отчётность: фотоотчёты + скрины ежемесячно.",
+      notes: "9 955 200 ₽ с НДС 22% (= 1 659 200 × 6).",
+    },
+  });
+  await prisma.creative.createMany({
+    data: [
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, title: "ВК-посты (с маркировкой)", status: "На согласовании" },
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, title: "Пуши в приложении", status: "В работе" },
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, title: "Брендинг турнирного календаря (2 мес)", status: "В работе" },
+    ],
+  });
+
+  // ── Архив (v2, п.1.6) ──────────────────────────────────────────────────────
+  console.log("🗄 Архив…");
+  const archived = [
+    { nameRu: "Т-Банк Fest", legalEntity: "АО «ТБанк»", type: "Рекламодатель", notes: "CF2026-трек, закрывается — в проекте не учитывать." },
+    { nameRu: "Банка Пэй", legalEntity: "ООО «ПС-Консалт»", type: "Рекламодатель", notes: "Off-boarding завершён." },
+    { nameRu: "Самокат", legalEntity: "ООО «Умный ритейл»", type: "Рекламодатель", notes: "Партнёр CF2026 — фестиваль прошёл." },
+    { nameRu: "Киберадверт", legalEntity: "ООО «КИБЕРАДВЕРТ»", type: "Агентство", notes: "Завершённые спецификации №3–6." },
+    { nameRu: "Амбитика", type: "Агентство", notes: "Проект Flowwow — завершён." },
+    { nameRu: "MacCoffee", type: "Рекламодатель", notes: "Разовый — завершён." },
+    { nameRu: "Пицца Суши Вок", type: "Рекламодатель", notes: "Разовый — завершён." },
+  ];
+  for (const a of archived) {
+    await prisma.advertiser.create({ data: { ...a, archived: true, status: "Архив" } });
+  }
+  const samokat = await prisma.advertiser.findFirst({ where: { nameRu: "Самокат" } });
+  const maccoffee = await prisma.advertiser.findFirst({ where: { nameRu: "MacCoffee" } });
+
+  // ── Финансы: помесячный календарь платежей ─────────────────────────────────
   console.log("💰 Финансы…");
-  const inv = await prisma.invoice.create({
-    data: {
-      dealId: dealMts.id,
-      number: "СЧ-2026/МТС-1",
-      basis: "Приложение №1 к Договору D260183187",
-      service: "Размещение РИМ в клубах",
-      amount: 7_979_200,
-      vatRate: 22,
-      ourBankAccount: "40702810201300048430",
-      appendixNo: "1",
-      issuedAt: new Date("2026-07-01"),
-    },
-  });
-  await prisma.payment.create({
-    data: {
-      invoiceId: inv.id,
-      number: "ПП-1041",
-      payer: "ПАО «МТС»",
-      payee: "ООО «УК КОЛИЗЕУМ»",
-      purpose: "Предоплата 40% по Приложению №1",
-      amount: 7_979_200,
-      paidAt: new Date("2026-07-05"),
-    },
-  });
-
-  // ── ОРД и промокоды (примеры) ──────────────────────────────────────────────
-  await prisma.ordMarking.create({
-    data: {
-      dealId: dealKiberadvert.id,
-      role: "Агентство",
-      finalClient: "Т2 (MIXX Play Pro)",
-      platform: "соцсети",
-      status: "Активна",
-      monthlyClosing: true,
-      markedAt: new Date("2026-06-20"),
-      placementStart: new Date("2026-06-20"),
-      placementEnd: new Date("2026-07-20"),
-      expiresAt: new Date("2026-07-20"),
-    },
-  });
-  await prisma.ordMarking.create({
-    data: {
-      dealId: dealKiberadvert.id,
-      role: "Клиент",
-      finalClient: "ОККО",
-      platform: "моб.приложение",
-      status: "Активна",
-      monthlyClosing: true,
-      urgent: true, // срочно снять креатив и сдать акт
-      markedAt: new Date("2026-06-25"),
-      placementStart: new Date("2026-06-25"),
-      placementEnd: new Date("2026-07-15"),
-      expiresAt: new Date("2026-07-15"),
-    },
-  });
-  await prisma.promoBatch.create({
-    data: {
-      advertiserId: tbank.id,
-      dealId: dealTbankAds.id,
-      mechanic: "Acquisition",
-      nominal: 500,
-      qty: 1000,
-      vatOnUsed: true,
-      delayHours: 12,
-      monetization: "Деньги",
-      validFrom: new Date("2026-07-01"),
-      validTo: new Date("2026-09-30"),
-      commercialTerms: "Выдача при регистрации в клубе.",
-      settlement: "Взаиморасчёт по факту использованных (+22% НДС), учёт через УПД.",
-      notes: "Отсрочка выдачи ≥12 ч.",
-    },
-  });
-  await prisma.promoBatch.create({
-    data: {
-      advertiserId: maccoffee.id,
-      mechanic: "Performance",
-      nominal: 300,
-      qty: 500,
-      vatOnUsed: true,
-      delayHours: 24,
-      monetization: "Бартер",
-      commercialTerms: "Бартер: продукция MacCoffee в клубы.",
-      settlement: "Бартерный акт.",
-    },
-  });
-
-  // ── Клиенты агентства (Киберадверт = агентство) ────────────────────────────
-  console.log("🏛 Клиенты агентства…");
-  await prisma.agencyClient.createMany({
-    data: [
-      { advertiserId: kiberadvert.id, name: "Т2", brand: "MIXX Play Pro", notes: "Спецификации №3–4." },
-      { advertiserId: kiberadvert.id, name: "ОККО", brand: "OKKO", notes: "Спецификации №5–6." },
-    ],
-  });
-
-  // ── Финансовый календарь: плановые платежи по месяцам ──────────────────────
-  console.log("📅 Плановые платежи…");
-  await prisma.deal.update({ where: { id: dealAlabuga.id }, data: { contractTotal: 9_955_200 } });
-  const alabugaMonthly = 1_659_200;
-  const alabugaMonths = ["2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"];
+  const alMonths = ["2026-08", "2026-09", "2026-10", "2026-11", "2026-12", "2027-01"];
   await prisma.plannedPayment.createMany({
-    data: alabugaMonths.map((m, i) => ({
-      advertiserId: alabuga.id,
-      dealId: dealAlabuga.id,
-      periodMonth: m,
-      amount: alabugaMonthly,
-      status: i === 0 ? "Оплачено" : "План",
-      note: i === 0 ? "Предоплата за первый месяц" : undefined,
-    })),
+    data: alMonths.map((m, i) => ({ advertiserId: alabuga.id, dealId: dealAlabuga.id, periodMonth: m, amount: 1_659_200, status: i === 0 ? "Оплачено" : "План", note: i === 0 ? "Предоплата за первый месяц" : "до 10 числа" })),
   });
-  await prisma.plannedPayment.create({
-    data: { advertiserId: mts.id, dealId: dealMts.id, periodMonth: "2026-07", amount: 7_979_200, status: "Оплачено", note: "Предоплата 40%" },
-  });
-  await prisma.plannedPayment.create({
-    data: { advertiserId: mts.id, dealId: dealMts.id, periodMonth: "2026-08", amount: 5_984_400, status: "План" },
-  });
-  await prisma.plannedPayment.create({
-    data: { advertiserId: samokat.id, dealId: dealSamokat.id, periodMonth: "2026-06", amount: 2_440_000, status: "Оплачено", note: "CF2026" },
-  });
-
-  // ── Календарь размещений (брони по слотам, из рабочей таблицы клиента) ───────
-  console.log("🗓 Размещения…");
-  const d = (s: string) => new Date(s);
-  await prisma.placement.createMany({
+  await prisma.plannedPayment.createMany({
     data: [
-      // Слот 1 — VOLT почти весь год
-      { slot: "Слот 1 (ПК ТВ + слайдер + ЛК)", brandLabel: "VOLT", responsible: "Марина Янюк", startDate: d("2026-01-01"), endDate: d("2026-09-30"), status: "Подписан" },
-      // Слот 2 — цепочка брендов
-      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", brandLabel: "DeepCool", responsible: "Марина / Катя", startDate: d("2026-01-01"), endDate: d("2026-01-14"), status: "На подписании" },
-      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", brandLabel: "ARENA BREAKOUT", responsible: "Марина / Катя", startDate: d("2026-01-15"), endDate: d("2026-02-28"), status: "Подписан" },
-      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", advertiserId: mts.id, dealId: dealMts.id, responsible: "Марина / Катя", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      // Слот 3
-      { slot: "Слот 3 (ПК ТВ + слайдер + ЛК)", brandLabel: "Делимобиль", responsible: "Артур Фирстов", startDate: d("2026-06-01"), endDate: d("2026-08-20"), status: "На подписании" },
-      // Слот 6
-      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", brandLabel: "Т2 (3 слота)", responsible: "Артур Фирстов", startDate: d("2026-02-15"), endDate: d("2026-03-31"), status: "Подписан" },
-      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", advertiserId: samokat.id, dealId: dealSamokat.id, responsible: "Артур Фирстов", startDate: d("2026-06-15"), endDate: d("2026-07-15"), status: "Подписан" },
-      // Слот 8 — Алабуга
-      { slot: "Слот 8 (ПК ТВ + слайдер + ЛК)", advertiserId: alabuga.id, dealId: dealAlabuga.id, responsible: "Катя Туринова", startDate: d("2026-06-15"), endDate: d("2026-12-15"), status: "Подписан" },
-      // Слот 10 — Т-Банк (в схеме слоты 1-6, добавим отдельно)
-      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", advertiserId: tbank.id, dealId: dealTbankAds.id, responsible: "Марина", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      // Баннер в мобильном приложении
-      { slot: "Баннер в мобильном приложении", brandLabel: "Банка пэй", responsible: "—", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
-      { slot: "Баннер в мобильном приложении", brandLabel: "МТС оплата", responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      { slot: "Баннер в мобильном приложении", advertiserId: maccoffee.id, responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-07-28"), status: "Ожидание" },
-      // Автозапуск в браузере
-      { slot: "Автозапуск в браузере", brandLabel: "Winline", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
-      // Ярлык на рабочем столе
-      { slot: "Ярлык на рабочем столе", brandLabel: "Банка пэй", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-11-15"), status: "Подписан" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, periodMonth: "2026-11", amount: 6_657_670, status: "План", note: "Предоплата 40%" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, periodMonth: "2026-12", amount: 3_328_835, status: "План" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, periodMonth: "2027-01", amount: 3_328_835, status: "План" },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, periodMonth: "2027-02", amount: 3_328_834, status: "План" },
     ],
   });
 
-  // ── Ежедневные статусы (для «Сегодня» → недельный отчёт) ────────────────────
-  console.log("📝 Ежедневные статусы…");
-  await prisma.dailyStatus.createMany({
-    data: [
-      { advertiserId: mts.id, dealId: dealMts.id, text: "Получили предоплату 40% по Приложению №1, двигаем к размещению.", authorId: owner.id, date: new Date() },
-      { advertiserId: alabuga.id, dealId: dealAlabuga.id, text: "Готовим ДС на уточнение суммы. Размещение идёт.", authorId: owner.id, date: new Date() },
-      { advertiserId: tbank.id, dealId: dealTbankAds.id, text: "Ждём подписания Приложения №1, дизайн на согласовании.", authorId: manager.id, date: new Date() },
-    ],
+  // ── ОРД (только интернет-форматы) ──────────────────────────────────────────
+  console.log("❖ ОРД…");
+  await prisma.ordMarking.create({
+    data: { dealId: dealAlabuga.id, role: "Рекламораспространитель", platform: "посты VK/TG", status: "Активна", monthlyClosing: true, markedAt: new Date("2026-07-10") },
+  });
+  await prisma.ordMarking.create({
+    data: { dealId: dealMtsPay.id, role: "Рекламораспространитель", platform: "баннер в МП / пуши", status: "Активна", monthlyClosing: true, urgent: false },
+  });
+
+  // ── Промокоды (v2, п.3.11) ─────────────────────────────────────────────────
+  console.log("% Промокоды…");
+  await prisma.promoBatch.create({
+    data: { advertiserId: mtsPao.id, dealId: dealMtsPao.id, mechanic: "Acquisition", nominal: 700, qty: 1, monetization: "Деньги", commercialTerms: "Единый код 700 ₽ за первый визит/действие.", settlement: "УПД при передаче за плату." },
+  });
+  await prisma.promoBatch.create({
+    data: { advertiserId: mtsPao.id, dealId: dealMtsPao.id, mechanic: "Performance", nominal: 700, qty: 30_000, vatOnUsed: true, monetization: "Деньги", commercialTerms: "30 000 платных кодов 500/700/2000 ₽ за целевые действия.", settlement: "Поквартальная сверка активаций; УПД по номиналу×количеству на дату передачи." },
   });
 
   // ── Задачи ─────────────────────────────────────────────────────────────────
   console.log("✅ Задачи…");
   await prisma.task.createMany({
     data: [
-      { dealId: dealTbankAds.id, advertiserId: tbank.id, title: "Согласовать макеты Приложения №1", kind: "Дизайн", assigneeId: manager.id, status: "В работе" },
-      { dealId: dealMts.id, advertiserId: mts.id, title: "Согласовать схему оплаты с закупщиком", kind: "Менеджер", assigneeId: owner.id, status: "Ждёт" },
-      { dealId: dealAlabuga.id, advertiserId: alabuga.id, title: "Оформить ДС на уточнение суммы", kind: "Юрист", status: "Открыта" },
-      { dealId: dealKiberadvert.id, advertiserId: kiberadvert.id, title: "Ежемесячное закрытие актов по маркировке", kind: "ОРД", assigneeId: manager.id, status: "Открыта" },
-      { dealId: dealSamokat.id, advertiserId: samokat.id, title: "Закрыть УПД через ИП Сараева", kind: "Бухгалтерия", status: "Открыта" },
+      { dealId: dealAlabuga.id, advertiserId: alabuga.id, title: "Оформить ДС на уменьшение стоимости", kind: "Юрист", status: "В работе" },
+      { dealId: dealTbankMain.id, advertiserId: tbankMain.id, title: "Согласовать Приложение №1 через бухгалтерию", kind: "Менеджер", assigneeId: manager.id, status: "Открыта" },
+      { dealId: dealMtsPay.id, advertiserId: mtsPay.id, title: "Подписание → печать 150 ковриков", kind: "Менеджер", status: "Ждёт" },
+      { dealId: dealMtsPao.id, advertiserId: mtsPao.id, title: "Правки в договор тестирования", kind: "Юрист", status: "Открыта" },
     ],
   });
 
-  // ── Документы с версиями (демо версионирования) ────────────────────────────
-  console.log("📄 Документы и версии…");
-  await seedDocumentWithVersions(alabuga.id, dealAlabuga.id, "Договор Алабуга (10/06/2026-РИМ)", "Договор", [
-    { note: "первая редакция", fileName: "Договор_Алабуга_проект.txt", body: "ДОГОВОР 10/06/2026-РИМ\nАО «ОЭЗ ППТ Алабуга»\nСумма: 9 955 200 ₽ с НДС 22% (проект)." },
-    { note: "комментарии УК 12.07", fileName: "Договор_Алабуга_комментарии_УК_12.07.txt", body: "ДОГОВОР 10/06/2026-РИМ (комментарии УК от 12.07)\nПравки только через ДС." },
-    { note: "к подписанию", fileName: "Договор_Алабуга_к_подписанию.txt", body: "ДОГОВОР 10/06/2026-РИМ / ОЭЗ-12426/26 от 13.07.2026\nФИНАЛ, к подписанию." },
+  // ── Документы (демо) ───────────────────────────────────────────────────────
+  console.log("📄 Документы…");
+  await seedDoc(alabuga.id, dealAlabuga.id, "Договор Алабуга (10/06/2026-РИМ)", "Договор", [
+    { note: "проект", fileName: "Договор_Алабуга_проект.txt", body: "ДОГОВОР 10/06/2026-РИМ\nАО «ОЭЗ ППТ «Алабуга»\nСумма: 9 955 200 ₽ с НДС 22%." },
+    { note: "к подписанию (ОЭЗ-12426/26)", fileName: "Договор_Алабуга_к_подписанию.txt", body: "ОЭЗ-12426/26 от 13.07.2026\nИзменения только через ДС." },
+  ]);
+  await seedDoc(tbankMain.id, dealTbankMain.id, "Приложение №1 (Т-Банк)", "Приложение", [
+    { note: "на согласовании", fileName: "Приложение_1_Тбанк.txt", body: "Приложение №1 к договору Т-ЦСД-ТО-156-2026\nФорматы по МП." },
   ]);
 
-  await seedDocumentWithVersions(mts.id, dealMts.id, "Медиаплан МТС v.7", "Медиаплан", [
-    { note: "v.6", fileName: "МП_МТС_v6.txt", body: "Медиаплан МТС v.6\nБез НДС: 23 078 000." },
-    { note: "v.7 со скидкой", fileName: "МП_МТС_v7.txt", body: "Медиаплан МТС v.7\nСо скидкой: 19 948 000 без НДС." },
-  ]);
+  // ── Календарь размещений (по рабочей таблице) ──────────────────────────────
+  console.log("🗓 Размещения…");
+  const d = (s: string) => new Date(s);
+  await prisma.placement.createMany({
+    data: [
+      { slot: "Слот 1 (ПК ТВ + слайдер + ЛК)", brandLabel: "VOLT", responsible: "Марина Янюк", startDate: d("2026-01-01"), endDate: d("2026-09-30"), status: "Подписан" },
+      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", advertiserId: mtsPao.id, dealId: dealMtsPao.id, responsible: "Марина / Катя", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      { slot: "Слот 3 (ПК ТВ + слайдер + ЛК)", brandLabel: "Делимобиль", responsible: "Артур Фирстов", startDate: d("2026-06-01"), endDate: d("2026-08-20"), status: "На подписании" },
+      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", advertiserId: tbankMain.id, dealId: dealTbankMain.id, responsible: "Марина", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      { slot: "Слот 8 (ПК ТВ + слайдер + ЛК)", advertiserId: alabuga.id, dealId: dealAlabuga.id, responsible: "Катя Туринова", startDate: d("2026-08-01"), endDate: d("2027-01-31"), status: "На подписании" },
+      { slot: "Баннер в мобильном приложении", brandLabel: "МТС оплата", responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
+      { slot: "Автозапуск в браузере", brandLabel: "Winline", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
+    ],
+  });
 
-  await seedDocumentWithVersions(tbank.id, dealTbankAds.id, "Приложение №1 (Т-Банк)", "Приложение", [
-    { note: "на согласовании", fileName: "Приложение_1_Тбанк.txt", body: "Приложение №1 к Договору Т-Банк\nФорматы: баннер в ЛК, заставки на ПК." },
-  ]);
+  // ── Ежедневные статусы ─────────────────────────────────────────────────────
+  console.log("📝 Статусы дня…");
+  await prisma.dailyStatus.createMany({
+    data: [
+      { advertiserId: alabuga.id, dealId: dealAlabuga.id, text: "Юрист готовит ДС на уменьшение стоимости, ждём финальную сумму.", authorId: owner.id, date: new Date() },
+      { advertiserId: tbankMain.id, dealId: dealTbankMain.id, text: "Приложение №1 на согласовании у бухгалтерии клиента.", authorId: manager.id, date: new Date() },
+      { advertiserId: mtsPay.id, dealId: dealMtsPay.id, text: "Ждём подписания, после — печать ковриков.", authorId: owner.id, date: new Date() },
+    ],
+  });
 
-  // ── База знаний (перенос разделов, блупринт 15) ────────────────────────────
+  // ── База знаний (v2, разделы 3.1–3.15) ─────────────────────────────────────
   console.log("📚 База знаний…");
   await seedKnowledge();
 
-  // ── Дневной журнал (пример записи) ─────────────────────────────────────────
+  // ── Журнал ─────────────────────────────────────────────────────────────────
   await prisma.journalEntry.create({
-    data: {
-      source: "EOD",
-      routedTo: "Трекер",
-      rawText:
-        "EOD 14.07: МТС — получили предоплату 40% по Прил.1, двигаем к размещению. Алабуга — готовим ДС на уточнение суммы. Т-Банк — ждём подписания Приложения №1.",
-      parsedSummary: "МТС → оплата получена; Алабуга → ДС; Т-Банк → приложение на согласовании.",
-      linkedDealIds: JSON.stringify([dealMts.id, dealAlabuga.id, dealTbankAds.id]),
-    },
+    data: { source: "EOD", routedTo: "Трекер", rawText: "EOD: Алабуга — ДС на уменьшение; Т-Банк — Приложение №1 на согласовании; МТС Оплата — ждём подписания.", parsedSummary: "Алабуга → ДС; Т-Банк → приложение; МТС Оплата → подписание." },
   });
 
-  console.log("✅ Готово. Аккаунты:");
-  console.log(`   Owner:   ${owner.email} / ${process.env.SEED_OWNER_PASSWORD ?? "colizeum"}`);
-  console.log(`   Manager: ${manager.email} / ${process.env.SEED_MANAGER_PASSWORD ?? "colizeum"}`);
-}
-
-// Создаёт логический документ и его версии (с реальными файлами в хранилище).
-async function seedDocumentWithVersions(
-  advertiserId: string,
-  dealId: string,
-  title: string,
-  type: string,
-  versions: { note: string; fileName: string; body: string }[],
-) {
-  const doc = await prisma.document.create({ data: { advertiserId, dealId, type, title } });
-  let currentId = "";
-  for (let i = 0; i < versions.length; i++) {
-    const v = versions[i];
-    const meta = writeVersionFile(advertiserId, doc.id, i + 1, v.fileName, v.body);
-    const created = await prisma.documentVersion.create({
-      data: { documentId: doc.id, versionNo: i + 1, changeNote: v.note, ...meta },
-    });
-    currentId = created.id;
-  }
-  await prisma.document.update({ where: { id: doc.id }, data: { currentVersionId: currentId } });
+  console.log("✅ Готово. owner@colizeum.ru / manager@colizeum.ru — пароль colizeum");
 }
 
 async function seedKnowledge() {
   const MC = "Материалы для клиента";
   const articles: { category: string; title: string; bodyMarkdown: string; notes?: string }[] = [
-    // ── Материалы, которые отправляются рекламодателю (ТЗ, раздел 7) ──────────
-    {
-      category: MC,
-      title: "Медиакит",
-      bodyMarkdown: [
-        "Презентация сети COLIZEUM для рекламодателей: аудитория, форматы, охваты, кейсы.",
-        "",
-        "- Сеть ~600 клубов (прогноз ~700 к концу 2026).",
-        "- Ядро аудитории 18–24 = 59%.",
-        "- Форматы: баннер в ЛК, заставки на ПК, TV, виджеты.",
-      ].join("\n"),
-      notes: "📎 Прикрепить актуальный файл медиакита (PDF/презентация).",
-    },
-    {
-      category: MC,
-      title: "Шаблоны медиаплана (клиентский и агентский)",
-      bodyMarkdown: [
-        "Два шаблона МП:",
-        "- **Клиентский** — для прямых рекламодателей.",
-        "- **Агентский** — с указанием конечного клиента (модель Киберадверт).",
-        "",
-        "Строки: формат, объём, период, цена, охват, сумма с НДС.",
-      ].join("\n"),
-      notes: "📎 Прикрепить актуальные xlsx-шаблоны (клиентский + агентский).",
-    },
-    {
-      category: MC,
-      title: "Учредительные документы",
-      bodyMarkdown: "Устав, ОГРН, свидетельства ООО «УК КОЛИЗЕУМ» — пакет для контрагента.",
-      notes: "📎 Прикрепить актуальный пакет учредительных документов.",
-    },
-    {
-      category: MC,
-      title: "Исследование аудитории",
-      bodyMarkdown: [
-        "Данные по аудитории сети для обоснования размещения.",
-        "",
-        "- Возраст 18–24 = 59%.",
-        "- CTR по типам креатива: 0,3–3%.",
-        "- Аналитика: SuperSet, Appmetrica.",
-      ].join("\n"),
-      notes: "📎 Прикрепить актуальное исследование (презентация/отчёт).",
-    },
-    {
-      category: MC,
-      title: "Технические требования к макетам",
-      bodyMarkdown: [
-        "| Формат | Размер |",
-        "| --- | --- |",
-        "| Баннер в ЛК | 766×473 |",
-        "| Виджет на раб. столе | 1920×1080 |",
-        "| Заставки на ПК | 1920×1080 |",
-        "| TV 65 | 1920×1080 |",
-        "| X-Coin слот | 520×208 |",
-        "",
-        "⚠️ Размеры баннеров моб. приложения в источниках расходятся (1080×372 / 960×372 / 520×208) — сверять перед отправкой.",
-      ].join("\n"),
-      notes: "📎 Прикрепить актуальные техтребования (PDF).",
-    },
-    {
-      category: MC,
-      title: "Шаблон рамки договора",
-      bodyMarkdown: "Типовая рамка договора (конструкции A/B/C/D — см. «Кейсы»). ДС — механизм правок.",
-      notes: "📎 Прикрепить актуальный шаблон рамки договора (docx).",
-    },
-    {
-      category: MC,
-      title: "Карточка компании",
-      bodyMarkdown: [
-        "Реквизиты ООО «УК КОЛИЗЕУМ» одним листом (для отправки контрагенту).",
-        "",
-        "ИНН 9713021000 · КПП 771301001 · ОГРН 1247700716394.",
-        "АО «АЛЬФА-БАНК», р/с 40702810201300048430, к/с 30101810200000000593, БИК 044525593.",
-        "См. полную статью в разделе «Профиль».",
-      ].join("\n"),
-      notes: "📎 Прикрепить актуальную карточку компании (PDF).",
-    },
-    {
-      category: "Профиль",
-      title: "Реквизиты УК Колизеум (наша сторона)",
-      bodyMarkdown: [
-        "**ООО «УК КОЛИЗЕУМ»**, Исполнитель.",
-        "",
-        "| Поле | Значение |",
-        "| --- | --- |",
-        "| ИНН | 9713021000 |",
-        "| КПП | 771301001 |",
-        "| ОГРН | 1247700716394 |",
-        "| Адрес | 127247, Москва, Дмитровское ш., д. 100, помещ. 2/7 |",
-        "| Банк | АО «АЛЬФА-БАНК», к/с 30101810200000000593, БИК 044525593 |",
-        "| Р/с основной | 40702810201300048430 |",
-        "| Р/с Самокат-fest | 40702810101300055743 ⚠️ |",
-        "| Ген. директор | Магдеев Ринат Рамильевич |",
-        "| ЭДО | 2AE37859A4D-653F-42B6-8048-0B9688E47660 |",
-        "| e-mail | info@colizeumarena.com, домены @colizeum.ru |",
-      ].join("\n"),
-      notes: "⚠️ Актуальный р/с под конкретный договор — выверять.",
-    },
-    {
-      category: "Форматы",
-      title: "Рекламные форматы и точные наименования",
-      bodyMarkdown: [
-        "| Формат | Размер | Примечание |",
-        "| --- | --- | --- |",
-        "| Баннер в личном кабинете | 766×473 | ЛК в CLS |",
-        "| Кликабельный виджет на раб. столе | 1920×1080 | |",
-        "| Заставки на свободных ПК | 1920×1080 | |",
-        "| Реклама на TV 65 | 1920×1080 | |",
-        "| X-Coin слот | 520×208 | не заменяется |",
-        "",
-        "Ротация ≥1,5 раз/мин, показ 5–7 сек, ~10 баннеров в ротации.",
-        "Сеть ~600 клубов (прогноз ~700 к концу 2026).",
-        "",
-        "⚠️ Размеры баннеров моб. приложения в источниках расходятся (1080×372 / 960×372 / 520×208) — сверять перед отправкой макетов.",
-      ].join("\n"),
-    },
-    {
-      category: "Цены/скидки",
-      title: "Пакеты и скидки",
-      bodyMarkdown: [
-        "- Пакеты: **стандарт** / **продвинутый**.",
-        "- MacCoffee — скидка **15%**.",
-        "- Киберадверт — типовая цена поста **195 200 ₽ с НДС**, сплит-оплата.",
-        "- НДС: 2026 → **22%**, 2025 → 20% (по дате документа).",
-      ].join("\n"),
-    },
-    {
-      category: "Условия и согласование",
-      title: "Маршрут согласования договора",
-      bodyMarkdown: [
-        "**Юрист (Екатерина) → Главбух (Ольга) → СЕО (через Сашу)** — если сумма > 3 млн ИЛИ нестандартный договор.",
-        "",
-        "До 3 млн и классический — уходит клиенту сразу.",
-        "",
-        "Сервис показывает следующий шаг маршрута по сумме и типу.",
-      ].join("\n"),
-    },
-    {
-      category: "ОРД",
-      title: "Маркировка ЕРИД / ОРД",
-      bodyMarkdown: [
-        "- Для интернет-размещений: роль (**рекламораспространитель / рекламодатель / агентство**), при агентстве — конечный заказчик.",
-        "- В договорах с маркировкой **акты закрываются каждый месяц**.",
-        "- Посты живут **до 1 месяца**.",
-        "- Вывод ЕРИД ведётся в Aspro.",
-      ].join("\n"),
-    },
-    {
-      category: "Промокоды",
-      title: "Промокоды: механики, налоги, ограничения",
-      bodyMarkdown: [
-        "- Механики: **Performance** / **Acquisition**.",
-        "- Отсрочка выдачи **≥ 12 часов**.",
-        "- Монетизация: деньги / бартер.",
-        "- Налог: **+22% НДС на использованные** промокоды.",
-        "- Учёт передачи партии — через **УПД**.",
-      ].join("\n"),
-    },
-    {
-      category: "CRM-правила",
-      title: "Правила ведения CRM",
-      bodyMarkdown: [
-        "- Карточку рекламодателя заводим при **первом касании**.",
-        "- Подрядчиков **не вносим**.",
-        "- Тип — это тег (Рекламодатель / Агентство / Арендатор / Кросс-промо).",
-        "- Период сделки храним как **срок/текст**, а не жёсткие даты.",
-      ].join("\n"),
-    },
-    {
-      category: "Бенчмарки",
-      title: "Бенчмарки и аудитория",
-      bodyMarkdown: [
-        "- CTR: **0,3–3%** по типу креатива.",
-        "- Возраст 18–24 = **59%** аудитории.",
-        "- Аналитика: SuperSet, Appmetrica.",
-      ].join("\n"),
-    },
-    {
-      category: "Финансы/документооборот",
-      title: "Финансовая цепочка закрытия",
-      bodyMarkdown: [
-        "**Счёт → Платёжное поручение → УПД → Отчёт → Акт сверки.**",
-        "",
-        "- Матчинг «счёт ↔ УПД» — по номеру приложения.",
-        "- УПД статус 1 = счёт-фактура + акт передачи.",
-        "- Первичный отчёт об оказанных услугах — за 5 рабочих дней (форматы, период, стоимость с НДС, скриншоты и фото из клубов).",
-        "- ⚠️ Контроль актуального р/с: основной …48430 vs Самокат-fest …55743.",
-      ].join("\n"),
-    },
-    {
-      category: "Платежи/интеграции",
-      title: "Подключение эквайринга (франчайзи)",
-      bodyMarkdown: [
-        "1. Банк даёт условия СБП/торгового эквайринга.",
-        "2. Выделяется менеджер и канал под COLIZEUM.",
-        "3. Открывается счёт, выдаётся API-токен.",
-        "4. Партнёр обращается в техподдержку.",
-        "5. ИТ-отдел получает токен и настраивает онлайн-оплату.",
-        "",
-        "Обкатка — на клубе под УК (**КиберАрена Шелепиха**), без франчайзи.",
-        "**Блокер:** платежи по клубу на ИП нельзя через счёт УК — нужен отдельный счёт под ИП клуба.",
-      ].join("\n"),
-    },
-    {
-      category: "Кейсы",
-      title: "Конструкции договоров (справочник)",
-      bodyMarkdown: [
-        "| Код | Конструкция | Пример |",
-        "| --- | --- | --- |",
-        "| A | Рамочный + Заказы | МТС |",
-        "| B | На мероприятие + Приложения | Алабуга, Самокат |",
-        "| C | Рамочный РИМ + Спецификации | Киберадверт |",
-        "| D | Разовый | МФ1 |",
-        "",
-        "**ДС** — механизм правок без переподписания тела договора.",
-      ].join("\n"),
-    },
-    {
-      category: "Отчётность",
-      title: "Типовые блокеры",
-      bodyMarkdown: [
-        "- Приложения Т-Банка — строго по очереди.",
-        "- Правки после подписания у клиентов без права правки тела → ДС (Алабуга).",
-        "- Платежи по клубу на ИП — только через отдельный счёт ИП.",
-        "- Размещение стартует только после предоплаты по её схеме (МТС 40%, Алабуга — за первый месяц, типовое 100%).",
-        "- Смена ИП на клубе сдвигает интеграцию эквайринга.",
-      ].join("\n"),
-    },
-  ];
+    // Материалы, отправляемые рекламодателю (структура — заполнить файлами)
+    { category: MC, title: "Медиакит", bodyMarkdown: "Презентация сети для рекламодателей: аудитория, форматы, охваты, кейсы (PepsiCo, Tornado, Cyberwater).", notes: "📎 Прикрепить актуальный медиакит (PDF)." },
+    { category: MC, title: "Шаблоны медиаплана (клиентский и агентский)", bodyMarkdown: "Клиентский — прямым; агентский — с конечным брендом. Медиаплан = реальный прайс.", notes: "📎 Прикрепить xlsx-шаблоны." },
+    { category: MC, title: "Учредительные документы", bodyMarkdown: "Устав, ОГРН, свидетельства ООО «УК КОЛИЗЕУМ».", notes: "📎 Прикрепить пакет." },
+    { category: MC, title: "Исследование аудитории", bodyMarkdown: "~95% мужчины; 18–24 = 59% (медиакит ~76% 15–24); NPS ~73%; сессия ~4 ч.", notes: "📎 Прикрепить исследование." },
+    { category: MC, title: "Технические требования к макетам", bodyMarkdown: [
+      "| Формат | Размер |", "| --- | --- |",
+      "| Баннер в ЛК | 766×473 |", "| Заставки на ПК / виджет / ТВ 65″ | 1920×1080 |",
+      "| Баннер в мобильном приложении | 1080×372 / 960×372 |",
+      "", "Ко-брендинг «Бренд × COLIZEUM» — в верхней зоне макета. Ротация: показ 1–1,5 мин, 5–7 сек, ~10 баннеров.",
+    ].join("\n"), notes: "📎 Прикрепить техтребования (PDF)." },
+    { category: MC, title: "Шаблон рамки договора", bodyMarkdown: "Рамочный \\_\\_/ММ/ГГГГ-РИМ; крупные — на своей бумаге. Конструкции — см. «Документооборот».", notes: "📎 Прикрепить docx." },
+    { category: MC, title: "Карточка компании", bodyMarkdown: "ООО «УК КОЛИЗЕУМ», ИНН 9713021000, КПП 771301001, ОГРН 1247700716394. АО «АЛЬФА-БАНК», р/с 40702810201300048430, к/с 30101810200000000593, БИК 044525593.", notes: "📎 Прикрепить PDF." },
 
-  for (const a of articles) {
-    await prisma.knowledgeArticle.create({ data: a });
-  }
+    // 3.1–3.15
+    { category: "Профиль", title: "3.1 Профиль компании и аудитории", bodyMarkdown: "COLIZEUM — федеральная сеть компьютерных клубов; исполнитель — ООО «УК КОЛИЗЕУМ». Сеть ~600 клубов (прогноз ~700 к концу 2026), >19–20 тыс. ПК, >1850–2000 ТВ. Аудитория ~95% мужчины (18–24 = 59%; медиакит ~76% 15–24). NPS ~73%. Средняя сессия ~4 ч (≥10 показов). Позиционирование для FMCG: «инфраструктура как сервис» (PepsiCo, Tornado, Cyberwater)." },
+    { category: "Профиль", title: "3.2 Реквизиты", bodyMarkdown: [
+      "ООО «УК КОЛИЗЕУМ», ИНН 9713021000, КПП 771301001, ОГРН 1247700716394.",
+      "Адрес: 127247, Москва, Дмитровское ш., д. 100, помещ. 2/7.",
+      "Банк: АО «АЛЬФА-БАНК», к/с 30101810200000000593, БИК 044525593.",
+      "**Р/с 40702810201300048430 — основной, единственный рабочий.**",
+      "Ген. директор Магдеев Ринат Рамильевич. e-mail info@colizeumarena.com; домены @colizeum.ru.",
+      "ЭДО: 2AE37859A4D-653F-42B6-8048-0B9688E47660. **НДС 2026 = 22%** (2025 — 20%); в договорах пункт о пересчёте при росте ставки.",
+    ].join("\n\n") },
+    { category: "CRM-правила", title: "3.3 Роль менеджера и рабочий контур", bodyMarkdown: "Менеджер ведёт сделку от первого касания до закрывающих, стыкуя юристов, бухгалтерию, дизайн/арт, склад и Langame. Четыре слоя: CRM (+ Архив), хранилище документов, база знаний, дневной журнал. Langame (CLS) — софт-фундамент клубов; техинтеграции (эквайринг, бонусы) — на уровне Langame, менеджер — коммуникационный мост." },
+    { category: "Условия и согласование", title: "3.4 Пайплайн и стадии", bodyMarkdown: "Канон — 9 стадий: Лид → КП/условия → Договор → Приложение/спец. → Предоплата → Материалы + ОРД → Размещение → УПД + отчёт → Закрытие. Путь: касание → CRM → бриф → МП → КП → согласование (юрист → главбух) → **подписание в ЭДО или на оригиналах** → оплата → маркировка (только при интернет-форматах) → услуги → первичный отчёт (5 р.д.) → закрывающие. **Отчётность по актам ежемесячная по умолчанию для всех.**" },
+    { category: "Кейсы", title: "3.5 Конструкции договоров (по частоте)", bodyMarkdown: [
+      "1. **Рамочный + спецификации/приложения** — самый популярный.",
+      "2. **Единый договор оказания услуг** — реже.",
+      "3. **Агентский договор** — рамка с агентством (Киберадверт на год).",
+      "4. **Допсоглашение (ДС)** — при изменении условий.",
+      "5. **Рамочный + заказы** — специфика МТС (заказ ≈ приложение).",
+      "", "Модели: свой рамочный \\_\\_/ММ/ГГГГ-РИМ для большинства; крупные — на своей бумаге.",
+    ].join("\n") },
+    { category: "Документооборот", title: "3.6 Блоки договора и нумерация", bodyMarkdown: "**Нумерацию договора заранее согласовывать с клиентом** (наша / его / двойная) — несогласованная ломает УПД. Блоки: шапка → преамбула (Устав/МЧД) → термины (РМ/РИМ, ФЗ-38, Приказ ФАС №821/23) → предмет → права/обязанности (первичный отчёт 5 р.д. + фото из 10 клубов) → стоимость и оплата (НДС 22%) → отчётность и приёмка → реквизиты. Финансы матчатся по номеру приложения: «Счёт … к прил. K» ↔ «УПД … к прил. K»." },
+    { category: "Финансы/документооборот", title: "3.7 Финансовая цепочка закрытия", bodyMarkdown: "Счёт (основание — Приложение №… к Договору) → Платёжное поручение → УПД статус 1 (счёт-фактура + акт) → Отчёт об оказанных услугах (+ скриншоты и фото из клубов) → Акт сверки. **Закрытие актов — ежемесячно по умолчанию.** Промокоды: передача за плату — УПД (номинал × количество на дату передачи), активацию не отслеживаем; бесплатно/зашито — УПД не нужен." },
+    { category: "Форматы", title: "3.8 Форматы (по медиаплану)", bodyMarkdown: [
+      "**Стандартный пакет (экраны в клубах):** баннер в ЛК (766×473); заставки на ПК (1920×1080); кликабельный баннер/видео и брендинг рабочего стола (1920×1080); кликабельный виджет (1920×1080, CTR ~2–6%, CTA-кнопка вместо QR); ТВ 65″ (1920×1080).",
+      "**Дополнительные:** брендинг браузера Chrome с автозапуском UTM (~18 000 открытий/день); **баннер в мобильном приложении — 1080×372 / 960×372** [интернет]; пуш-уведомления [интернет]; посты VK и TG — один формат [интернет]; брендинг турнирного календаря (~1,5 млн охват/мес).",
+      "**Побочные/кастом:** спонсорские турниры; промокоды; ярлыки ПК; кнопки пополнения Steam; кастом-производство (коврики) — **в печать только после подписания**.",
+      "**Интернет-форматы (маркировка): баннер в МП, пуши, посты VK/TG. Всё.**",
+    ].join("\n\n") },
+    { category: "Цены/скидки", title: "3.9 Цены, пакеты, скидки", bodyMarkdown: "Пакеты «Стандарт»/«Продвинутый» на 30 дн / 3 / 6 / 12 мес; отдельно Москва и МО. Ориентиры: стандарт 30 дн РФ ~1,7 млн без НДС (CPU ≈3,78 ₽), продвинутый ~3,98 млн. Порядок КП: клиентский прайс → агентствам −17% → период с зашитой скидкой → опционально −10–20% сверху после согласования. CPV ~0,04–1,26 ₽, CPU ~0,5–6 ₽. CTR: 0,3–0,5% имидж / 0,5–1% оффер / 1,5–3% с мотивацией." },
+    { category: "ОРД", title: "3.10 ОРД и маркировка", bodyMarkdown: "Только для интернет-форматов. ERID-токен — юрист на аутсорсе; менеджер составляет ТЗ по рекламодателю и договору (или цепочке). **Заявка — через отдельный бизнес-процесс в Aspro** (№ заявки, инициатор, контрагент, площадка, 18+, роль рекламораспространителя, даты, ресурс, текст поста; «ЕРИД #» = номер заявки, не токен). Акты — ежемесячно; **юрист сводит маркировку квартально: март — июнь — сентябрь — декабрь.** Розыгрыш в креативе → «Правила акции», ссылка на креативе." },
+    { category: "Промокоды", title: "3.11 Промокоды", bodyMarkdown: "**Performance** — пул кодов за целевые действия, мелкий номинал (МТС — 30 000 кодов 500/700/2000 ₽, поквартальная сверка; **Яндекс Алиса AI** — раздача в чат-боте: установить приложение → скриншот → 100 ₽ бонусов). **Acquisition** — единый код за первый визит (МТС — 700 ₽). Налоги: номинал без НДС, использованные +22%; УПД при передаче за плату; задержка выдача→активация ≥12 ч." },
+    { category: "Аналитика", title: "3.12 Инструменты", bodyMarkdown: "Aspro (aspro.cloud) — заявки и бизнес-процессы (вкл. ОРД); SuperSet — аналитика; Appmetrica — метрики мобильного приложения; ЭДО — документооборот (подписание ЭДО или оригиналы); **MyMeet + собственный сервис контроля встреч Colizeum** — транскрипция/саммари встреч." },
+    { category: "Люди", title: "3.13 Люди и маршрут согласования", bodyMarkdown: "Договор: юрист **Екатерина** → главбух **Ольга**. Креативы — арт-директор + директор по маркетингу; внутренние макеты апрувятся автоматически, согласование у клиента — на менеджере. ОРД — юрист на аутсорсе. Отчётность — фотоотчёт (проект-менеджер), скрины (баннер-менеджер Милана). ⚠️ Директорию выверить (две «Миланы», @izovsehsil13). Контакты клиентов — в карточках клиентов." },
+    { category: "Условия и согласование", title: "3.14 Глобальные блокеры (только два)", bodyMarkdown: "1. **Сроки согласования** — договор/приложения проходят юристов и бухгалтерию обеих сторон; у крупных этапы строго последовательны; нумерацию согласовывать заранее.\n2. **Согласование оплат** — схема утверждается на стороне клиента и влияет на правки договора; размещение стартует после предоплаты.\n\nСитуативные блокеры в базе знаний не хранятся — только в поле карточки." },
+    { category: "Профиль", title: "3.15 Глоссарий", bodyMarkdown: "РИМ — рекламно-информационные материалы; РМ — рекламный материал; МП — медиаплан; КП — коммерческое предложение; ДС — допсоглашение; Спецификация/Приложение — неотъемлемая часть договора; УПД — универсальный передаточный документ (статус 1 = счёт-фактура + акт); ЭДО — электронный документооборот; ЕРИД — идентификатор маркировки; ОРД — оператор рекламных данных; CLS — Colizeum Langame Software; ЛК — личный кабинет; T-Pay — платёжный сервис Т-Банка; **ЕББ — единый бонусный баланс** (компенсация «кэшбека» бонусами на игровой баланс за оплату картой Т-Банка); МЧД — машиночитаемая доверенность." },
+  ];
+  for (const a of articles) await prisma.knowledgeArticle.create({ data: a });
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });
