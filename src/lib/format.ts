@@ -18,6 +18,12 @@ export function formatMoney(amount?: number | null, currency = "RUB"): string {
   return rub.format(amount);
 }
 
+/** Чистая сумма без НДС из суммы с НДС (по умолчанию 22 %). */
+export function netOfVat(gross?: number | null, ratePercent = 22): number | null {
+  if (gross == null) return null;
+  return Math.round(gross / (1 + ratePercent / 100));
+}
+
 export function formatDate(date?: Date | string | null): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;

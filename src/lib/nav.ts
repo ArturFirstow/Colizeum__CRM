@@ -11,8 +11,8 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Работа",
     items: [
       { href: "/dashboard", label: "Сегодня", icon: "◆" },
-      { href: "/deals", label: "Сделки", icon: "⑂" },
       { href: "/tasks", label: "Задачи", icon: "✓" },
+      { href: "/deals", label: "Сделки", icon: "⑂" },
       { href: "/journal", label: "Журнал", icon: "✎" },
     ],
   },

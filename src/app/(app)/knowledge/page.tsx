@@ -5,8 +5,9 @@ import { KnowledgeView } from "@/components/knowledge/KnowledgeView";
 export const dynamic = "force-dynamic";
 
 export default async function KnowledgePage() {
+  // Порядок чтения — по циклу сделки (orderIndex), «сверху вниз для новичка».
   const articles = await prisma.knowledgeArticle.findMany({
-    orderBy: [{ category: "asc" }, { title: "asc" }],
+    orderBy: [{ orderIndex: "asc" }, { title: "asc" }],
   });
 
   const withHtml = articles.map((a) => ({

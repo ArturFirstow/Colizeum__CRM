@@ -7,7 +7,7 @@ import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DeleteButton } from "@/components/ui/DeleteButton";
-import { formatMoney, formatDate } from "@/lib/format";
+import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 import {
   CLOSING_KINDS,
@@ -133,7 +133,6 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   { name: "service", label: "Услуга" },
                   { name: "amount", label: "Сумма", type: "number", half: true },
                   { name: "vatRate", label: "НДС %", type: "number", default: "22", half: true },
-                  { name: "ourBankAccount", label: "Наш р/с", placeholder: "…48430 / …55743" },
                 ]}
               />
             }
@@ -316,12 +315,28 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 {deal.amount != null ? (
                   <span>
                     {formatMoney(deal.amount)}{" "}
-                    <span className="text-ink-400">{deal.vatIncluded ? "с НДС" : "без НДС"}</span>
+                    <span className="text-ink-400">{deal.vatIncluded ? "с НДС 22%" : "без НДС"}</span>
+                    {/* Чистая стоимость считается автоматически: сумма с НДС / 1,22 */}
+                    {deal.vatIncluded && (
+                      <span className="block text-xs text-ink-400">
+                        без НДС ≈ {formatMoney(netOfVat(deal.amount))}
+                      </span>
+                    )}
                   </span>
                 ) : (
                   "—"
                 )}
               </Field>
+              {deal.contractTotal != null && (
+                <Field label="Сумма по договору (весь период)">
+                  <span>
+                    {formatMoney(deal.contractTotal)} <span className="text-ink-400">с НДС 22%</span>
+                    <span className="block text-xs text-ink-400">
+                      без НДС ≈ {formatMoney(netOfVat(deal.contractTotal))}
+                    </span>
+                  </span>
+                </Field>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Дата запуска">{deal.launchDate ? formatDate(deal.launchDate) : null}</Field>
                 <Field label="Срок">{deal.periodText}</Field>

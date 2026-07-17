@@ -6,7 +6,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLANNED_PAYMENT_STATUSES } from "@/lib/enums";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, netOfVat } from "@/lib/format";
 
 type PP = {
   id: string;
@@ -48,19 +48,16 @@ export function PaymentCalendar({
   const [addOpen, setAddOpen] = useState(false);
   const [cell, setCell] = useState<{ advertiserId: string; month: string } | null>(null);
 
-  // Диапазон месяцев: от минимального до максимального среди платежей (иначе — текущий + 5).
+  // Лента на год вперёд: июль 2026 → июль 2027; если платежи выходят
+  // за границы — диапазон расширяется автоматически.
   const months = useMemo(() => {
+    const BASE_FROM = "2026-07";
+    const BASE_TO = "2027-07";
     const set = [...new Set(payments.map((p) => p.periodMonth))].sort();
-    if (set.length === 0) {
-      const now = new Date();
-      return Array.from({ length: 6 }, (_, i) => {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      });
-    }
-    // Заполняем непрерывный ряд от min до max.
-    const [minY, minM] = set[0].split("-").map(Number);
-    const [maxY, maxM] = set[set.length - 1].split("-").map(Number);
+    const from = set.length > 0 && set[0] < BASE_FROM ? set[0] : BASE_FROM;
+    const to = set.length > 0 && set[set.length - 1] > BASE_TO ? set[set.length - 1] : BASE_TO;
+    const [minY, minM] = from.split("-").map(Number);
+    const [maxY, maxM] = to.split("-").map(Number);
     const out: string[] = [];
     let y = minY;
     let m = minM;
@@ -327,14 +324,21 @@ function CellModal({
   const [busyId, setBusyId] = useState<string | null>(null);
   const adv = advertisers.find((a) => a.id === cell?.advertiserId);
 
-  async function setStatus(id: string, status: string) {
+  async function patch(id: string, body: Record<string, unknown>) {
     setBusyId(id);
     try {
-      await apiFetch(`/api/planned-payments/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      await apiFetch(`/api/planned-payments/${id}`, { method: "PATCH", body: JSON.stringify(body) });
       onChanged();
     } finally {
       setBusyId(null);
     }
+  }
+
+  // Перенос карточки оплаты на соседний месяц (←/→).
+  function shiftMonth(ym: string, delta: number): string {
+    const [y, m] = ym.split("-").map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
 
   if (!cell) return null;
@@ -353,14 +357,30 @@ function CellModal({
           ) : (
             payments.map((p) => (
               <div key={p.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-ink-100">{formatMoney(p.amount)}</span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* Сумма правится сразу, без лишних кликов; Enter или уход из поля — сохранить */}
+                  <div>
+                    <input
+                      className="input h-9 w-36 font-semibold"
+                      type="number"
+                      defaultValue={p.amount}
+                      disabled={busyId === p.id}
+                      onBlur={(e) => {
+                        const v = Number(e.target.value);
+                        if (v >= 0 && v !== p.amount) patch(p.id, { amount: v });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                    />
+                    <div className="mt-1 text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(p.amount))}</div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <select
                       className="rounded-lg border border-ink-700 bg-ink-900 px-2 py-1 text-xs text-ink-200"
                       value={p.status}
                       disabled={busyId === p.id}
-                      onChange={(e) => setStatus(p.id, e.target.value)}
+                      onChange={(e) => patch(p.id, { status: e.target.value })}
                     >
                       {PLANNED_PAYMENT_STATUSES.map((s) => (
                         <option key={s} value={s}>
@@ -370,6 +390,24 @@ function CellModal({
                     </select>
                     <DeleteButton endpoint={`/api/planned-payments/${p.id}`} what="платёж" />
                   </div>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    disabled={busyId === p.id}
+                    onClick={() => patch(p.id, { periodMonth: shiftMonth(p.periodMonth, -1) })}
+                    title="Перенести на месяц раньше"
+                  >
+                    ← {monthLabel(shiftMonth(p.periodMonth, -1))}
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    disabled={busyId === p.id}
+                    onClick={() => patch(p.id, { periodMonth: shiftMonth(p.periodMonth, 1) })}
+                    title="Перенести на месяц позже"
+                  >
+                    {monthLabel(shiftMonth(p.periodMonth, 1))} →
+                  </button>
                 </div>
                 {p.note && <div className="mt-1 text-xs text-ink-500">{p.note}</div>}
               </div>

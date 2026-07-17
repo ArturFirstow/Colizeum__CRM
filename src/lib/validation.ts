@@ -211,6 +211,8 @@ export const plannedPaymentUpdateSchema = z.object({
   amount: z.number().nonnegative().optional(),
   status: inSet(PLANNED_PAYMENT_STATUSES).optional(),
   note: optionalString,
+  // перенос карточки оплаты на другой месяц (стрелки ←/→ в календаре)
+  periodMonth: z.string().regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ").optional(),
 });
 
 export const placementCreateSchema = z

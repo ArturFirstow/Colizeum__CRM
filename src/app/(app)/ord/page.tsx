@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
-import { NewOrdButton, OrdRowActions } from "@/components/ord/OrdControls";
+import { NewOrdButton, OrdRowActions, EridInline, EditOrdButton } from "@/components/ord/OrdControls";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +66,9 @@ export default async function OrdPage() {
                   </td>
                   <td className="px-4 py-3 text-ink-300">{m.finalClient ?? "—"}</td>
                   <td className="px-4 py-3 text-ink-300">{m.platform ?? "—"}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-ink-300">{m.erid ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <EridInline ord={m} />
+                  </td>
                   <td className="px-4 py-3 text-ink-300">{m.expiresAt ? formatDate(m.expiresAt) : "—"}</td>
                   <td className="px-4 py-3">
                     {m.monthlyClosing ? (
@@ -76,7 +78,10 @@ export default async function OrdPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <OrdRowActions ord={m} />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <EditOrdButton ord={m} />
+                      <OrdRowActions ord={m} />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -380,6 +380,8 @@ model KnowledgeArticle {
   title        String
   bodyMarkdown String
   notes        String?
+  // Порядок чтения «сверху вниз» по циклу сделки (новые статьи — в конец).
+  orderIndex   Int      @default(999)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
