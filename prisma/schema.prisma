@@ -32,6 +32,8 @@ model User {
   assignedDeals    Deal[]            @relation("DealAssignee")
   assignedTasks    Task[]            @relation("TaskAssignee")
   uploadedVersions DocumentVersion[] @relation("VersionUploader")
+  ownedAdvertisers Advertiser[]      @relation("AdvertiserOwner")
+  ownedTasks       Task[]            @relation("TaskOwner")
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -46,6 +48,8 @@ model Advertiser {
   type        String   @default("Рекламодатель") // Рекламодатель | Агентство (см. enums.ts)
   status      String   @default("Активный")
   archived    Boolean  @default(false) // в Архиве (v2, п.1.2)
+  // Личный кабинет: клиент принадлежит сотруднику; null = данные до разделения.
+  ownerId     String?
   goals       String?
   notes       String?
   // Реквизиты для карточки контрагента.
@@ -57,6 +61,7 @@ model Advertiser {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  owner           User?            @relation("AdvertiserOwner", fields: [ownerId], references: [id])
   contacts        Contact[]
   deals           Deal[]
   documents       Document[]
@@ -67,6 +72,8 @@ model Advertiser {
   placements      Placement[]
   dailyStatuses   DailyStatus[]
   promoBatches    PromoBatch[]
+
+  @@index([ownerId])
 }
 
 // ── Креатив (макет) — блок «Креативы» в карточке клиента (v2, п.1.3) ─────────
@@ -219,6 +226,8 @@ model Task {
   status       String    @default("Открыта") // Открыта | В работе | Ждёт | Готова
   // На чьей стороне сейчас согласование: «Мы» | «Клиент» (доска задач).
   side         String    @default("Мы")
+  // Чья задача (личный кабинет сотрудника); null = данные до разделения.
+  ownerId      String?
   dueDate      DateTime?
   notes        String?
   createdAt    DateTime  @default(now())
@@ -227,6 +236,7 @@ model Task {
   deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: Cascade)
   advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
   assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  owner      User?       @relation("TaskOwner", fields: [ownerId], references: [id])
 
   @@index([dealId])
   @@index([status])
@@ -405,6 +415,8 @@ model Person {
 model JournalEntry {
   id               String   @id @default(cuid())
   date             DateTime @default(now())
+  // Чей журнал (личный кабинет); null = данные до разделения.
+  ownerId          String?
   source           String // EOD | Транскрипт | Чат
   rawText          String
   parsedSummary    String?

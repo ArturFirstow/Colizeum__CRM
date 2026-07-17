@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth";
+import { ownScope } from "@/lib/scope";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { NewPromoButton } from "@/components/promo/NewPromoButton";
@@ -8,15 +10,20 @@ import { formatDate } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function PromoPage() {
+  // Личный кабинет: партии промокодов только своих клиентов.
+  const session = await requireSession();
   const [batches, advertisers] = await Promise.all([
     prisma.promoBatch.findMany({
+      where: {
+        OR: [{ advertiser: ownScope(session) }, { deal: { advertiser: ownScope(session) } }],
+      },
       include: {
         advertiser: { select: { id: true, nameRu: true } },
         deal: { include: { advertiser: { select: { id: true, nameRu: true } } } },
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.advertiser.findMany({ select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+    prisma.advertiser.findMany({ where: ownScope(session), select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
   ]);
 
   return (

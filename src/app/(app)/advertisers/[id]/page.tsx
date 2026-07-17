@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth";
+import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, TypeBadge, StageBadge, UrgencyBadge, Field, EmptyState } from "@/components/ui/primitives";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
@@ -28,6 +30,9 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
 
   const isAgency = advertiser?.type === "Агентство";
   if (!advertiser) notFound();
+  // Чужого клиента не показываем (личные кабинеты).
+  const session = await requireSession();
+  if (!canSeeOwned(session, advertiser.ownerId)) notFound();
 
   return (
     <div>

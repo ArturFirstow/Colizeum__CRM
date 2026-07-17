@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { VERIFY_FLAGS } from "@/lib/enums";
+import { requireSession } from "@/lib/auth";
+import { ownScope } from "@/lib/scope";
 
 const STUCK_DAYS = 7;
 
-// Архивные проекты не участвуют в панелях дашборда (v2, п.1.2).
-const notArchived = { advertiser: { archived: false } };
-
 export default async function DashboardPage() {
-  const session = await getSession();
+  const session = await requireSession();
   const now = new Date();
+
+  // Личный кабинет: дашборд считает только своих клиентов; архив скрыт.
+  const notArchived = { advertiser: { archived: false, ...ownScope(session) } };
+  const myTask = ownScope(session);
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -31,7 +33,7 @@ export default async function DashboardPage() {
       orderBy: { urgency: "desc" },
     }),
     prisma.task.findMany({
-      where: { status: { not: "Готова" } },
+      where: { status: { not: "Готова" }, ...myTask },
       include: { advertiser: true, assignee: true, deal: true },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
       take: 8,
@@ -46,17 +48,17 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "asc" },
       take: 6,
     }),
-    prisma.journalEntry.findMany({ orderBy: { date: "desc" }, take: 4 }),
+    prisma.journalEntry.findMany({ where: myTask, orderBy: { date: "desc" }, take: 4 }),
     Promise.all([
       prisma.deal.count({ where: notArchived }),
-      prisma.advertiser.count({ where: { archived: false } }),
-      prisma.document.count(),
-      prisma.task.count({ where: { status: { not: "Готова" } } }),
+      prisma.advertiser.count({ where: { archived: false, ...ownScope(session) } }),
+      prisma.document.count({ where: { advertiser: ownScope(session) } }),
+      prisma.task.count({ where: { status: { not: "Готова" }, ...myTask } }),
     ]),
-    prisma.advertiser.findMany({ where: { archived: false }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
+    prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
     prisma.deal.findMany({ where: notArchived, select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
     prisma.dailyStatus.findMany({
-      where: { date: { gte: todayStart } },
+      where: { date: { gte: todayStart }, advertiser: ownScope(session) },
       include: { advertiser: { select: { nameRu: true } }, deal: { select: { title: true } } },
       orderBy: { createdAt: "desc" },
     }),

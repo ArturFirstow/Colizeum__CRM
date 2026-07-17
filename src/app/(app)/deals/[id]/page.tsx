@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth";
+import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, Field, UrgencyBadge, EmptyState, WarningFlag } from "@/components/ui/primitives";
 import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
@@ -37,6 +39,9 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     },
   });
   if (!deal) notFound();
+  // Сделка чужого клиента не показывается (личные кабинеты).
+  const session = await requireSession();
+  if (!canSeeOwned(session, deal.advertiser.ownerId)) notFound();
 
   const construction = CONTRACT_CONSTRUCTIONS.find((c) => c.code === deal.contractConstruction);
   const ep = `/api/deals/${deal.id}`;

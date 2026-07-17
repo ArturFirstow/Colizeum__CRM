@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth";
+import { ownScope } from "@/lib/scope";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { NewOrdButton, OrdRowActions, EridInline, EditOrdButton } from "@/components/ord/OrdControls";
 import { formatDate } from "@/lib/format";
@@ -7,12 +9,16 @@ import { formatDate } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function OrdPage() {
+  // Личный кабинет: маркировки только по сделкам своих клиентов.
+  const session = await requireSession();
   const [markings, deals] = await Promise.all([
     prisma.ordMarking.findMany({
+      where: { deal: { advertiser: ownScope(session) } },
       include: { deal: { include: { advertiser: { select: { nameRu: true } } } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.deal.findMany({
+      where: { advertiser: ownScope(session) },
       include: { advertiser: { select: { nameRu: true } } },
       orderBy: { updatedAt: "desc" },
     }),

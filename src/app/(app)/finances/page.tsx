@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth";
+import { ownScope } from "@/lib/scope";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { PaymentCalendar } from "@/components/finances/PaymentCalendar";
 import { QuickAdd } from "@/components/deals/QuickAdd";
@@ -10,10 +12,12 @@ import { CLOSING_KINDS } from "@/lib/enums";
 export const dynamic = "force-dynamic";
 
 export default async function FinancesPage() {
-  // Корзины клиентов: все сделки активных (неархивных) рекламодателей.
+  // Личный кабинет: финансы только по своим клиентам.
+  const session = await requireSession();
+  const myClients = { archived: false, ...ownScope(session) };
   const [deals, advertisers, plannedPayments] = await Promise.all([
     prisma.deal.findMany({
-      where: { advertiser: { archived: false } },
+      where: { advertiser: myClients },
       include: {
         advertiser: { select: { id: true, nameRu: true } },
         invoices: { include: { payments: true }, orderBy: { createdAt: "desc" } },
@@ -22,11 +26,11 @@ export default async function FinancesPage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.advertiser.findMany({
-      where: { archived: false },
+      where: myClients,
       select: { id: true, nameRu: true },
       orderBy: { nameRu: "asc" },
     }),
-    prisma.plannedPayment.findMany({ orderBy: { periodMonth: "asc" } }),
+    prisma.plannedPayment.findMany({ where: { advertiser: ownScope(session) }, orderBy: { periodMonth: "asc" } }),
   ]);
 
   const totalInvoiced = deals.reduce(

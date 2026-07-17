@@ -343,6 +343,11 @@ async function main() {
     data: { source: "EOD", routedTo: "Трекер", rawText: "EOD: Алабуга — ДС на уменьшение; Т-Банк — Приложение №1 на согласовании; МТС Оплата — ждём подписания.", parsedSummary: "Алабуга → ДС; Т-Банк → приложение; МТС Оплата → подписание." },
   });
 
+  // ── Личные кабинеты: все демо-данные принадлежат старшему сотруднику ───────
+  await prisma.advertiser.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });
+  await prisma.task.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });
+  await prisma.journalEntry.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });
+
   console.log("✅ Готово. owner@colizeum.ru / manager@colizeum.ru — пароль colizeum");
 }
 

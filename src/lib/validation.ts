@@ -194,6 +194,13 @@ export const invoiceCreateSchema = z.object({
   appendixNo: optionalString,
 });
 
+// Создание сотрудника (страница «Команда», только Owner).
+export const userCreateSchema = z.object({
+  name: z.string().trim().min(1, "Укажите имя"),
+  email: z.string().trim().toLowerCase().email("Некорректный e-mail"),
+  password: z.string().min(6, "Пароль минимум 6 символов"),
+});
+
 export const dailyStatusCreateSchema = z.object({
   advertiserId: z.string().min(1, "Выберите проект/рекламодателя"),
   dealId: optionalString,

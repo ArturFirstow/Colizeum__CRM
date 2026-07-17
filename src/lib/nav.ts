@@ -22,6 +22,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { href: "/advertisers", label: "Рекламодатели", icon: "☰" },
       { href: "/documents", label: "Документы", icon: "❐" },
       { href: "/knowledge", label: "База знаний", icon: "◈" },
+      { href: "/team", label: "Команда", icon: "◉" },
     ],
   },
   {
