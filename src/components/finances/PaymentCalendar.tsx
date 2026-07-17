@@ -121,7 +121,7 @@ export function PaymentCalendar({
                     {monthLabel(m)}
                   </th>
                 ))}
-                <th className="px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">Итого</th>
+                <th className="sticky right-0 z-10 bg-ink-850 px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">Итого</th>
               </tr>
             </thead>
             <tbody>
@@ -162,7 +162,7 @@ export function PaymentCalendar({
                         </td>
                       );
                     })}
-                    <td className="px-2 py-1 text-right text-sm font-semibold text-ink-100">
+                    <td className="sticky right-0 z-10 bg-ink-850 px-2 py-1 text-right text-sm font-semibold text-ink-100">
                       {formatMoney(rowTotal)}
                     </td>
                   </tr>
@@ -177,7 +177,7 @@ export function PaymentCalendar({
                     {t > 0 ? compact(t) : ""}
                   </td>
                 ))}
-                <td className="px-2 py-2 text-right text-sm font-bold text-brand">{formatMoney(grandTotal)}</td>
+                <td className="sticky right-0 z-10 bg-ink-850 px-2 py-2 text-right text-sm font-bold text-brand">{formatMoney(grandTotal)}</td>
               </tr>
             </tbody>
           </table>

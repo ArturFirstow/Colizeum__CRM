@@ -217,6 +217,8 @@ model Task {
   kind         String    @default("Менеджер") // Юрист | Дизайн | Менеджер | Бухгалтерия | ОРД | Прочее
   assigneeId   String?
   status       String    @default("Открыта") // Открыта | В работе | Ждёт | Готова
+  // На чьей стороне сейчас согласование: «Мы» | «Клиент» (доска задач).
+  side         String    @default("Мы")
   dueDate      DateTime?
   notes        String?
   createdAt    DateTime  @default(now())

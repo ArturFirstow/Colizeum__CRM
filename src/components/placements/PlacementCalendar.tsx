@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
-import { PLACEMENT_STATUSES, PLACEMENT_SLOTS } from "@/lib/enums";
+import { PLACEMENT_STATUSES, PLACEMENT_SLOTS, PLACEMENT_SLOT_GROUPS } from "@/lib/enums";
 
 type Placement = {
   id: string;
@@ -89,12 +89,18 @@ export function PlacementCalendar({
     return `${y}-${pad(m + 1)}-${pad(day)}`;
   }
 
-  // Все слоты из справочника показываются всегда (даже пустые) + нестандартные из данных.
-  const slots = useMemo(() => {
+  // Все слоты из справочника показываются всегда (даже пустые), по группам
+  // как в таблице; нестандартные из данных — в конец последней группы.
+  const groups = useMemo(() => {
     const present = [...new Set(placements.map((p) => p.slot))];
-    const extra = present.filter((s) => !(PLACEMENT_SLOTS as readonly string[]).includes(s));
-    return [...(PLACEMENT_SLOTS as readonly string[]), ...extra];
+    const extra = present.filter((s) => !PLACEMENT_SLOTS.includes(s));
+    return PLACEMENT_SLOT_GROUPS.map((g, i) => ({
+      title: g.title,
+      slots: i === PLACEMENT_SLOT_GROUPS.length - 1 ? [...g.slots, ...extra] : [...g.slots],
+    }));
   }, [placements]);
+
+  const slots = useMemo(() => groups.flatMap((g) => g.slots), [groups]);
 
   const monthLabel = (i: number) => {
     const m = (model.baseMonth + i) % 12;
@@ -162,11 +168,21 @@ export function PlacementCalendar({
             ))}
           </div>
 
-          {/* Строки слотов — все форматы, даже пустые */}
-          {slots.map((slot, si) => {
-            const rowPlacements = placements.filter(
-              (p) => p.slot === slot && weekIndex(new Date(p.endDate)) >= 0,
-            );
+          {/* Строки слотов — все форматы, даже пустые, по группам как в таблице */}
+          {groups.map((group) => (
+            <div key={group.title}>
+              <div
+                className="grid"
+                style={{ gridTemplateColumns: gridCols }}
+              >
+                <div className="sticky left-0 z-10 bg-ink-850 px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-brand">
+                  {group.title}
+                </div>
+              </div>
+              {group.slots.map((slot, si) => {
+                const rowPlacements = placements.filter(
+                  (p) => p.slot === slot && weekIndex(new Date(p.endDate)) >= 0,
+                );
             return (
               <div
                 key={slot}
@@ -220,6 +236,8 @@ export function PlacementCalendar({
               </div>
             );
           })}
+            </div>
+          ))}
         </div>
       </div>
 

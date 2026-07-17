@@ -162,14 +162,23 @@ export default async function DashboardPage() {
                         {t.deal?.title ?? t.advertiser?.nameRu ?? "Без привязки"}
                         {t.assignee ? ` · ${t.assignee.name}` : ""}
                       </div>
+                      {/* Комментарий из карточки задачи (правки/статус от клиента) — на контроль */}
+                      {t.notes && (
+                        <div className="mt-1 line-clamp-2 text-xs text-ink-400">💬 {t.notes}</div>
+                      )}
                     </div>
+                    {t.side === "Клиент" && (
+                      <span className="badge shrink-0 bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30">
+                        🤝 у клиента
+                      </span>
+                    )}
                     {t.dueDate && (
-                      <span className={`text-xs ${overdue ? "text-red-300" : "text-ink-400"}`}>
+                      <span className={`shrink-0 text-xs ${overdue ? "font-semibold text-red-300" : "text-ink-400"}`}>
                         {overdue ? "просрочено · " : ""}
                         {formatDate(t.dueDate)}
                       </span>
                     )}
-                    <span className="badge badge-muted">{t.status}</span>
+                    <span className="badge badge-muted shrink-0">{t.status}</span>
                   </div>
                 );
               })}

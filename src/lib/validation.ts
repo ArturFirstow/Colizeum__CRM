@@ -115,6 +115,7 @@ export const taskCreateSchema = z.object({
   advertiserId: optionalString,
   assigneeId: optionalString,
   status: inSet(TASK_STATUSES).optional(),
+  side: z.enum(["Мы", "Клиент"]).optional(),
   dueDate: z.string().datetime().optional().or(z.literal("").transform(() => undefined)),
   notes: optionalString,
 });

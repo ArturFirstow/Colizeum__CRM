@@ -266,10 +266,10 @@ async function main() {
   console.log("✅ Задачи…");
   await prisma.task.createMany({
     data: [
-      { dealId: dealAlabuga.id, advertiserId: alabuga.id, title: "Оформить ДС на уменьшение стоимости", kind: "Юрист", status: "В работе" },
-      { dealId: dealTbankMain.id, advertiserId: tbankMain.id, title: "Согласовать Приложение №1 через бухгалтерию", kind: "Менеджер", assigneeId: manager.id, status: "Открыта" },
-      { dealId: dealMtsPay.id, advertiserId: mtsPay.id, title: "Подписание → печать 150 ковриков", kind: "Менеджер", status: "Ждёт" },
-      { dealId: dealMtsPao.id, advertiserId: mtsPao.id, title: "Правки в договор тестирования", kind: "Юрист", status: "Открыта" },
+      { dealId: dealAlabuga.id, advertiserId: alabuga.id, title: "Оформить ДС на уменьшение стоимости", kind: "Юрист", status: "В работе", side: "Мы" },
+      { dealId: dealTbankMain.id, advertiserId: tbankMain.id, title: "Согласовать Приложение №1 через бухгалтерию", kind: "Менеджер", assigneeId: manager.id, status: "Ждёт", side: "Клиент", notes: "Приложение у бухгалтерии Т-Банка, обещали ответ до конца недели." },
+      { dealId: dealMtsPay.id, advertiserId: mtsPay.id, title: "Подписание → печать 150 ковриков", kind: "Менеджер", status: "Ждёт", side: "Клиент", notes: "Ждём подписание договора со стороны МТС Оплаты — только после этого коврики в печать." },
+      { dealId: dealMtsPao.id, advertiserId: mtsPao.id, title: "Правки в договор тестирования", kind: "Юрист", status: "Открыта", side: "Мы" },
     ],
   });
 
@@ -286,15 +286,41 @@ async function main() {
   // ── Календарь размещений (по рабочей таблице) ──────────────────────────────
   console.log("🗓 Размещения…");
   const d = (s: string) => new Date(s);
+  // Полный перенос строк из листа (gid=462204401). Статусы, которые из выгрузки
+  // не видны (цвет ячейки), помечены «Ожидание» — сверить с таблицей.
   await prisma.placement.createMany({
     data: [
+      // Стандартный пакет — слоты ПК ТВ + слайдер + ЛК
       { slot: "Слот 1 (ПК ТВ + слайдер + ЛК)", brandLabel: "VOLT", responsible: "Марина Янюк", startDate: d("2026-01-01"), endDate: d("2026-09-30"), status: "Подписан" },
-      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", advertiserId: mtsPao.id, dealId: dealMtsPao.id, responsible: "Марина / Катя", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      { slot: "Слот 3 (ПК ТВ + слайдер + ЛК)", brandLabel: "Делимобиль", responsible: "Артур Фирстов", startDate: d("2026-06-01"), endDate: d("2026-08-20"), status: "На подписании" },
-      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", advertiserId: tbankMain.id, dealId: dealTbankMain.id, responsible: "Марина", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      { slot: "Слот 8 (ПК ТВ + слайдер + ЛК)", advertiserId: alabuga.id, dealId: dealAlabuga.id, responsible: "Катя Туринова", startDate: d("2026-08-01"), endDate: d("2027-01-31"), status: "На подписании" },
-      { slot: "Баннер в мобильном приложении", brandLabel: "МТС оплата", responsible: "—", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "Подписан" },
-      { slot: "Автозапуск в браузере", brandLabel: "Winline", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
+      { slot: "Слот 2 (ПК ТВ + слайдер + ЛК)", advertiserId: mtsPao.id, dealId: dealMtsPao.id, responsible: "Марина / Катя", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "На подписании" },
+      { slot: "Слот 3 (ПК ТВ + слайдер + ЛК)", brandLabel: "Делимобиль", responsible: "Артур Фирстов", startDate: d("2026-06-08"), endDate: d("2026-09-14"), status: "На подписании" },
+      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", brandLabel: "GP", responsible: "Артур Фирстов", startDate: d("2026-08-01"), endDate: d("2026-08-31"), status: "Ожидание" },
+      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", brandLabel: "Эконива", responsible: "Артур Фирстов", startDate: d("2026-09-01"), endDate: d("2026-09-30"), status: "Ожидание" },
+      { slot: "Слот 4 (ПК ТВ + слайдер + ЛК)", brandLabel: "Тиммейт × Пятёрочка × ГТА", responsible: "Артур Фирстов", startDate: d("2026-10-20"), endDate: d("2026-11-05"), status: "Ожидание" },
+      { slot: "Слот 5 (ПК ТВ + слайдер + ЛК)", brandLabel: "М-видео?", responsible: "Артур / Катя", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "Ожидание" },
+      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", brandLabel: "Самокат", responsible: "Артур Фирстов", startDate: d("2026-06-22"), endDate: d("2026-07-21"), status: "Подписан" },
+      { slot: "Слот 6 (ПК ТВ + слайдер + ЛК)", brandLabel: "Фан Пэй?", responsible: "Артур Фирстов", startDate: d("2026-08-01"), endDate: d("2026-08-31"), status: "Ожидание" },
+      { slot: "Слот 7 (ПК ТВ + слайдер + ЛК)", brandLabel: "БигБон", responsible: "Марина Янюк", startDate: d("2026-08-15"), endDate: d("2026-08-21"), status: "Ожидание" },
+      { slot: "Слот 8 (ПК ТВ + слайдер + ЛК)", advertiserId: alabuga.id, dealId: dealAlabuga.id, responsible: "Катя Туринова", startDate: d("2026-08-01"), endDate: d("2027-01-31"), status: "Подписан" },
+      { slot: "Слот 9 (ПК ТВ + слайдер + ЛК)", advertiserId: mtsPay.id, dealId: dealMtsPay.id, responsible: "Катя / Артур", startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "На подписании" },
+      { slot: "Слот 10 (ПК ТВ + слайдер + ЛК)", advertiserId: tbankMain.id, dealId: dealTbankMain.id, responsible: "Марина", startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "На подписании" },
+      // Турнирный календарь
+      { slot: "Турнирный календарь", brandLabel: "Аван-маркет", startDate: d("2026-08-15"), endDate: d("2026-09-14"), status: "Ожидание" },
+      { slot: "Турнирный календарь", brandLabel: "VOLT", startDate: d("2026-09-15"), endDate: d("2026-10-14"), status: "Подписан" },
+      { slot: "Турнирный календарь", brandLabel: "Аван-маркет", startDate: d("2026-10-15"), endDate: d("2026-12-14"), status: "Ожидание" },
+      // Мобильное приложение (брендинг)
+      { slot: "Мобильное приложение (брендинг)", brandLabel: "Маккофе", startDate: d("2026-07-22"), endDate: d("2026-08-21"), status: "Ожидание" },
+      { slot: "Мобильное приложение (брендинг)", brandLabel: "Горячая штучка", startDate: d("2026-11-01"), endDate: d("2026-12-31"), status: "Ожидание" },
+      // Баннер в мобильном приложении — 4 слота
+      { slot: "Слот 1 (Баннер в моб. приложении)", brandLabel: "Банка пэй", startDate: d("2026-01-01"), endDate: d("2026-06-07"), status: "Подписан" },
+      { slot: "Слот 1 (Баннер в моб. приложении)", advertiserId: mtsPay.id, dealId: dealMtsPay.id, brandLabel: "МТС оплата", startDate: d("2026-06-08"), endDate: d("2026-12-31"), status: "Подписан" },
+      { slot: "Слот 2 (Баннер в моб. приложении)", brandLabel: "VOLT", startDate: d("2026-01-01"), endDate: d("2026-10-31"), status: "Подписан" },
+      { slot: "Слот 3 (Баннер в моб. приложении)", advertiserId: mtsPao.id, dealId: dealMtsPao.id, startDate: d("2026-07-01"), endDate: d("2026-12-31"), status: "На подписании" },
+      { slot: "Слот 4 (Баннер в моб. приложении)", advertiserId: tbankMain.id, dealId: dealTbankMain.id, startDate: d("2026-08-01"), endDate: d("2026-12-31"), status: "На подписании" },
+      // Доп форматы
+      { slot: "Автозапуск в браузере — 1", brandLabel: "Winline", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-06-15"), status: "Подписан" },
+      { slot: "Автозапуск в браузере — 2", brandLabel: "Банка пэй", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-11-30"), status: "Подписан" },
+      { slot: "Ярлык на рабочем столе", brandLabel: "Банка пэй", responsible: "Артур Фирстов", startDate: d("2026-01-01"), endDate: d("2026-11-30"), status: "Подписан" },
     ],
   });
 
