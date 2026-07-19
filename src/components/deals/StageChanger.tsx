@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DEAL_STAGES } from "@/lib/enums";
 import { stageStyle } from "@/lib/ui-tokens";
+import { celebrate } from "@/lib/celebrate";
 
 export function StageChanger({ dealId, current }: { dealId: string; current: string }) {
   const router = useRouter();
@@ -21,6 +22,8 @@ export function StageChanger({ dealId, current }: { dealId: string; current: str
         body: JSON.stringify({ stage, confirm }),
       });
       setPending(null);
+      // Сделка дошла до конца — маленький праздник.
+      if (stage === "Закрытие") celebrate();
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

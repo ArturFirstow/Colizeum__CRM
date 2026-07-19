@@ -8,6 +8,9 @@ import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { VERIFY_FLAGS } from "@/lib/enums";
 import { requireSession } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
+import { netOfVat } from "@/lib/format";
+import { CountUp } from "@/components/ui/CountUp";
+import { StageRing } from "@/components/ui/StageRing";
 
 const STUCK_DAYS = 7;
 
@@ -56,7 +59,11 @@ export default async function DashboardPage() {
       prisma.task.count({ where: { status: { not: "Готова" }, ...myTask } }),
     ]),
     prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
-    prisma.deal.findMany({ where: notArchived, select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
+    prisma.deal.findMany({
+      where: notArchived,
+      select: { id: true, title: true, advertiserId: true, stage: true, amount: true, advertiser: { select: { nameRu: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
     prisma.dailyStatus.findMany({
       where: { date: { gte: todayStart }, advertiser: ownScope(session) },
       include: { advertiser: { select: { nameRu: true } }, deal: { select: { title: true } } },
@@ -68,6 +75,9 @@ export default async function DashboardPage() {
   const hour = now.getHours();
   const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
 
+  // «Кинетика»: портфель под управлением — сумма активных сделок.
+  const portfolio = dealOpts.reduce((s, d) => s + (d.amount ?? 0), 0);
+
   return (
     <div>
       <PageHeader
@@ -76,13 +86,44 @@ export default async function DashboardPage() {
         icon="◆"
       />
 
-      {/* Метрики */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Активные сделки" value={dealCount} href="/deals" />
-        <StatCard label="Рекламодатели" value={advCount} href="/advertisers" />
-        <StatCard label="Задачи в работе" value={activeTasks} href="/tasks" accent={activeTasks > 0} />
-        <StatCard label="Документы" value={docCount} href="/documents" />
+      {/* Бенто-метрики: живые цифры досчитываются на глазах */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:grid-rows-2">
+        <Link href="/finances" className="col-span-2 row-span-2">
+          <div className="card card-hover flex h-full flex-col justify-center !border-brand/30 p-6">
+            <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
+              Портфель под управлением
+            </div>
+            <div className="mt-3 font-display text-4xl font-semibold text-brand lg:text-5xl">
+              <CountUp value={portfolio} suffix=" ₽" duration={1100} />
+            </div>
+            <div className="mt-2 text-sm text-ink-400">
+              без НДС ≈ {formatMoney(netOfVat(portfolio))} · {dealCount} активных сделок
+            </div>
+          </div>
+        </Link>
+        <StatCard label="Активные сделки" value={<CountUp value={dealCount} />} href="/deals" />
+        <StatCard label="Задачи в работе" value={<CountUp value={activeTasks} />} href="/tasks" accent={activeTasks > 0} />
+        <StatCard label="Рекламодатели" value={<CountUp value={advCount} />} href="/advertisers" />
+        <StatCard label="Документы" value={<CountUp value={docCount} />} href="/documents" />
       </div>
+
+      {/* Кольца стадий: где каждый проект на пути из 9 шагов */}
+      {dealOpts.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-bold text-ink-50">Проекты на пути к закрытию</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {dealOpts.slice(0, 5).map((d) => (
+              <Link key={d.id} href={`/deals/${d.id}`} className="card card-hover flex items-center gap-3 p-4">
+                <StageRing stage={d.stage} />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-ink-100">{d.advertiser.nameRu}</div>
+                  <div className="mt-0.5 truncate text-xs text-ink-400">{d.stage}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Статус дня по проектам + недельный отчёт */}
       <div className="mb-8">

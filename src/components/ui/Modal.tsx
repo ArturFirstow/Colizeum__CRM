@@ -42,7 +42,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div
-        className={`relative my-8 w-full ${width} card animate-fade-in`}
+        className={`relative my-8 w-full ${width} card animate-pop`}
         role="dialog"
         aria-modal="true"
       >

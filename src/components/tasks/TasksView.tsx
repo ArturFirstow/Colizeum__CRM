@@ -207,7 +207,7 @@ function TaskCard({
         e.dataTransfer.setData("text/plain", task.id);
         onDragStart();
       }}
-      className="card cursor-grab p-3.5 active:cursor-grabbing"
+      className="card card-hover cursor-grab p-3.5 active:cursor-grabbing"
     >
       <div className="flex items-start gap-2">
         <span className="text-base">{TASK_KIND_EMOJI[task.kind] ?? "•"}</span>
