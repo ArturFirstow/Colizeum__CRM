@@ -198,14 +198,20 @@ function ArticleModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const NEW_CATEGORY = "__new__";
   const [f, setF] = useState({
     category: article?.category ?? KNOWLEDGE_CATEGORIES[0],
     title: article?.title ?? "",
     bodyMarkdown: article?.bodyMarkdown ?? "",
     notes: article?.notes ?? "",
   });
+  // Создание новой категории прямо из формы (ТЗ р.2, п.6).
+  const [newCategory, setNewCategory] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const knownCategories = [...KNOWLEDGE_CATEGORIES] as string[];
+  if (article && !knownCategories.includes(article.category)) knownCategories.push(article.category);
 
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((s) => ({ ...s, [k]: v }));
@@ -216,10 +222,15 @@ function ArticleModal({
     setError(null);
     setSaving(true);
     try {
+      const payload = {
+        ...f,
+        category: f.category === NEW_CATEGORY ? newCategory.trim() : f.category,
+      };
+      if (!payload.category) throw new Error("Укажите название новой категории");
       if (article) {
-        await apiFetch(`/api/knowledge/${article.id}`, { method: "PATCH", body: JSON.stringify(f) });
+        await apiFetch(`/api/knowledge/${article.id}`, { method: "PATCH", body: JSON.stringify(payload) });
       } else {
-        await apiFetch("/api/knowledge", { method: "POST", body: JSON.stringify(f) });
+        await apiFetch("/api/knowledge", { method: "POST", body: JSON.stringify(payload) });
       }
       onSaved();
       onClose();
@@ -237,12 +248,23 @@ function ArticleModal({
           <div>
             <label className="label">Категория</label>
             <select className="input" value={f.category} onChange={(e) => set("category", e.target.value)}>
-              {KNOWLEDGE_CATEGORIES.map((c) => (
+              {knownCategories.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
+              <option value={NEW_CATEGORY}>➕ Новая категория…</option>
             </select>
+            {f.category === NEW_CATEGORY && (
+              <input
+                className="input mt-2"
+                placeholder="Название новой категории"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                autoFocus
+                required
+              />
+            )}
           </div>
           <div>
             <label className="label">Заголовок *</label>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
@@ -207,9 +208,9 @@ export function EditOrdButton({ ord }: { ord: OrdRow }) {
       <button
         onClick={() => setOpen(true)}
         title="Редактировать карточку"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-ink-700 bg-ink-800/60 text-sm text-ink-300 hover:text-brand"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-ink-700 bg-ink-800/60 text-ink-300 hover:border-brand/40 hover:text-brand"
       >
-        ✎
+        <Pencil size={14} strokeWidth={2.2} />
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Карточка ОРД">
         <form onSubmit={submit} className="space-y-4">

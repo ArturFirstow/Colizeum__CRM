@@ -129,7 +129,9 @@ export const documentCreateSchema = z.object({
 });
 
 export const knowledgeCreateSchema = z.object({
-  category: inSet(KNOWLEDGE_CATEGORIES),
+  // Категория — свободная строка: помимо стандартных, можно создавать новые
+  // категории прямо из формы «+ Статья» (ТЗ р.2, п.6).
+  category: z.string().trim().min(1, "Укажите категорию"),
   title: z.string().trim().min(1),
   bodyMarkdown: z.string().default(""),
   notes: optionalString,

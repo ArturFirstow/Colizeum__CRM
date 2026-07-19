@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
@@ -209,27 +210,30 @@ function TaskCard({
       }}
       className="card card-hover cursor-grab p-3.5 active:cursor-grabbing"
     >
-      <div className="flex items-start gap-2">
-        <span className="text-base">{TASK_KIND_EMOJI[task.kind] ?? "•"}</span>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-ink-100">{task.title}</div>
-          <div className="mt-1 text-xs text-ink-500">
-            {task.deal ? (
-              <Link href={`/deals/${task.deal.id}`} className="hover:text-brand">
-                {task.deal.title}
-              </Link>
-            ) : (
-              task.advertiser?.nameRu ?? "Без привязки"
-            )}
-          </div>
-        </div>
+      {/* Крупная пометка роли-исполнителя (ТЗ р.2, п.2): видно с первого взгляда, кто делает */}
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand-200 ring-1 ring-inset ring-brand/30">
+          {TASK_KIND_EMOJI[task.kind] ?? "•"} {task.kind}
+        </span>
         <button
-          className="btn-icon shrink-0 text-ink-400 hover:text-brand"
+          className="btn-icon h-8 w-8 shrink-0 text-ink-300 hover:text-brand"
           title="Правки / комментарии / дедлайн"
           onClick={() => setEditing(true)}
         >
-          ✎
+          <Pencil size={14} strokeWidth={2.2} />
         </button>
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-ink-50">{task.title}</div>
+        <div className="mt-1 text-sm text-ink-400">
+          {task.deal ? (
+            <Link href={`/deals/${task.deal.id}`} className="hover:text-brand">
+              {task.deal.title}
+            </Link>
+          ) : (
+            task.advertiser?.nameRu ?? "Без привязки"
+          )}
+        </div>
       </div>
       {/* Комментарии/правки от клиента или для клиента */}
       {task.notes && (

@@ -41,6 +41,10 @@ export default async function FinancesPage() {
     (s, d) => s + d.invoices.reduce((a, i) => a + i.payments.reduce((p, x) => p + (x.amount ?? 0), 0), 0),
     0,
   );
+  // Общий бюджет по всем клиентам: суммы по договорам активных сделок (ТЗ р.2, п.7).
+  const totalBudget = deals
+    .filter((d) => d.stage !== "Закрытие")
+    .reduce((s, d) => s + (d.contractTotal ?? d.amount ?? 0), 0);
 
   return (
     <div>
@@ -50,8 +54,13 @@ export default async function FinancesPage() {
         icon="₽"
       />
 
-      {/* Суммы парой: с НДС 22 % и чистая без НДС */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* Сводный бюджет + суммы парой: с НДС 22 % и чистая без НДС */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="card !border-brand/30 p-5">
+          <div className="text-xs uppercase tracking-wide text-ink-400">Общий бюджет по клиентам</div>
+          <div className="mt-2 font-display text-2xl font-bold text-brand">{formatMoney(totalBudget)}</div>
+          <div className="mt-0.5 text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(totalBudget))}</div>
+        </div>
         <SummaryCard label="Выставлено" value={totalInvoiced} color="text-ink-50" />
         <SummaryCard label="Оплачено" value={totalPaid} color="text-emerald-300" />
         <SummaryCard label="Остаток" value={totalInvoiced - totalPaid} color="text-amber-300" />
@@ -60,23 +69,6 @@ export default async function FinancesPage() {
       {/* Помесячный календарь платежей */}
       <div className="mb-6">
         <PaymentCalendar advertisers={advertisers} payments={plannedPayments} />
-      </div>
-
-      {/* Наш расчётный счёт */}
-      <div className="mb-6 card p-5">
-        <div className="mb-3 text-sm font-semibold text-ink-100">Наш расчётный счёт</div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {ORG.accounts.map((acc) => (
-            <div key={acc.value} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
-              <div className="text-sm font-semibold text-ink-100">{acc.label}</div>
-              <div className="mt-0.5 font-mono text-xs text-ink-300">{acc.value}</div>
-              <div className="text-xs text-ink-500">{acc.note}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 text-xs text-ink-500">
-          {ORG.bank.name} · БИК {ORG.bank.bik} · к/с {ORG.bank.corr}
-        </div>
       </div>
 
       {/* Корзины клиентов: счета, платёжные поручения, УПД */}
@@ -210,6 +202,23 @@ export default async function FinancesPage() {
           })}
         </div>
       )}
+
+      {/* Наш расчётный счёт — справочно, в самом низу раздела (ТЗ р.2, п.7) */}
+      <div className="mt-8 card p-5">
+        <div className="mb-3 text-sm font-semibold text-ink-300">Наш расчётный счёт (справочно)</div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {ORG.accounts.map((acc) => (
+            <div key={acc.value} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
+              <div className="text-sm font-semibold text-ink-100">{acc.label}</div>
+              <div className="mt-0.5 font-mono text-xs text-ink-300">{acc.value}</div>
+              <div className="text-xs text-ink-500">{acc.note}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 text-xs text-ink-500">
+          {ORG.bank.name} · БИК {ORG.bank.bik} · к/с {ORG.bank.corr}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
@@ -47,6 +47,28 @@ export function PaymentCalendar({
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [cell, setCell] = useState<{ advertiserId: string; month: string } | null>(null);
+  const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  // Перетаскивание карточки с суммой на другой месяц (в пределах строки клиента).
+  const dragRef = useRef<{ advertiserId: string; month: string } | null>(null);
+
+  async function dropTo(advertiserId: string, month: string) {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setDragOverCell(null);
+    if (!drag || drag.advertiserId !== advertiserId || drag.month === month) return;
+    const moving = payments.filter(
+      (p) => p.advertiserId === drag.advertiserId && p.periodMonth === drag.month,
+    );
+    await Promise.all(
+      moving.map((p) =>
+        apiFetch(`/api/planned-payments/${p.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ periodMonth: month }),
+        }),
+      ),
+    );
+    router.refresh();
+  }
 
   // Лента на год вперёд: июль 2026 → июль 2027; если платежи выходят
   // за границы — диапазон расширяется автоматически.
@@ -134,12 +156,28 @@ export function PaymentCalendar({
                     </td>
                     {months.map((m) => {
                       const cps = cellPayments(a.id, m);
+                      const key = `${a.id}|${m}`;
+                      const dropProps = {
+                        onDragOver: (e: React.DragEvent) => {
+                          // принимаем только в пределах строки этого клиента
+                          if (dragRef.current?.advertiserId !== a.id) return;
+                          e.preventDefault();
+                          if (dragOverCell !== key) setDragOverCell(key);
+                        },
+                        onDragLeave: () => setDragOverCell((c) => (c === key ? null : c)),
+                        onDrop: (e: React.DragEvent) => {
+                          e.preventDefault();
+                          dropTo(a.id, m);
+                        },
+                      };
                       if (cps.length === 0)
                         return (
-                          <td key={m} className="px-0.5 py-0.5">
+                          <td key={m} className="px-0.5 py-0.5" {...dropProps}>
                             <button
                               onClick={() => setCell({ advertiserId: a.id, month: m })}
-                              className="h-9 w-full rounded-md border border-transparent text-ink-700 transition hover:border-ink-700 hover:text-ink-400"
+                              className={`h-9 w-full rounded-md border text-ink-700 transition hover:border-ink-700 hover:text-ink-400 ${
+                                dragOverCell === key ? "border-brand/60 bg-brand/10" : "border-transparent"
+                              }`}
                             >
                               ·
                             </button>
@@ -152,10 +190,20 @@ export function PaymentCalendar({
                           ? "Оплачено"
                           : "План";
                       return (
-                        <td key={m} className="px-0.5 py-0.5">
+                        <td key={m} className="px-0.5 py-0.5" {...dropProps}>
                           <button
+                            draggable
+                            onDragStart={(e) => {
+                              dragRef.current = { advertiserId: a.id, month: m };
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData("text/plain", key);
+                            }}
+                            onDragEnd={() => setDragOverCell(null)}
                             onClick={() => setCell({ advertiserId: a.id, month: m })}
-                            className={`h-9 w-full rounded-md px-1 text-xs font-semibold ring-1 ring-inset transition hover:brightness-125 ${STATUS_CELL[status]}`}
+                            title="Тянуть — перенести на другой месяц, клик — открыть"
+                            className={`h-9 w-full cursor-grab rounded-md px-1 text-xs font-semibold ring-1 ring-inset transition hover:brightness-125 active:cursor-grabbing ${STATUS_CELL[status]} ${
+                              dragOverCell === key ? "outline outline-2 outline-brand/60" : ""
+                            }`}
                           >
                             {compact(total)}
                           </button>
@@ -223,6 +271,10 @@ function AddPaymentModal({
     status: "План",
     note: "",
   });
+  // Режим «распределить по месяцам»: общая сумма делится равными частями
+  // по диапазону (ТЗ р.2, п.7). Разовый платёж остаётся как был.
+  const [spread, setSpread] = useState(false);
+  const [monthTo, setMonthTo] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -230,24 +282,64 @@ function AddPaymentModal({
     setF((s) => ({ ...s, [k]: v }));
   }
 
+  function monthRange(from: string, to: string): string[] {
+    const [fy, fm] = from.split("-").map(Number);
+    const [ty, tm] = to.split("-").map(Number);
+    const out: string[] = [];
+    let y = fy;
+    let m = fm;
+    while (y < ty || (y === ty && m <= tm)) {
+      out.push(`${y}-${String(m).padStart(2, "0")}`);
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+    return out;
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSaving(true);
     try {
-      await apiFetch("/api/planned-payments", {
-        method: "POST",
-        body: JSON.stringify({
-          advertiserId: f.advertiserId,
-          periodMonth: f.periodMonth,
-          amount: Number(f.amount),
-          status: f.status,
-          note: f.note || undefined,
-        }),
-      });
+      const total = Number(f.amount);
+      if (spread && monthTo) {
+        const range = monthRange(f.periodMonth, monthTo);
+        if (range.length === 0) throw new Error("Конец диапазона раньше начала");
+        // Равные части; копейки от округления — в последний месяц.
+        const part = Math.floor(total / range.length);
+        const last = total - part * (range.length - 1);
+        for (let i = 0; i < range.length; i++) {
+          await apiFetch("/api/planned-payments", {
+            method: "POST",
+            body: JSON.stringify({
+              advertiserId: f.advertiserId,
+              periodMonth: range[i],
+              amount: i === range.length - 1 ? last : part,
+              status: f.status,
+              note: f.note || `часть ${i + 1}/${range.length}`,
+            }),
+          });
+        }
+      } else {
+        await apiFetch("/api/planned-payments", {
+          method: "POST",
+          body: JSON.stringify({
+            advertiserId: f.advertiserId,
+            periodMonth: f.periodMonth,
+            amount: total,
+            status: f.status,
+            note: f.note || undefined,
+          }),
+        });
+      }
       onSaved();
       onClose();
       setF({ advertiserId: "", periodMonth: "", amount: "", status: "План", note: "" });
+      setSpread(false);
+      setMonthTo("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
@@ -271,14 +363,34 @@ function AddPaymentModal({
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Месяц *</label>
+            <label className="label">{spread ? "Первый месяц *" : "Месяц *"}</label>
             <input className="input" type="month" value={f.periodMonth} onChange={(e) => set("periodMonth", e.target.value)} required />
           </div>
           <div>
-            <label className="label">Сумма ₽ *</label>
+            <label className="label">{spread ? "Общая сумма ₽ *" : "Сумма ₽ *"}</label>
             <input className="input" type="number" value={f.amount} onChange={(e) => set("amount", e.target.value)} required />
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm text-ink-200">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-brand"
+            checked={spread}
+            onChange={(e) => setSpread(e.target.checked)}
+          />
+          Распределить сумму равными частями по месяцам
+        </label>
+        {spread && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Последний месяц *</label>
+              <input className="input" type="month" value={monthTo} onChange={(e) => setMonthTo(e.target.value)} required />
+            </div>
+            <div className="flex items-end pb-1 text-xs text-ink-400">
+              Пример: остаток после предоплаты на 6 или 12 месяцев — каждая часть станет отдельной карточкой в календаре.
+            </div>
+          </div>
+        )}
         <div>
           <label className="label">Статус</label>
           <select className="input" value={f.status} onChange={(e) => set("status", e.target.value)}>

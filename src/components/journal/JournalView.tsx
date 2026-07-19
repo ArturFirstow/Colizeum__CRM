@@ -2,11 +2,58 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/client";
-import { FormError } from "@/components/ui/Modal";
+import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { JOURNAL_SOURCES, JOURNAL_ROUTES } from "@/lib/enums";
 import { formatDateTime } from "@/lib/format";
+
+// Недельное ИИ-саммари: собирает прогресс по каждому партнёру за 7 дней.
+function WeeklyAiSummary() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [html, setHtml] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    setOpen(true);
+    setLoading(true);
+    setError(null);
+    setHtml(null);
+    try {
+      const data = (await apiFetch("/api/reports/weekly-ai", { method: "POST" })) as { html: string };
+      setHtml(data.html);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <button className="btn btn-primary" onClick={generate}>
+        <Sparkles size={15} /> Недельное ИИ-саммари
+      </button>
+      <Modal open={open} onClose={() => setOpen(false)} title="Недельное саммари" subtitle="ИИ собрал прогресс по партнёрам за 7 дней" size="lg">
+        {loading && (
+          <div className="space-y-3">
+            <div className="skeleton h-5 w-2/5" />
+            <div className="skeleton h-3.5 w-full" />
+            <div className="skeleton h-3.5 w-4/5" />
+            <div className="skeleton h-5 w-1/3" />
+            <div className="skeleton h-3.5 w-full" />
+            <div className="skeleton h-3.5 w-3/5" />
+            <p className="pt-1 text-xs text-ink-500">Собираю статусы, журнал и сделки, пишу саммари…</p>
+          </div>
+        )}
+        {error && <FormError message={error} />}
+        {html && <div className="prose-kb" dangerouslySetInnerHTML={{ __html: html }} />}
+      </Modal>
+    </>
+  );
+}
 
 type Entry = {
   id: string;
@@ -45,14 +92,17 @@ export function JournalView({ entries }: { entries: Entry[] }) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-700 bg-ink-800/60 text-xl">
-          ✎
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-700 bg-ink-800/60 text-xl">
+            ✎
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-ink-50">Дневной журнал</h1>
+            <p className="mt-0.5 text-sm text-ink-300">EOD-сводки и транскрипты встреч</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-ink-50">Дневной журнал</h1>
-          <p className="mt-0.5 text-sm text-ink-300">EOD-сводки и транскрипты встреч</p>
-        </div>
+        <WeeklyAiSummary />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">

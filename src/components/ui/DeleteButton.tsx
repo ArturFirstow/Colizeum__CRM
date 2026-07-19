@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 
@@ -41,6 +42,7 @@ export function DeleteButton({
     }
   }
 
+  // Корзина считывается сразу: красный акцент уже в покое, ярче — при наведении (ТЗ р.2, п.0).
   const trigger =
     variant === "icon" ? (
       <button
@@ -53,10 +55,10 @@ export function DeleteButton({
         aria-label="Удалить"
         className={
           className ??
-          "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-ink-700 bg-ink-800/60 text-ink-300 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
+          "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
         }
       >
-        🗑
+        <Trash2 size={15} strokeWidth={2.2} />
       </button>
     ) : variant === "text" ? (
       <button
@@ -65,9 +67,9 @@ export function DeleteButton({
           e.stopPropagation();
           setOpen(true);
         }}
-        className={className ?? "text-xs text-ink-400 transition hover:text-red-300"}
+        className={className ?? "inline-flex items-center gap-1 text-xs font-medium text-red-400 transition hover:text-red-300"}
       >
-        Удалить
+        <Trash2 size={13} strokeWidth={2.2} /> Удалить
       </button>
     ) : (
       <button
@@ -78,7 +80,7 @@ export function DeleteButton({
         }}
         className={className ?? "btn btn-danger btn-sm"}
       >
-        🗑 Удалить
+        <Trash2 size={14} strokeWidth={2.2} /> Удалить
       </button>
     );
 

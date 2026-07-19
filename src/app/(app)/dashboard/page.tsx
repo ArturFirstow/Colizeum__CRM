@@ -75,8 +75,10 @@ export default async function DashboardPage() {
   const hour = now.getHours();
   const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
 
-  // «Кинетика»: портфель под управлением — сумма активных сделок.
-  const portfolio = dealOpts.reduce((s, d) => s + (d.amount ?? 0), 0);
+  // Портфель = сумма по активным сделкам БЕЗ закрытых (ТЗ р.2, п.1);
+  // каждая сделка входит один раз, архивные клиенты уже исключены выборкой.
+  const activeDeals = dealOpts.filter((d) => d.stage !== "Закрытие");
+  const portfolio = activeDeals.reduce((s, d) => s + (d.amount ?? 0), 0);
 
   return (
     <div>
@@ -97,7 +99,7 @@ export default async function DashboardPage() {
               <CountUp value={portfolio} suffix=" ₽" duration={1100} />
             </div>
             <div className="mt-2 text-sm text-ink-400">
-              без НДС ≈ {formatMoney(netOfVat(portfolio))} · {dealCount} активных сделок
+              без НДС ≈ {formatMoney(netOfVat(portfolio))} · {activeDeals.length} активных сделок
             </div>
           </div>
         </Link>
@@ -108,11 +110,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* Кольца стадий: где каждый проект на пути из 9 шагов */}
-      {dealOpts.length > 0 && (
+      {activeDeals.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-lg font-bold text-ink-50">Проекты на пути к закрытию</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {dealOpts.slice(0, 5).map((d) => (
+            {activeDeals.slice(0, 5).map((d) => (
               <Link key={d.id} href={`/deals/${d.id}`} className="card card-hover flex items-center gap-3 p-4">
                 <StageRing stage={d.stage} />
                 <div className="min-w-0">
@@ -130,23 +132,26 @@ export default async function DashboardPage() {
         <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
 
-      {/* На выверку — ровно 4 актуальных флага (v2, п.1.7) */}
-      <section className="mb-8">
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
-          <span>⚠️</span> На выверку
-        </h2>
-        <div className="grid gap-2 md:grid-cols-2">
-          {VERIFY_FLAGS.map((flag) => (
-            <div
-              key={flag}
-              className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-sm text-amber-100"
-            >
-              <span className="shrink-0">⚠️</span>
-              <span>{flag}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* На выверку — только в кабинете владельца данных: флаги касаются его
+          клиентов и не должны светиться в чужих ЛК (ТЗ р.2, п.1). */}
+      {session.role === "Owner" && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
+            <span>⚠️</span> На выверку
+          </h2>
+          <div className="grid gap-2 md:grid-cols-2">
+            {VERIFY_FLAGS.map((flag) => (
+              <div
+                key={flag}
+                className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-sm text-amber-100"
+              >
+                <span className="shrink-0">⚠️</span>
+                <span>{flag}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Решения, которые ждут */}
       <section className="mb-8">

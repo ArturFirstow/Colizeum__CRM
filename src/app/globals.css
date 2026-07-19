@@ -154,6 +154,29 @@
   }
 }
 
+/* Канбан: горизонтальная прокрутка с заметным скроллбаром (ТЗ р.2, п.3) */
+.kanban-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: #fcdf3b66 #1f1f1f;
+}
+.kanban-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+.kanban-scroll::-webkit-scrollbar-track {
+  background: #1f1f1f;
+  border-radius: 999px;
+}
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: rgba(252, 223, 59, 0.4);
+  border-radius: 999px;
+  border: 2px solid #1f1f1f;
+  background-clip: content-box;
+}
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(252, 223, 59, 0.65);
+  background-clip: content-box;
+}
+
 /* ─── «Кинетика»: движение как язык интерфейса ─────────────────────────────── */
 
 /* Появление страницы: контент мягко поднимается */
