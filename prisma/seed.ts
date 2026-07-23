@@ -62,11 +62,18 @@ async function main() {
   await prisma.user.deleteMany();
 
   console.log("👤 Пользователи…");
+  // Отдел коллабораций: админ (он же менеджер) + 2 менеджера + руководитель.
   const owner = await prisma.user.create({
-    data: { email: (process.env.SEED_OWNER_EMAIL ?? "owner@colizeum.ru").toLowerCase(), name: "Ведущий менеджер", role: "Owner", passwordHash: hash(process.env.SEED_OWNER_PASSWORD ?? "colizeum") },
+    data: { email: (process.env.SEED_OWNER_EMAIL ?? "owner@colizeum.ru").toLowerCase(), name: "Артур Фирстов", role: "Owner", passwordHash: hash(process.env.SEED_OWNER_PASSWORD ?? "colizeum") },
   });
   const manager = await prisma.user.create({
     data: { email: (process.env.SEED_MANAGER_EMAIL ?? "manager@colizeum.ru").toLowerCase(), name: "Младший менеджер", role: "Manager", passwordHash: hash(process.env.SEED_MANAGER_PASSWORD ?? "colizeum") },
+  });
+  await prisma.user.create({
+    data: { email: "manager2@colizeum.ru", name: "Марина Янюк", role: "Manager", passwordHash: hash("colizeum") },
+  });
+  await prisma.user.create({
+    data: { email: "boss@colizeum.ru", name: "Руководитель отдела", role: "Director", passwordHash: hash("colizeum") },
   });
 
   // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────
@@ -345,6 +352,38 @@ async function main() {
 
   // Тестовая пустая карточка для проверки добавления (ТЗ р.2, п.5).
   await prisma.advertiser.create({ data: { nameRu: "ПиццаСушиВок", ownerId: owner.id } });
+
+  // ── Бюджет отдела (демо, июль 2026, по рабочей таблице) ─────────────────────
+  console.log("₽ Бюджет отдела…");
+  await prisma.deptMonthBudget.create({ data: { month: "2026-07", plannedBudget: 120000 } });
+  await prisma.deptIncome.createMany({
+    data: [
+      { month: "2026-07", source: "Реклама", w1: 2000000, w2: 1365000, w3: 4500000, w4: 5500000 },
+      { month: "2026-07", source: "Корпоративные турниры", w1: 0, w2: 0, w3: 0, w4: 1500000 },
+    ],
+  });
+  await prisma.deptExpense.createMany({
+    data: [
+      {
+        month: "2026-07", title: "Застройка сцены от подрядчика (Т-Банк)", category: "Мероприятия",
+        accountingSub: "Оплата поставщикам (Коллаборация)", periodicity: "Разовый", vatRate: 0,
+        amountTotal: 80000, payFormat: "Безнал", payDate: d("2026-07-11"), deliveryDate: d("2026-07-20"),
+        serviceEndDate: d("2026-07-30"), justification: "Оформление сцены для корпоративного турнира Т-Банк", status: "Согласовано",
+      },
+      {
+        month: "2026-07", title: "Судейство (2 судьи) (Т-Банк)", category: "Мероприятия",
+        accountingSub: "Оплата поставщикам (Коллаборация)", periodicity: "Разовый", vatRate: 0,
+        amountTotal: 30000, payFormat: "Безнал", payDate: d("2026-07-20"), deliveryDate: d("2026-07-24"),
+        justification: "Привлечение судей для корпоративного турнира Т-Банк", status: "Согласовано",
+      },
+      {
+        month: "2026-07", title: "Услуги службы доставки (СДЭК)", category: "Логистика (курьеры, доставки)",
+        accountingSub: "Оплата поставщикам (Коллаборация)", periodicity: "Разовый", vatRate: 22,
+        amountTotal: 10000, payFormat: "Безнал", payDate: d("2026-07-20"), deliveryDate: d("2026-07-20"),
+        justification: "Отправка призов победителям розыгрыша", status: "Согласовано",
+      },
+    ],
+  });
 
   // ── Личные кабинеты: все демо-данные принадлежат старшему сотруднику ───────
   await prisma.advertiser.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });

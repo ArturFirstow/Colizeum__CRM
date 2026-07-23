@@ -201,7 +201,49 @@ export const userCreateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя"),
   email: z.string().trim().toLowerCase().email("Некорректный e-mail"),
   password: z.string().min(6, "Пароль минимум 6 символов"),
+  role: z.enum(["Manager", "Director"]).optional(),
 });
+
+// ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────
+const ym = z.string().regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ");
+
+export const deptBudgetSchema = z.object({
+  month: ym,
+  plannedBudget: z.number().nonnegative(),
+});
+
+export const deptIncomeSchema = z.object({
+  month: ym,
+  source: z.string().trim().min(1, "Укажите источник"),
+  w1: z.number().nonnegative().optional(),
+  w2: z.number().nonnegative().optional(),
+  w3: z.number().nonnegative().optional(),
+  w4: z.number().nonnegative().optional(),
+});
+export const deptIncomeUpdateSchema = deptIncomeSchema.partial();
+
+const optDate = z.string().optional().or(z.literal("").transform(() => undefined));
+export const deptExpenseSchema = z.object({
+  month: ym,
+  department: optionalString,
+  category: optionalString,
+  accountingSub: optionalString,
+  legalEntity: optionalString,
+  title: z.string().trim().min(1, "Укажите наименование"),
+  periodicity: optionalString,
+  vatRate: z.number().int().optional(),
+  amountTotal: z.number().nonnegative().optional(),
+  spentTotal: z.number().nonnegative().optional(),
+  payFormat: optionalString,
+  payDate: optDate,
+  deliveryDate: optDate,
+  serviceEndDate: optDate,
+  actClosedDate: optDate,
+  justification: optionalString,
+  description: optionalString,
+  status: z.enum(["Не согласовано", "Согласовано", "Оплачено"]).optional(),
+});
+export const deptExpenseUpdateSchema = deptExpenseSchema.partial().omit({ month: true });
 
 export const dailyStatusCreateSchema = z.object({
   advertiserId: z.string().min(1, "Выберите проект/рекламодателя"),

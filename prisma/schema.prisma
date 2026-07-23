@@ -412,6 +412,56 @@ model Person {
 }
 
 // ── Запись дневного журнала (EOD / транскрипт) ──────────────────────────────
+// ── Бюджет отдела (кабинет руководителя): доходы + реестр расходов ──────────
+// Данные уровня отдела (не по сотрудникам), ведёт руководитель/админ.
+
+model DeptMonthBudget {
+  id            String   @id @default(cuid())
+  month         String   @unique // «YYYY-MM»
+  plannedBudget Float    @default(0) // планируемый бюджет расходов на месяц
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DeptIncome {
+  id        String   @id @default(cuid())
+  month     String // «YYYY-MM»
+  source    String // Реклама | Корпоративные турниры | …
+  w1        Float    @default(0)
+  w2        Float    @default(0)
+  w3        Float    @default(0)
+  w4        Float    @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([month])
+}
+
+model DeptExpense {
+  id             String    @id @default(cuid())
+  month          String // «YYYY-MM» (месяц реестра)
+  department     String? // Отдел / общесетевые
+  category       String? // Статья
+  accountingSub  String? // Подстатья для бухгалтерии
+  legalEntity    String? // Юр.лицо
+  title          String // Подстатья / наименование
+  periodicity    String? // Разовый | Повторяющийся
+  vatRate        Int       @default(0) // 0 = без НДС, 22 = 22 %
+  amountTotal    Float     @default(0) // Сумма ИТОГО (с НДС)
+  spentTotal     Float? // Потрачено ИТОГО (факт)
+  payFormat      String? // Безнал | Нал | Карта
+  payDate        DateTime? // Дата оплаты по договору
+  deliveryDate   DateTime? // Дата оказания услуги/поставки
+  serviceEndDate DateTime? // Срок окончания услуги
+  actClosedDate  DateTime? // Дата закрытия актом услуги
+  justification  String? // Обоснование
+  description    String?
+  status         String    @default("Не согласовано") // Не согласовано | Согласовано | Оплачено
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([month])
+}
+
 model JournalEntry {
   id               String   @id @default(cuid())
   date             DateTime @default(now())

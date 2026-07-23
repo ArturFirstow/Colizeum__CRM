@@ -23,7 +23,7 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
-  const [f, setF] = useState({ name: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", email: "", password: "", role: "Manager" });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((s) => ({ ...s, [k]: v }));
@@ -36,7 +36,7 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
     try {
       await apiFetch("/api/users", { method: "POST", body: JSON.stringify(f) });
       setCreated({ email: f.email, password: f.password });
-      setF({ name: "", email: "", password: "" });
+      setF({ name: "", email: "", password: "", role: "Manager" });
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -76,8 +76,8 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
                 <div className="font-semibold text-ink-50">{m.name}</div>
                 <div className="mt-0.5 text-sm text-ink-400">{m.email}</div>
               </div>
-              <span className={`badge ${m.role === "Owner" ? "badge-brand" : "badge-muted"}`}>
-                {m.role === "Owner" ? "Администратор" : "Сотрудник"}
+              <span className={`badge ${m.role === "Owner" || m.role === "Director" ? "badge-brand" : "badge-muted"}`}>
+                {m.role === "Owner" ? "Админ" : m.role === "Director" ? "Руководитель" : "Менеджер"}
               </span>
             </div>
             <div className="mt-3 flex gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
@@ -112,6 +112,13 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
               <label className="label">Пароль *</label>
               <input className="input" value={f.password} onChange={(e) => set("password", e.target.value)} required minLength={6} placeholder="минимум 6 символов" />
             </div>
+          </div>
+          <div>
+            <label className="label">Роль</label>
+            <select className="input" value={f.role} onChange={(e) => set("role", e.target.value)}>
+              <option value="Manager">Менеджер — ведёт своих клиентов</option>
+              <option value="Director">Руководитель — видит весь отдел + бюджет</option>
+            </select>
           </div>
           <FormError message={error} />
           <div className="flex justify-end gap-2">

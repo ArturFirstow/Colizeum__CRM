@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: data.name,
         email: data.email,
-        role: "Manager",
+        role: data.role ?? "Manager",
         passwordHash: await hashPassword(data.password),
       },
       select: { id: true, name: true, email: true, role: true },

@@ -6,7 +6,16 @@ export type NavItem = {
   phase?: string;
 };
 
-export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+// leadershipOnly — группа видна только руководителю/админу.
+export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boolean }[] = [
+  {
+    title: "Руководителю",
+    leadershipOnly: true,
+    items: [
+      { href: "/leadership", label: "Обзор отдела", icon: "◎" },
+      { href: "/leadership/budget", label: "Бюджет отдела", icon: "₽" },
+    ],
+  },
   {
     title: "Работа",
     items: [

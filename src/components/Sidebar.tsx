@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { NAV_GROUPS } from "@/lib/nav";
+import { ROLE_LABELS, type Role } from "@/lib/enums";
 import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
 
@@ -26,9 +27,13 @@ export function Sidebar({
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
+  // Группы «только для руководства» скрыты у обычных менеджеров.
+  const isLeadership = user.role === "Owner" || user.role === "Director";
+  const groups = NAV_GROUPS.filter((g) => !g.leadershipOnly || isLeadership);
+
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.title}>
           <div className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">
             {group.title}
@@ -59,7 +64,7 @@ export function Sidebar({
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-ink-100">{user.name}</div>
-          <div className="truncate text-xs text-ink-500">{user.role}</div>
+          <div className="truncate text-xs text-ink-500">{ROLE_LABELS[user.role as Role] ?? user.role}</div>
         </div>
         <button
           onClick={logout}

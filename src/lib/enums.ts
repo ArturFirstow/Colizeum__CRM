@@ -4,8 +4,22 @@
 // зафиксированный набор значений + метки/цвета для UI. Единый источник правды.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ROLES = ["Owner", "Manager"] as const;
+export const ROLES = ["Owner", "Manager", "Director"] as const;
 export type Role = (typeof ROLES)[number];
+
+// Человекочитаемые названия ролей для интерфейса.
+export const ROLE_LABELS: Record<Role, string> = {
+  Owner: "Админ",
+  Manager: "Менеджер",
+  Director: "Руководитель",
+};
+
+// ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────
+export const INCOME_SOURCES = ["Реклама", "Корпоративные турниры"] as const;
+export const EXPENSE_CATEGORIES = ["Реклама", "Мероприятия", "Логистика (курьеры, доставки)", "Прочее"] as const;
+export const EXPENSE_STATUSES = ["Не согласовано", "Согласовано", "Оплачено"] as const;
+export const EXPENSE_PERIODICITY = ["Разовый", "Повторяющийся"] as const;
+export const PAY_FORMATS = ["Безнал", "Нал", "Карта"] as const;
 
 export const ADVERTISER_TYPES = [
   "Рекламодатель",
