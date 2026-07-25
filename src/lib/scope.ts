@@ -1,25 +1,29 @@
 import type { SessionPayload } from "@/lib/auth";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Личные кабинеты + роли.
-//   Менеджер (Manager)     — видит только свои данные.
-//   Руководитель (Director) — видит весь отдел (сводки + каждого сотрудника).
-//   Админ (Owner)           — то же, что руководитель, плюс управление доступами;
-//                             ведёт своих клиентов как менеджер.
+// Роли и видимость данных.
+//   Специалист (Manager)   — видит только своих клиентов/данные.
+//   Руководитель (Director) — видит весь отдел (сводки + бюджет + каждый сотрудник).
+//   Админ (Owner)           — техническая роль (управление доступами); при этом
+//                             сам работает как специалист и видит ТОЛЬКО своих
+//                             клиентов. Сводных вкладок у админа нет.
 // Общее для всех: база знаний, календарь размещений, справочники.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Руководитель или админ — видят весь отдел и кабинет руководителя. */
+/** Руководитель — единственный, кто видит сводки по отделу и бюджет. */
 export function isLeadership(session: SessionPayload): boolean {
-  return session.role === "Owner" || session.role === "Director";
+  return session.role === "Director";
 }
 
-/** where-фрагмент «записи, доступные этому пользователю» (по полю ownerId).
- *  Руководство видит всё (в т.ч. данные без владельца — до разделения). */
+/** Админ (техническая роль) — управление доступами (страница «Команда»). */
+export function isAdmin(session: SessionPayload): boolean {
+  return session.role === "Owner";
+}
+
+/** where-фрагмент «записи в области видимости».
+ *  Руководитель — весь отдел; остальные — только свои. */
 export function ownScope(session: SessionPayload) {
-  return isLeadership(session)
-    ? { OR: [{ ownerId: session.userId }, { ownerId: null }, { NOT: { ownerId: null } }] }
-    : { ownerId: session.userId };
+  return isLeadership(session) ? {} : { ownerId: session.userId };
 }
 
 /** where-фрагмент «сущности, привязанные к клиентам в области видимости». */
@@ -29,6 +33,6 @@ export function advertiserScope(session: SessionPayload) {
 
 /** Можно ли этому пользователю видеть запись с данным ownerId. */
 export function canSeeOwned(session: SessionPayload, ownerId: string | null): boolean {
-  if (ownerId === session.userId) return true;
-  return isLeadership(session);
+  if (isLeadership(session)) return true;
+  return ownerId === session.userId;
 }

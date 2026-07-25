@@ -27,9 +27,9 @@ export function Sidebar({
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
-  // Группы «только для руководства» скрыты у обычных менеджеров.
-  const isLeadership = user.role === "Owner" || user.role === "Director";
-  const groups = NAV_GROUPS.filter((g) => !g.leadershipOnly || isLeadership);
+  // Раздел «Руководителю» видит только директор (не админ и не специалисты).
+  const isDirector = user.role === "Director";
+  const groups = NAV_GROUPS.filter((g) => !g.leadershipOnly || isDirector);
 
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
