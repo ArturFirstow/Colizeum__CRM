@@ -72,3 +72,26 @@ export function nextStages(stage: DealStage, all: readonly string[]): string[] {
   const idx = all.indexOf(stage);
   return all.slice(idx + 1) as string[];
 }
+
+// ── Турнирный контур (кабинет Артёма) ────────────────────────────────────────
+export const CONTRACTOR_STATUS_STYLES: Record<string, string> = {
+  Лид: "bg-ink-600/50 text-ink-100 ring-ink-500/50",
+  Переговоры: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+  Согласование: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
+  Подтверждён: "bg-indigo-500/15 text-indigo-300 ring-indigo-500/30",
+  Проведён: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+  Отказ: "bg-red-500/15 text-red-300 ring-red-500/30",
+};
+export function contractorStatusStyle(s?: string | null): string {
+  return (s && CONTRACTOR_STATUS_STYLES[s]) || "bg-ink-600/50 text-ink-200 ring-ink-500/50";
+}
+
+export const TOURNAMENT_STATUS_STYLES: Record<string, string> = {
+  Планируется: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+  Подтверждён: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
+  Проведён: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+  Отменён: "bg-red-500/15 text-red-300 ring-red-500/30",
+};
+export function tournamentStatusStyle(s?: string | null): string {
+  return (s && TOURNAMENT_STATUS_STYLES[s]) || "bg-ink-600/50 text-ink-200 ring-ink-500/50";
+}

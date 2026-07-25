@@ -38,6 +38,10 @@ async function seedDoc(advertiserId: string, dealId: string, title: string, type
 
 async function main() {
   console.log("🌱 Очистка…");
+  await prisma.arenaBooking.deleteMany();
+  await prisma.tournamentBudgetLine.deleteMany();
+  await prisma.tournament.deleteMany();
+  await prisma.tournamentContractor.deleteMany();
   await prisma.deptExpense.deleteMany();
   await prisma.deptIncome.deleteMany();
   await prisma.deptMonthBudget.deleteMany();
@@ -78,9 +82,9 @@ async function main() {
   await prisma.user.create({
     data: { email: "manager2@colizeum.ru", name: "Марина Янюк", role: "Manager", passwordHash: hash("colizeum") },
   });
-  // Артём — специалист по корпоративным турнирам (свой кабинет).
-  await prisma.user.create({
-    data: { email: "turnir@colizeum.ru", name: "Артём Чепелюк", role: "Manager", passwordHash: hash("colizeum") },
+  // Артём — специалист по корпоративным турнирам (свой кабинет, track = Tournaments).
+  const turnir = await prisma.user.create({
+    data: { email: "turnir@colizeum.ru", name: "Артём Чепелюк", role: "Manager", track: "Tournaments", passwordHash: hash("colizeum") },
   });
   // Александр Иванушкин — директор Colizeum Agency (сводки по отделу + бюджет).
   await prisma.user.create({
@@ -394,6 +398,42 @@ async function main() {
         justification: "Отправка призов победителям розыгрыша", status: "Согласовано",
       },
     ],
+  });
+
+  // ── Турнирный контур (демо для кабинета Артёма, track = Tournaments) ────────
+  console.log("♛ Турниры (демо)…");
+  const contractorA = await prisma.tournamentContractor.create({
+    data: {
+      name: "Демо-заказчик (бренд)", brand: "DEMO", contactPerson: "Контакт заказчика",
+      contact: "@demo", status: "Подтверждён", ownerId: turnir.id,
+      notes: "Демо-карточка контрагента — можно удалить и завести своих.",
+    },
+  });
+  await prisma.tournamentContractor.create({
+    data: { name: "Потенциальный заказчик", status: "Переговоры", ownerId: turnir.id },
+  });
+  const tournamentA = await prisma.tournament.create({
+    data: {
+      title: "Демо-кубок по CS2", contractorId: contractorA.id, discipline: "CS2",
+      format: "Гибрид", arena: "Colizeum Шелепиха", status: "Подтверждён",
+      startDate: d("2026-07-26"), endDate: d("2026-07-27"), ownerId: turnir.id,
+      budgetNote: "Демо-смета — суммы условные, для примера структуры.",
+    },
+  });
+  await prisma.tournamentBudgetLine.createMany({
+    data: [
+      { tournamentId: tournamentA.id, category: "Призовой фонд", amountPlanned: 300000, sort: 0 },
+      { tournamentId: tournamentA.id, category: "Аренда и застройка арены", amountPlanned: 150000, sort: 1 },
+      { tournamentId: tournamentA.id, category: "Судейство и администраторы", amountPlanned: 60000, sort: 2 },
+      { tournamentId: tournamentA.id, category: "Продакшн и трансляция", amountPlanned: 120000, sort: 3 },
+    ],
+  });
+  await prisma.arenaBooking.create({
+    data: {
+      tournamentId: tournamentA.id, contractorId: contractorA.id, zone: "Вся арена",
+      timeSlot: "Весь день", status: "Подтверждена",
+      startDate: d("2026-07-26"), endDate: d("2026-07-27"),
+    },
   });
 
   // ── Личные кабинеты: все демо-данные принадлежат старшему сотруднику ───────

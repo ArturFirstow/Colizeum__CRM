@@ -25,7 +25,10 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  role         String   @default("Manager") // Owner | Manager (см. enums.ts)
+  role         String   @default("Manager") // Owner | Manager | Director (см. enums.ts)
+  // Направление работы: Ads — реклама/коллаборации, Tournaments — турниры (Артём).
+  // От track зависит набор разделов в кабинете (см. src/lib/nav.ts).
+  track        String   @default("Ads") // Ads | Tournaments
   createdAt    DateTime @default(now())
 
   ownedDeals       Deal[]            @relation("DealOwner")
@@ -556,4 +559,94 @@ model Job {
   error     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ТУРНИРНЫЙ КОНТУР (кабинет Артёма Чепелюка, track = "Tournaments").
+// Отдельный домен: корпоративные коммерческие турниры для брендов-заказчиков.
+// Не пересекается с рекламным контуром (Advertiser/Deal/Placement).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Контрагент-заказчик турнира (своя база Артёма) ──────────────────────────
+model TournamentContractor {
+  id            String   @id @default(cuid())
+  name          String // компания/бренд-заказчик
+  brand         String? // конкретный бренд, если отличается
+  contactPerson String? // контактное лицо
+  contact       String? // телефон / почта / телеграм
+  status        String   @default("Лид") // воронка (см. TOURNAMENT_CONTRACTOR_STATUSES)
+  notes         String?
+  ownerId       String? // сотрудник-владелец (Артём); null — данные до разделения
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tournaments Tournament[]
+  bookings    ArenaBooking[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+// ── Турнир (событие для заказчика) + смета ──────────────────────────────────
+model Tournament {
+  id           String    @id @default(cuid())
+  title        String // название турнира/кубка
+  contractorId String? // заказчик из базы
+  clientLabel  String? // заказчик текстом (для разовых, без карточки)
+  discipline   String? // CS2 | Dota 2 | Valorant | …
+  format       String? // Онлайн | Офлайн | Гибрид
+  arena        String?   @default("Colizeum Шелепиха") // площадка офлайн-части
+  startDate    DateTime?
+  endDate      DateTime?
+  status       String    @default("Планируется") // см. TOURNAMENT_STATUSES
+  budgetNote   String? // комментарий к смете
+  ownerId      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  contractor  TournamentContractor?   @relation(fields: [contractorId], references: [id], onDelete: SetNull)
+  budgetLines TournamentBudgetLine[]
+  bookings    ArenaBooking[]
+
+  @@index([contractorId])
+  @@index([ownerId])
+  @@index([startDate])
+}
+
+// ── Строка сметы турнира (планировка бюджета) ───────────────────────────────
+model TournamentBudgetLine {
+  id            String   @id @default(cuid())
+  tournamentId  String
+  category      String // Призовой фонд | Аренда и застройка арены | … (шаблон + свои)
+  title         String? // уточнение (напр. «серверы FACEIT»)
+  amountPlanned Float    @default(0) // предполагаемая сумма
+  amountActual  Float? // фактическая сумма (для сверки)
+  notes         String?
+  sort          Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId])
+}
+
+// ── Бронь арены Colizeum Шелепиха (календарь дат под заказчика) ──────────────
+model ArenaBooking {
+  id           String   @id @default(cuid())
+  tournamentId String? // связанный турнир
+  contractorId String? // заказчик
+  clientLabel  String? // заказчик/бренд текстом
+  zone         String   @default("Вся арена") // зона/зал арены
+  timeSlot     String? // Весь день | Утро | День | Вечер (опц.)
+  startDate    DateTime
+  endDate      DateTime
+  status       String   @default("Ожидание") // см. ARENA_BOOKING_STATUSES
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  tournament Tournament?            @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  contractor TournamentContractor?  @relation(fields: [contractorId], references: [id], onDelete: SetNull)
+
+  @@index([tournamentId])
+  @@index([startDate])
 }

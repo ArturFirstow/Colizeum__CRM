@@ -12,7 +12,7 @@ import { apiFetch } from "@/lib/client";
 export function Sidebar({
   user,
 }: {
-  user: { name: string; email: string; role: string };
+  user: { name: string; email: string; role: string; track: string };
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,8 +28,16 @@ export function Sidebar({
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   // Раздел «Руководителю» видит только директор (не админ и не специалисты).
+  // Руководитель видит оба контура (реклама + турниры); специалист — только свой
+  // (пункты с track показываются лишь сотрудникам этого направления).
   const isDirector = user.role === "Director";
-  const groups = NAV_GROUPS.filter((g) => !g.leadershipOnly || isDirector);
+  const groups = NAV_GROUPS
+    .filter((g) => !g.leadershipOnly || isDirector)
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => !it.track || isDirector || it.track === user.track),
+    }))
+    .filter((g) => g.items.length > 0);
 
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">

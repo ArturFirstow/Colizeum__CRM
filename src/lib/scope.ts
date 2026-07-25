@@ -20,6 +20,16 @@ export function isAdmin(session: SessionPayload): boolean {
   return session.role === "Owner";
 }
 
+/** Турнирный специалист (Артём) — видит турнирный контур вместо рекламного. */
+export function isTournaments(session: SessionPayload): boolean {
+  return session.track === "Tournaments";
+}
+
+/** Доступ к турнирным разделам: сам турнирщик или руководитель (обзор отдела). */
+export function canSeeTournaments(session: SessionPayload): boolean {
+  return isTournaments(session) || isLeadership(session);
+}
+
 /** where-фрагмент «записи в области видимости».
  *  Руководитель — весь отдел; остальные — только свои. */
 export function ownScope(session: SessionPayload) {

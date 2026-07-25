@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import type { Role } from "@/lib/enums";
+import type { Role, UserTrack } from "@/lib/enums";
 
 const COOKIE_NAME = "colizeum_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 дней
@@ -36,6 +36,7 @@ export type SessionPayload = {
   email: string;
   name: string;
   role: Role;
+  track: UserTrack;
 };
 
 async function signSession(payload: SessionPayload): Promise<string> {
@@ -62,6 +63,7 @@ export async function login(
     email: user.email,
     name: user.name,
     role: user.role as Role,
+    track: (user.track as UserTrack) ?? "Ads",
   };
   const token = await signSession(payload);
 
@@ -94,6 +96,7 @@ export async function getSession(): Promise<SessionPayload | null> {
       email: String(payload.email),
       name: String(payload.name),
       role: payload.role as Role,
+      track: (payload.track as UserTrack) ?? "Ads",
     };
   } catch {
     return null;

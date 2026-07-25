@@ -7,6 +7,14 @@
 export const ROLES = ["Owner", "Manager", "Director"] as const;
 export type Role = (typeof ROLES)[number];
 
+// Направление работы сотрудника: реклама/коллаборации или турниры (Артём).
+export const USER_TRACKS = ["Ads", "Tournaments"] as const;
+export type UserTrack = (typeof USER_TRACKS)[number];
+export const TRACK_LABELS: Record<UserTrack, string> = {
+  Ads: "Реклама и коллаборации",
+  Tournaments: "Турниры",
+};
+
 // Человекочитаемые названия ролей для интерфейса.
 export const ROLE_LABELS: Record<Role, string> = {
   Owner: "Админ",
@@ -20,6 +28,48 @@ export const EXPENSE_CATEGORIES = ["Реклама", "Мероприятия", "
 export const EXPENSE_STATUSES = ["Не согласовано", "Согласовано", "Оплачено"] as const;
 export const EXPENSE_PERIODICITY = ["Разовый", "Повторяющийся"] as const;
 export const PAY_FORMATS = ["Безнал", "Нал", "Карта"] as const;
+
+// ── Турнирный контур (кабинет Артёма) ────────────────────────────────────────
+// Воронка контрагента-заказчика: от первого контакта до проведённого турнира.
+export const TOURNAMENT_CONTRACTOR_STATUSES = [
+  "Лид",
+  "Переговоры",
+  "Согласование",
+  "Подтверждён",
+  "Проведён",
+  "Отказ",
+] as const;
+export type TournamentContractorStatus = (typeof TOURNAMENT_CONTRACTOR_STATUSES)[number];
+
+// Дисциплины — стартовый список; поле свободное (datalist), можно вписать свою.
+export const TOURNAMENT_DISCIPLINES = [
+  "CS2",
+  "Dota 2",
+  "Valorant",
+  "Mobile Legends",
+  "PUBG",
+  "EA FC",
+] as const;
+
+export const TOURNAMENT_FORMATS = ["Онлайн", "Офлайн", "Гибрид"] as const;
+
+export const TOURNAMENT_STATUSES = ["Планируется", "Подтверждён", "Проведён", "Отменён"] as const;
+export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
+
+// Строки сметы турнира — шаблон (выбраны пользователем); свои строки добавляются.
+export const TOURNAMENT_BUDGET_LINES = [
+  "Призовой фонд",
+  "Аренда и застройка арены",
+  "Судейство и администраторы",
+  "Продакшн и трансляция",
+] as const;
+
+// Бронь арены Шелепиха.
+export const ARENA_BOOKING_STATUSES = ["Ожидание", "Подтверждена", "Проведено", "Отменена"] as const;
+export type ArenaBookingStatus = (typeof ARENA_BOOKING_STATUSES)[number];
+export const ARENA_TIME_SLOTS = ["Весь день", "Утро", "День", "Вечер"] as const;
+// Зона — свободное поле; по умолчанию «Вся арена». Реальные зоны впишет Артём.
+export const ARENA_ZONE_PRESETS = ["Вся арена"] as const;
 
 export const ADVERTISER_TYPES = [
   "Рекламодатель",

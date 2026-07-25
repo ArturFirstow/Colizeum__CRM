@@ -15,6 +15,10 @@ import {
   TASK_KINDS,
   TASK_STATUSES,
   URGENCIES,
+  TOURNAMENT_CONTRACTOR_STATUSES,
+  TOURNAMENT_FORMATS,
+  TOURNAMENT_STATUSES,
+  ARENA_BOOKING_STATUSES,
 } from "./enums";
 
 /** Zod-схема «значение из фиксированного набора» (замена native enum для SQLite). */
@@ -290,6 +294,69 @@ export const placementUpdateSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   status: inSet(PLACEMENT_STATUSES).optional(),
+  notes: optionalString,
+});
+
+// ── Турнирный контур (кабинет Артёма) ────────────────────────────────────────
+export const contractorCreateSchema = z.object({
+  name: z.string().trim().min(1, "Укажите заказчика"),
+  brand: optionalString,
+  contactPerson: optionalString,
+  contact: optionalString,
+  status: inSet(TOURNAMENT_CONTRACTOR_STATUSES).optional(),
+  notes: optionalString,
+});
+export const contractorUpdateSchema = contractorCreateSchema.partial();
+
+export const tournamentCreateSchema = z.object({
+  title: z.string().trim().min(1, "Укажите название турнира"),
+  contractorId: optionalString,
+  clientLabel: optionalString,
+  discipline: optionalString,
+  format: inSet(TOURNAMENT_FORMATS).optional(),
+  arena: optionalString,
+  startDate: optDate,
+  endDate: optDate,
+  status: inSet(TOURNAMENT_STATUSES).optional(),
+  budgetNote: optionalString,
+});
+export const tournamentUpdateSchema = tournamentCreateSchema.partial();
+
+export const budgetLineCreateSchema = z.object({
+  category: z.string().trim().min(1, "Укажите статью"),
+  title: optionalString,
+  amountPlanned: z.number().nonnegative().optional(),
+  amountActual: z.number().nonnegative().optional(),
+  notes: optionalString,
+  sort: z.number().int().optional(),
+});
+export const budgetLineUpdateSchema = budgetLineCreateSchema.partial();
+
+export const arenaBookingCreateSchema = z
+  .object({
+    tournamentId: optionalString,
+    contractorId: optionalString,
+    clientLabel: optionalString,
+    zone: optionalString,
+    timeSlot: optionalString,
+    startDate: z.string().min(1, "Дата начала"),
+    endDate: z.string().min(1, "Дата конца"),
+    status: inSet(ARENA_BOOKING_STATUSES).optional(),
+    notes: optionalString,
+  })
+  .refine((d) => d.tournamentId || d.contractorId || d.clientLabel, {
+    message: "Укажите турнир, заказчика или бренд",
+    path: ["clientLabel"],
+  });
+export const arenaBookingUpdateSchema = z.object({
+  tournamentId: optionalString,
+  contractorId: optionalString,
+  clientLabel: optionalString,
+  zone: optionalString,
+  timeSlot: optionalString,
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  status: inSet(ARENA_BOOKING_STATUSES).optional(),
   notes: optionalString,
 });
 
