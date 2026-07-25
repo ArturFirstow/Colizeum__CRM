@@ -70,25 +70,29 @@ async function main() {
 
   console.log("👤 Пользователи…");
   // Отдел рекламы и коллабораций COLIZEUM Agency (5 человек).
-  // Артур — специалист + админ (техническая роль); своих клиентов видит только он.
+  // У каждого — свой корпоративный логин и персональный пароль (индивидуальный ЛК).
+  // Пароли можно переопределить через переменные окружения SEED_PW_* (напр. на проде).
+  const pw = (envKey: string, fallback: string) => hash(process.env[envKey] ?? fallback);
+
+  // Артур — ведущий специалист + админ (техническая роль); своих клиентов видит только он.
   const owner = await prisma.user.create({
-    data: { email: (process.env.SEED_OWNER_EMAIL ?? "owner@colizeum.ru").toLowerCase(), name: "Артур Фирстов", role: "Owner", passwordHash: hash(process.env.SEED_OWNER_PASSWORD ?? "colizeum") },
+    data: { email: "a.firstov@colizeum.ru", name: "Артур Фирстов", role: "Owner", passwordHash: pw("SEED_PW_FIRSTOV", "yf9hPJWwYE") },
   });
-  // Екатерина — младший специалист.
+  // Екатерина — младший специалист рекламы и коллабораций.
   const manager = await prisma.user.create({
-    data: { email: (process.env.SEED_MANAGER_EMAIL ?? "manager@colizeum.ru").toLowerCase(), name: "Екатерина Туринова", role: "Manager", passwordHash: hash(process.env.SEED_MANAGER_PASSWORD ?? "colizeum") },
+    data: { email: "e.turinova@colizeum.ru", name: "Екатерина Туринова", role: "Manager", passwordHash: pw("SEED_PW_TURINOVA", "RbFpd7ZfrD") },
   });
   // Марина — ведущий специалист.
   await prisma.user.create({
-    data: { email: "manager2@colizeum.ru", name: "Марина Янюк", role: "Manager", passwordHash: hash("colizeum") },
+    data: { email: "m.yanyuk@colizeum.ru", name: "Марина Янюк", role: "Manager", passwordHash: pw("SEED_PW_YANYUK", "njsNFLh5Tg") },
   });
   // Артём — специалист по корпоративным турнирам (свой кабинет, track = Tournaments).
   const turnir = await prisma.user.create({
-    data: { email: "turnir@colizeum.ru", name: "Артём Чепелюк", role: "Manager", track: "Tournaments", passwordHash: hash("colizeum") },
+    data: { email: "a.chepelyuk@colizeum.ru", name: "Артём Чепелюк", role: "Manager", track: "Tournaments", passwordHash: pw("SEED_PW_CHEPELYUK", "THsmxwcKX8") },
   });
   // Александр Иванушкин — директор Colizeum Agency (сводки по отделу + бюджет).
   await prisma.user.create({
-    data: { email: "boss@colizeum.ru", name: "Иванушкин Александр", role: "Director", passwordHash: hash("colizeum") },
+    data: { email: "a.ivanushkin@colizeum.ru", name: "Иванушкин Александр", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "a5RKwu2H5w") },
   });
 
   // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────
@@ -441,7 +445,7 @@ async function main() {
   await prisma.task.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });
   await prisma.journalEntry.updateMany({ where: { ownerId: null }, data: { ownerId: owner.id } });
 
-  console.log("✅ Готово. owner@colizeum.ru / manager@colizeum.ru — пароль colizeum");
+  console.log("✅ Готово. Персональные логины (a.firstov@… и т.д.) — пароли выданы отдельно.");
 }
 
 async function seedKnowledge() {

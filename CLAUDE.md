@@ -31,7 +31,7 @@ npm run setup             # prisma generate + db push + seed
 npm run dev               # http://localhost:3000
 ```
 
-Демо-аккаунты: `owner@colizeum.ru` и `manager@colizeum.ru`, пароль `colizeum`.
+Аккаунты сотрудников (сид): `a.firstov@` (админ), `a.ivanushkin@` (руководитель), `m.yanyuk@`, `e.turinova@`, `a.chepelyuk@` (турниры) — все `@colizeum.ru`. Пароли — случайные дефолты в `seed.ts` (переопределяются через `SEED_PW_*`).
 
 ## ⚠️ Доставка кода
 

@@ -34,12 +34,15 @@ npm run setup      # prisma generate + db push + сид демо-данных
 npm run dev        # → http://localhost:3000
 ```
 
-Демо-доступ (создаётся сидом):
+Аккаунты сотрудников (создаются сидом; пароли — в `seed.ts` или через `SEED_PW_*`):
 
-| Роль | Логин | Пароль |
+| Роль | Сотрудник | Логин |
 | --- | --- | --- |
-| Owner | `owner@colizeum.ru` | `colizeum` |
-| Manager | `manager@colizeum.ru` | `colizeum` |
+| Owner (админ) | Артур Фирстов | `a.firstov@colizeum.ru` |
+| Director (руководитель) | Иванушкин Александр | `a.ivanushkin@colizeum.ru` |
+| Manager | Марина Янюк | `m.yanyuk@colizeum.ru` |
+| Manager | Екатерина Туринова | `e.turinova@colizeum.ru` |
+| Manager (турниры) | Артём Чепелюк | `a.chepelyuk@colizeum.ru` |
 
 ## Команды
 

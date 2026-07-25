@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("owner@colizeum.ru");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function LoginPage() {
               className="input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@colizeum.ru"
+              placeholder="имя@colizeum.ru"
               required
             />
           </div>
@@ -96,12 +96,6 @@ export default function LoginPage() {
           <button type="submit" className="btn btn-primary w-full py-2.5" disabled={loading}>
             {loading ? "Вход…" : "Войти"}
           </button>
-
-          <div className="rounded-xl border border-ink-700/60 bg-ink-900/60 px-3.5 py-3 text-xs text-ink-400">
-            <div className="mb-1 font-semibold text-ink-300">Демо-доступ</div>
-            <div>owner@colizeum.ru · manager@colizeum.ru</div>
-            <div>пароль: <span className="font-mono text-brand-200">colizeum</span></div>
-          </div>
         </form>
 
         <p className="mt-6 text-center text-xs text-ink-500">
