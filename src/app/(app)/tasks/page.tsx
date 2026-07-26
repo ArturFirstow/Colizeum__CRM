@@ -15,6 +15,7 @@ export default async function TasksPage() {
         deal: { select: { id: true, title: true } },
         advertiser: { select: { id: true, nameRu: true } },
         assignee: { select: { id: true, name: true } },
+        assignedBy: { select: { id: true, name: true } },
       },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
     }),

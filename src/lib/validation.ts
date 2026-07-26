@@ -125,6 +125,16 @@ export const taskCreateSchema = z.object({
 });
 export const taskUpdateSchema = taskCreateSchema.partial();
 
+// Поручение от руководителя конкретному сотруднику.
+export const leadershipTaskSchema = z.object({
+  assigneeId: z.string().min(1, "Выберите сотрудника"),
+  title: z.string().trim().min(1, "Укажите поручение"),
+  kind: inSet(TASK_KINDS).optional(),
+  advertiserId: optionalString,
+  dueDate: z.string().datetime().optional().or(z.literal("").transform(() => undefined)),
+  notes: optionalString,
+});
+
 export const documentCreateSchema = z.object({
   advertiserId: z.string().min(1, "Выберите рекламодателя"),
   dealId: optionalString,

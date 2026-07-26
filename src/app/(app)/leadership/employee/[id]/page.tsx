@@ -6,6 +6,8 @@ import { isLeadership } from "@/lib/scope";
 import { PageHeader, StageBadge, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import { ROLE_LABELS, type Role } from "@/lib/enums";
+import { taskStatusStyle } from "@/lib/ui-tokens";
+import { AssignTaskButton } from "@/components/leadership/AssignTaskButton";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) notFound();
 
-  const [advertisers, deals, tasks, statuses] = await Promise.all([
+  const [advertisers, deals, tasks, statuses, assignedByMe] = await Promise.all([
     prisma.advertiser.findMany({ where: { ownerId: id, archived: false }, orderBy: { nameRu: "asc" } }),
     prisma.deal.findMany({
       where: { advertiser: { ownerId: id, archived: false } },
@@ -35,6 +37,13 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
       orderBy: { date: "desc" },
       take: 6,
     }),
+    // Поручения, которые этот руководитель поставил данному сотруднику.
+    prisma.task.findMany({
+      where: { ownerId: id, assignedById: session.userId },
+      include: { advertiser: { select: { nameRu: true } } },
+      orderBy: [{ createdAt: "desc" }],
+      take: 20,
+    }),
   ]);
 
   const portfolio = deals.filter((d) => d.stage !== "Закрытие").reduce((s, d) => s + (d.amount ?? 0), 0);
@@ -46,8 +55,16 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
       </Link>
       <PageHeader
         title={user.name}
-        subtitle={`${ROLE_LABELS[user.role as Role] ?? user.role} · только просмотр`}
+        subtitle={`${ROLE_LABELS[user.role as Role] ?? user.role} · просмотр + поручения`}
         icon="👤"
+        actions={
+          user.id !== session.userId ? (
+            <AssignTaskButton
+              employee={{ id: user.id, name: user.name }}
+              clients={advertisers.map((a) => ({ id: a.id, nameRu: a.nameRu }))}
+            />
+          ) : undefined
+        }
       />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -56,6 +73,45 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
         <Mini label="Портфель" value={formatMoney(portfolio)} sub={`без НДС ≈ ${formatMoney(netOfVat(portfolio))}`} />
         <Mini label="Задач в работе" value={String(tasks.length)} />
       </div>
+
+      {/* Поручения от руководителя этому сотруднику */}
+      <section className="card mb-6 p-5">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-ink-50">Поручения от вас</h2>
+          <span className="text-xs text-ink-500">
+            {assignedByMe.filter((t) => t.status !== "Готова").length} в работе · {assignedByMe.length} всего
+          </span>
+        </div>
+        {assignedByMe.length === 0 ? (
+          <p className="text-sm text-ink-400">
+            Пока нет поручений. Нажмите «Поручить задачу» вверху — она попадёт в кабинет сотрудника.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {assignedByMe.map((t) => {
+              const overdue = t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "Готова";
+              return (
+                <div key={t.id} className="flex items-start justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-ink-100">{t.title}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-ink-500">
+                      {t.advertiser && <span>клиент: {t.advertiser.nameRu}</span>}
+                      {t.dueDate && (
+                        <span className={overdue ? "font-semibold text-red-300" : ""}>
+                          {overdue ? "⚠ срок " : "⏰ срок "}
+                          {formatDate(t.dueDate)}
+                        </span>
+                      )}
+                    </div>
+                    {t.notes && <p className="mt-1 whitespace-pre-wrap text-xs text-ink-400">{t.notes}</p>}
+                  </div>
+                  <span className={`pill shrink-0 ring-1 ring-inset ${taskStatusStyle(t.status)}`}>{t.status}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Клиенты и сделки */}

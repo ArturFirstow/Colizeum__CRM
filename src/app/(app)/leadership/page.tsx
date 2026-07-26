@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { isLeadership } from "@/lib/scope";
 import { PageHeader } from "@/components/ui/primitives";
 import { CountUp } from "@/components/ui/CountUp";
+import { AssignTaskButton } from "@/components/leadership/AssignTaskButton";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import { ROLE_LABELS, DEAL_STAGES, type Role } from "@/lib/enums";
 
@@ -112,7 +113,7 @@ export default async function LeadershipPage() {
       {/* Сотрудники — сравнение + провал внутрь */}
       <h2 className="mb-3 text-lg font-bold text-ink-50">Сотрудники</h2>
       <div className="mb-8 card overflow-x-auto">
-        <table className="w-full min-w-[820px] text-sm">
+        <table className="w-full min-w-[940px] text-sm">
           <thead>
             <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
               <th className="px-4 py-3 font-medium">Сотрудник</th>
@@ -124,6 +125,7 @@ export default async function LeadershipPage() {
               <th className="px-4 py-3 font-medium">Блок.</th>
               <th className="px-4 py-3 font-medium">Завис.</th>
               <th className="px-4 py-3 font-medium">Активность</th>
+              <th className="px-4 py-3 text-right font-medium">Поручить</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-800">
@@ -149,6 +151,9 @@ export default async function LeadershipPage() {
                 <td className="px-4 py-3">{r.blockers > 0 ? <span className="text-red-300">{r.blockers}</span> : "—"}</td>
                 <td className="px-4 py-3">{r.stuck > 0 ? <span className="text-amber-300">{r.stuck}</span> : "—"}</td>
                 <td className="px-4 py-3 text-xs text-ink-400">{r.lastActive ? formatDate(r.lastActive) : "—"}</td>
+                <td className="px-4 py-3 text-right">
+                  {r.id !== session.userId && <AssignTaskButton employee={{ id: r.id, name: r.name }} variant="row" />}
+                </td>
               </tr>
             ))}
           </tbody>

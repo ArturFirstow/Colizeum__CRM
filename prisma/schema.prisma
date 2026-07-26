@@ -37,6 +37,7 @@ model User {
   uploadedVersions DocumentVersion[] @relation("VersionUploader")
   ownedAdvertisers Advertiser[]      @relation("AdvertiserOwner")
   ownedTasks       Task[]            @relation("TaskOwner")
+  assignedByMe     Task[]            @relation("TaskAssignedBy")
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -231,6 +232,8 @@ model Task {
   side         String    @default("Мы")
   // Чья задача (личный кабинет сотрудника); null = данные до разделения.
   ownerId      String?
+  // Кто поручил задачу (руководитель). null = обычная личная задача сотрудника.
+  assignedById String?
   dueDate      DateTime?
   notes        String?
   createdAt    DateTime  @default(now())
@@ -240,9 +243,11 @@ model Task {
   advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
   assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
   owner      User?       @relation("TaskOwner", fields: [ownerId], references: [id])
+  assignedBy User?       @relation("TaskAssignedBy", fields: [assignedById], references: [id])
 
   @@index([dealId])
   @@index([status])
+  @@index([assignedById])
 }
 
 // ── Медиаплан сделки ─────────────────────────────────────────────────────────

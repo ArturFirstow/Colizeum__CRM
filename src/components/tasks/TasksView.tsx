@@ -22,6 +22,7 @@ type Task = {
   deal: { id: string; title: string } | null;
   advertiser: { id: string; nameRu: string } | null;
   assignee: { id: string; name: string } | null;
+  assignedBy: { id: string; name: string } | null;
 };
 
 type Opt = { id: string; title: string };
@@ -208,8 +209,14 @@ function TaskCard({
         e.dataTransfer.setData("text/plain", task.id);
         onDragStart();
       }}
-      className="card card-hover cursor-grab p-3.5 active:cursor-grabbing"
+      className={`card card-hover cursor-grab p-3.5 active:cursor-grabbing ${task.assignedBy ? "ring-1 ring-brand/40" : ""}`}
     >
+      {/* Поручение от руководителя — видно с первого взгляда */}
+      {task.assignedBy && (
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-brand/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-200 ring-1 ring-inset ring-brand/30">
+          🎯 Поручение · {task.assignedBy.name.split(" ")[0]}
+        </div>
+      )}
       {/* Крупная пометка роли-исполнителя (ТЗ р.2, п.2): видно с первого взгляда, кто делает */}
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand-200 ring-1 ring-inset ring-brand/30">
