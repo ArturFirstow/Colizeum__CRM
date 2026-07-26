@@ -10,6 +10,7 @@ import { AgencyClients } from "@/components/advertisers/AgencyClients";
 import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
 import { Creatives } from "@/components/advertisers/Creatives";
 import { NewDealButton } from "@/components/deals/NewDealButton";
+import { AiSummaryButton } from "@/components/ai/AiButtons";
 import { formatMoney } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 
@@ -47,6 +48,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           <>
             {advertiser.archived && <span className="badge badge-muted">🗄 В архиве</span>}
             <TypeBadge type={advertiser.type} />
+            <AiSummaryButton advertiserId={advertiser.id} />
             <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
             {/* «Удаление» карточки = перемещение в Архив (v2, п.1.2), данные не теряются. */}

@@ -9,6 +9,7 @@ import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DeleteButton } from "@/components/ui/DeleteButton";
+import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import { hasWarningFlag } from "@/lib/ui-tokens";
 import {
@@ -58,6 +59,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         actions={
           <>
             <UrgencyBadge urgency={deal.urgency} />
+            <AiDraftDsButton dealId={deal.id} />
             <EditDealButton deal={deal} />
             <DeleteButton
               endpoint={`/api/deals/${deal.id}`}

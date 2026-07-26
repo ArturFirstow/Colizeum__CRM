@@ -39,6 +39,7 @@ model User {
   ownedTasks       Task[]            @relation("TaskOwner")
   assignedByMe     Task[]            @relation("TaskAssignedBy")
   chatMessages     ChatMessage[]     @relation("ChatAuthor")
+  channelMemberships ChannelMember[]
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -667,10 +668,27 @@ model Channel {
   name        String
   description String?
   isGeneral   Boolean  @default(false) // «Общий» — нельзя удалить
+  isDm        Boolean  @default(false) // личный диалог 1-на-1 (виден только участникам)
   createdById String?
   createdAt   DateTime @default(now())
 
   messages ChatMessage[]
+  members  ChannelMember[]
+}
+
+// Участник канала — используется для лички (isDm). Обычные каналы видны всем
+// без записей membership.
+model ChannelMember {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
 }
 
 model ChatMessage {

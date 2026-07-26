@@ -2,13 +2,27 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
+import { emitChatMessage } from "@/lib/chat-events";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+// Личку видят только её участники; обычные каналы — все сотрудники.
+async function assertAccess(channelId: string, userId: string) {
+  const channel = await prisma.channel.findUnique({ where: { id: channelId } });
+  if (!channel) return { ok: false as const, code: "not_found", message: "Канал не найден", status: 404 };
+  if (channel.isDm) {
+    const member = await prisma.channelMember.findUnique({ where: { channelId_userId: { channelId, userId } } });
+    if (!member) return { ok: false as const, code: "forbidden", message: "Нет доступа к диалогу", status: 403 };
+  }
+  return { ok: true as const, channel };
+}
+
 // Лента сообщений канала (от старых к новым).
 export async function GET(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    const access = await assertAccess(id, session.userId);
+    if (!access.ok) return fail(access.code, access.message, access.status);
     const messages = await prisma.chatMessage.findMany({
       where: { channelId: id },
       include: {
@@ -25,8 +39,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 export async function POST(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
-    const channel = await prisma.channel.findUnique({ where: { id } });
-    if (!channel) return fail("not_found", "Канал не найден", 404);
+    const access = await assertAccess(id, session.userId);
+    if (!access.ok) return fail(access.code, access.message, access.status);
 
     const form = await req.formData();
     const body = String(form.get("body") ?? "").trim();
@@ -61,6 +75,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       });
     }
 
+    emitChatMessage(id); // realtime: разбудить открытые чаты этого канала
     return ok({ id: message.id }, { status: 201 });
   });
 }

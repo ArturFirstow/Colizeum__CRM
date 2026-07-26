@@ -6,7 +6,8 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { formatDateTime, formatBytes, initials } from "@/lib/format";
 
-type Channel = { id: string; name: string; description: string | null; isGeneral: boolean };
+type Channel = { id: string; name: string; description: string | null; isGeneral: boolean; isDm: boolean };
+type UserLite = { id: string; name: string };
 type Attachment = { id: string; fileName: string; sizeBytes: number; contentType: string | null };
 type Msg = {
   id: string;
@@ -27,11 +28,13 @@ type DealOpt = { id: string; title: string };
 export function MessengerView({
   me,
   channels: initialChannels,
+  users,
   advertisers,
   deals,
 }: {
   me: Me;
   channels: Channel[];
+  users: UserLite[];
   advertisers: Adv[];
   deals: DealOpt[];
 }) {
@@ -40,6 +43,7 @@ export function MessengerView({
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [newChannelOpen, setNewChannelOpen] = useState(false);
+  const [dmOpen, setDmOpen] = useState(false);
 
   const active = channels.find((c) => c.id === activeId) ?? null;
 
@@ -55,13 +59,35 @@ export function MessengerView({
     }
   }, [activeId]);
 
-  // Поллинг ленты активного канала (~4 c) — «почти realtime».
+  // Актуальные значения для SSE-подписки (чтобы не переподключаться на каждый рефреш).
+  const activeIdRef = useRef(activeId);
+  const reloadRef = useRef(reload);
+  activeIdRef.current = activeId;
+  reloadRef.current = reload;
+
+  // Мгновенный realtime: сервер шлёт channelId нового сообщения — если открыт
+  // этот канал, подтягиваем ленту. Поллинг оставляем медленным запасным (10 c).
+  useEffect(() => {
+    const es = new EventSource("/api/chat/stream");
+    es.addEventListener("message", (e) => {
+      if ((e as MessageEvent).data === activeIdRef.current) reloadRef.current();
+    });
+    return () => es.close();
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     reload();
-    const t = setInterval(reload, 4000);
+    const t = setInterval(reload, 10000);
     return () => clearInterval(t);
   }, [reload]);
+
+  async function startDm(userId: string) {
+    const c = await apiFetch<{ id: string; name: string }>("/api/chat/dm", { method: "POST", body: JSON.stringify({ userId }) });
+    setChannels((cs) => (cs.some((x) => x.id === c.id) ? cs : [...cs, { id: c.id, name: c.name, description: null, isGeneral: false, isDm: true }]));
+    setActiveId(c.id);
+    setDmOpen(false);
+  }
 
   const pinned = useMemo(() => messages.filter((m) => m.pinned), [messages]);
 
@@ -91,27 +117,57 @@ export function MessengerView({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-        {/* Каналы */}
-        <aside className="card h-max p-3">
-          <div className="mb-2 flex items-center justify-between px-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Каналы</span>
-            <button className="btn-icon h-7 w-7 text-ink-300 hover:text-brand" title="Новый канал" onClick={() => setNewChannelOpen(true)}>
-              <Plus size={15} />
-            </button>
-          </div>
-          <div className="space-y-0.5">
-            {channels.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveId(c.id)}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
-                  c.id === activeId ? "bg-brand/15 font-semibold text-brand-200" : "text-ink-300 hover:bg-ink-800/60"
-                }`}
-              >
-                <span className="text-ink-500">#</span>
-                <span className="truncate">{c.name}</span>
+        {/* Каналы + личка */}
+        <aside className="card h-max space-y-4 p-3">
+          <div>
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Каналы</span>
+              <button className="btn-icon h-7 w-7 text-ink-300 hover:text-brand" title="Новый канал" onClick={() => setNewChannelOpen(true)}>
+                <Plus size={15} />
               </button>
-            ))}
+            </div>
+            <div className="space-y-0.5">
+              {channels.filter((c) => !c.isDm).map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveId(c.id)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
+                    c.id === activeId ? "bg-brand/15 font-semibold text-brand-200" : "text-ink-300 hover:bg-ink-800/60"
+                  }`}
+                >
+                  <span className="text-ink-500">#</span>
+                  <span className="truncate">{c.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">Личные</span>
+              <button className="btn-icon h-7 w-7 text-ink-300 hover:text-brand" title="Написать сотруднику" onClick={() => setDmOpen(true)}>
+                <Plus size={15} />
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {channels.filter((c) => c.isDm).map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveId(c.id)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
+                    c.id === activeId ? "bg-brand/15 font-semibold text-brand-200" : "text-ink-300 hover:bg-ink-800/60"
+                  }`}
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-700 text-[10px] font-bold text-ink-100">
+                    {initials(c.name)}
+                  </span>
+                  <span className="truncate">{c.name}</span>
+                </button>
+              ))}
+              {channels.filter((c) => c.isDm).length === 0 && (
+                <div className="px-3 py-1 text-xs text-ink-600">нет диалогов</div>
+              )}
+            </div>
           </div>
         </aside>
 
@@ -121,10 +177,10 @@ export function MessengerView({
             <>
               <header className="flex items-center justify-between gap-3 border-b border-ink-800 px-5 py-3">
                 <div className="min-w-0">
-                  <div className="font-semibold text-ink-50"># {active.name}</div>
-                  {active.description && <div className="truncate text-xs text-ink-500">{active.description}</div>}
+                  <div className="font-semibold text-ink-50">{active.isDm ? `💬 ${active.name}` : `# ${active.name}`}</div>
+                  <div className="truncate text-xs text-ink-500">{active.isDm ? "личный диалог" : active.description}</div>
                 </div>
-                {!active.isGeneral && (
+                {!active.isGeneral && !active.isDm && (
                   <button
                     className="btn-icon h-8 w-8 border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20"
                     title="Удалить канал"
@@ -166,6 +222,22 @@ export function MessengerView({
       </div>
 
       <NewChannelModal open={newChannelOpen} onClose={() => setNewChannelOpen(false)} onCreate={createChannel} />
+
+      <Modal open={dmOpen} onClose={() => setDmOpen(false)} title="Написать сотруднику">
+        <div className="space-y-1.5">
+          {users.length === 0 && <p className="text-sm text-ink-400">Других сотрудников пока нет.</p>}
+          {users.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => startDm(u.id)}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-ink-200 transition hover:bg-ink-800/60"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-700 text-xs font-bold text-ink-100">{initials(u.name)}</span>
+              {u.name}
+            </button>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }
