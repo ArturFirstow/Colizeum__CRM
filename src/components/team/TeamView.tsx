@@ -23,6 +23,7 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  const [edit, setEdit] = useState<Member | null>(null);
   const [f, setF] = useState({ name: "", email: "", password: "", role: "Manager" });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
@@ -76,9 +77,16 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
                 <div className="font-semibold text-ink-50">{m.name}</div>
                 <div className="mt-0.5 text-sm text-ink-400">{m.email}</div>
               </div>
-              <span className={`badge ${m.role === "Owner" || m.role === "Director" ? "badge-brand" : "badge-muted"}`}>
-                {m.role === "Owner" ? "Админ" : m.role === "Director" ? "Руководитель" : "Менеджер"}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={`badge ${m.role === "Owner" || m.role === "Director" ? "badge-brand" : "badge-muted"}`}>
+                  {m.role === "Owner" ? "Админ" : m.role === "Director" ? "Руководитель" : "Менеджер"}
+                </span>
+                {isAdmin && (
+                  <button className="btn-icon h-7 w-7 text-ink-400 hover:text-brand" title="Изменить" onClick={() => setEdit(m)}>
+                    ✎
+                  </button>
+                )}
+              </div>
             </div>
             <div className="mt-3 flex gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
               <span>☰ {m._count.ownedAdvertisers} клиентов</span>
@@ -131,6 +139,66 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
           </div>
         </form>
       </Modal>
+
+      {edit && <EditMemberModal member={edit} onClose={() => setEdit(null)} onSaved={() => router.refresh()} />}
     </div>
+  );
+}
+
+function EditMemberModal({
+  member,
+  onClose,
+  onSaved,
+}: {
+  member: Member;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(member.name);
+  const [role, setRole] = useState(member.role);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role }) });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Изменить сотрудника" subtitle={member.email}>
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label className="label">Имя</label>
+          <input className="input" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+        </div>
+        <div>
+          <label className="label">Роль</label>
+          <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="Manager">Менеджер — ведёт своих клиентов</option>
+            <option value="Director">Руководитель — видит весь отдел + бюджет</option>
+            <option value="Owner">Админ — управление доступами</option>
+          </select>
+        </div>
+        <FormError message={error} />
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Отмена
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "…" : "Сохранить"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -38,6 +38,9 @@ async function seedDoc(advertiserId: string, dealId: string, title: string, type
 
 async function main() {
   console.log("🌱 Очистка…");
+  await prisma.chatAttachment.deleteMany();
+  await prisma.chatMessage.deleteMany();
+  await prisma.channel.deleteMany();
   await prisma.arenaBooking.deleteMany();
   await prisma.tournamentBudgetLine.deleteMany();
   await prisma.tournament.deleteMany();
@@ -92,7 +95,7 @@ async function main() {
   });
   // Александр Иванушкин — директор Colizeum Agency (сводки по отделу + бюджет).
   await prisma.user.create({
-    data: { email: "a.ivanushkin@colizeum.ru", name: "Иванушкин Александр", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "a5RKwu2H5w") },
+    data: { email: "a.ivanushkin@colizeum.ru", name: "Александр", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "a5RKwu2H5w") },
   });
 
   // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────
@@ -437,6 +440,18 @@ async function main() {
       tournamentId: tournamentA.id, contractorId: contractorA.id, zone: "Вся арена",
       timeSlot: "Весь день", status: "Подтверждена",
       startDate: d("2026-07-26"), endDate: d("2026-07-27"),
+    },
+  });
+
+  // ── Мессенджер: канал «Общий» + приветственное закреплённое сообщение ──────
+  console.log("✉ Мессенджер (демо)…");
+  const general = await prisma.channel.create({
+    data: { name: "Общий", description: "Общий канал команды Colizeum Agency", isGeneral: true, createdById: owner.id },
+  });
+  await prisma.chatMessage.create({
+    data: {
+      channelId: general.id, authorId: owner.id, pinned: true,
+      body: "Добро пожаловать в командный чат! Здесь пересылаем сообщения и документы, важное — закрепляем 📌. Каналы можно заводить по клиентам и темам.",
     },
   });
 

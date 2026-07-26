@@ -27,6 +27,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
       { href: "/dashboard", label: "Сегодня", icon: "◆" },
       { href: "/tasks", label: "Задачи", icon: "✓" },
       { href: "/deals", label: "Сделки", icon: "⑂", track: "Ads" },
+      { href: "/messenger", label: "Мессенджер", icon: "✉" },
       { href: "/journal", label: "Журнал", icon: "✎" },
     ],
   },

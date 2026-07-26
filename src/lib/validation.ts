@@ -218,6 +218,12 @@ export const userCreateSchema = z.object({
   role: z.enum(["Manager", "Director"]).optional(),
 });
 
+// Правка сотрудника (переименование, смена роли; страница «Команда», только Owner).
+export const userUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Укажите имя").optional(),
+  role: z.enum(["Owner", "Manager", "Director"]).optional(),
+});
+
 // ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────
 const ym = z.string().regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ");
 
@@ -368,6 +374,16 @@ export const arenaBookingUpdateSchema = z.object({
   endDate: z.string().optional(),
   status: inSet(ARENA_BOOKING_STATUSES).optional(),
   notes: optionalString,
+});
+
+// ── Внутренний мессенджер ────────────────────────────────────────────────────
+export const channelCreateSchema = z.object({
+  name: z.string().trim().min(1, "Название канала"),
+  description: optionalString,
+});
+export const chatMessagePatchSchema = z.object({
+  pinned: z.boolean().optional(),
+  body: z.string().trim().min(1).optional(),
 });
 
 export const promoStandaloneCreateSchema = promoCreateSchema.extend({

@@ -38,6 +38,7 @@ model User {
   ownedAdvertisers Advertiser[]      @relation("AdvertiserOwner")
   ownedTasks       Task[]            @relation("TaskOwner")
   assignedByMe     Task[]            @relation("TaskAssignedBy")
+  chatMessages     ChatMessage[]     @relation("ChatAuthor")
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -654,4 +655,55 @@ model ArenaBooking {
 
   @@index([tournamentId])
   @@index([startDate])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ВНУТРЕННИЙ МЕССЕНДЖЕР (командный чат: каналы, сообщения, вложения, закрепы).
+// Цель — чтобы важное (сообщения/документы) не терялось во внешних чатах.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Channel {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isGeneral   Boolean  @default(false) // «Общий» — нельзя удалить
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  channelId String
+  authorId  String
+  body      String
+  pinned    Boolean  @default(false) // закреплённое сообщение (наверху канала)
+  // Привязка к сущности сервиса (денормализовано, без жёсткой связи):
+  contextType  String? // advertiser | deal
+  contextId    String?
+  contextLabel String? // имя клиента/сделки для отображения
+  createdAt DateTime  @default(now())
+  editedAt  DateTime?
+
+  channel     Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author      User             @relation("ChatAuthor", fields: [authorId], references: [id])
+  attachments ChatAttachment[]
+
+  @@index([channelId])
+  @@index([pinned])
+}
+
+model ChatAttachment {
+  id          String   @id @default(cuid())
+  messageId   String
+  storageKey  String
+  fileName    String
+  sizeBytes   Int      @default(0)
+  contentType String?
+  createdAt   DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
 }
