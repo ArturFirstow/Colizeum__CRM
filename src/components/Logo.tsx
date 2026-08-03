@@ -1,34 +1,33 @@
 // Логотип Colizeum Agency.
-// Фирменный знак по брендбуку: жёлтый круг в толстом тёмном контуре,
-// широкая тёмная маска-полоса с глазами X и O, снизу по центру полосы —
-// жёлтый вырез-«нос» (пик вверх).
+// Фирменный знак по брендбуку: жёлтый круг-«маска» с глазами X и O.
+// «Нос» — жёлтый вырез-пик снизу вверх в тёмную полосу (не тёмный треугольник вниз).
 
 export function XoMark({ className = "h-9 w-9" }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
       <defs>
         <clipPath id="xo-face">
-          <circle cx="24" cy="24" r="21" />
+          <circle cx="24" cy="24" r="22.5" />
         </clipPath>
       </defs>
 
       {/* жёлтое «лицо» */}
-      <circle cx="24" cy="24" r="21" fill="#FCDF3B" />
+      <circle cx="24" cy="24" r="22.5" fill="#FCDF3B" stroke="#141414" strokeWidth="1.4" />
 
-      {/* маска-полоса во всю ширину; жёлтый пик-«нос» вырезан из её нижнего края */}
+      {/* широкая тёмная маска-полоса; по центру нижнего края — жёлтый вырез-пик вверх */}
       <g clipPath="url(#xo-face)">
-        <path d="M0 16.4 H48 V31.6 H27 L24 28.5 L21 31.6 H0 Z" fill="#161616" />
+        <path d="M0 14.6 H48 V30.8 H27 L24 27.9 L21 30.8 H0 Z" fill="#1A1A1A" />
       </g>
 
-      {/* толстый тёмный контур поверх, чтобы полоса уходила под него */}
-      <circle cx="24" cy="24" r="21" fill="none" stroke="#161616" strokeWidth="3.2" />
-
-      {/* левый глаз — X (чуть наклонён, как в знаке) */}
-      <g transform="rotate(8 15 24)">
-        <path d="M10.8 19.8 L19.2 28.2 M19.2 19.8 L10.8 28.2" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
-      </g>
-      {/* правый глаз — O */}
-      <circle cx="33.2" cy="24" r="3.9" fill="none" stroke="#FFFFFF" strokeWidth="3" />
+      {/* левый глаз — X (у левого края маски) */}
+      <path
+        d="M11 19.2 L18 26.2 M18 19.2 L11 26.2"
+        stroke="#FFFFFF"
+        strokeWidth="2.7"
+        strokeLinecap="round"
+      />
+      {/* правый глаз — O (правее центра, широкий зазор) */}
+      <circle cx="35" cy="22.7" r="5" fill="none" stroke="#FFFFFF" strokeWidth="2.7" />
     </svg>
   );
 }
