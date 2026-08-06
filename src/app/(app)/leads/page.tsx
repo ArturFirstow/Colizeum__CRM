@@ -24,7 +24,7 @@ export default async function LeadsPage() {
   return (
     <div>
       <PageHeader
-        title="Заявки с сайта"
+        title="Входящие с сайта"
         subtitle="Обращения из формы на colizeum-agency.ru. Общий поток отдела: возьмите заявку в работу, чтобы её не вели двое."
         icon="⚑"
       />

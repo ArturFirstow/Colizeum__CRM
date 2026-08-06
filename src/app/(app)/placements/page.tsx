@@ -21,8 +21,8 @@ export default async function PlacementsPage() {
   return (
     <div>
       <PageHeader
-        title="Календарь размещений"
-        subtitle="Бронирование слотов по неделям — тайминг-полосы (Gantt)"
+        title="Сетка размещений"
+        subtitle="Что и когда выходит: слоты по неделям"
         icon="▦"
       />
       <PlacementCalendar placements={placements} advertisers={advertisers} />

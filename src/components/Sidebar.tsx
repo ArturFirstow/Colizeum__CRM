@@ -54,8 +54,10 @@ export function Sidebar({
                 onClick={() => setOpen(false)}
                 className={`nav-link ${isActive(item.href) ? "nav-link-active" : ""}`}
               >
-                <span className="w-5 text-center text-base opacity-90">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="nav-icon w-5 text-center text-base opacity-90">{item.icon}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{item.label}</span>
+                </span>
               </Link>
             ))}
           </div>

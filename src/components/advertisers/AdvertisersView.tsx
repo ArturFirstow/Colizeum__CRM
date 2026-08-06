@@ -7,7 +7,6 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { TypeBadge } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
 import { ADVERTISER_TYPES } from "@/lib/enums";
-import { hasWarningFlag } from "@/lib/ui-tokens";
 
 type Advertiser = {
   id: string;
@@ -53,7 +52,7 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
             ☰
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-ink-50">Рекламодатели</h1>
+            <h1 className="text-2xl font-bold text-ink-50">Клиенты</h1>
             <p className="mt-0.5 text-sm text-ink-300">
               Карточка заводится при первом касании. Подрядчиков не вносим.
             </p>
@@ -98,7 +97,6 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-base font-bold text-ink-50">{a.nameRu}</span>
-                    {hasWarningFlag(a.notes) && <span title="На выверку">⚠️</span>}
                     {a.archived && <span className="badge badge-muted shrink-0">архив</span>}
                   </div>
                   {a.legalEntity && (

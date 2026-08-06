@@ -20,8 +20,8 @@ export default async function ContractorsPage() {
   return (
     <div>
       <PageHeader
-        title="Контрагенты"
-        subtitle="База заказчиков турниров — статусы от лида до проведённого"
+        title="Партнёры"
+        subtitle="Заказчики турниров — от первого касания до проведённого"
         icon="◈"
       />
       <ContractorsView contractors={contractors.map((c) => ({ ...c, createdAt: c.createdAt.toISOString(), updatedAt: c.updatedAt.toISOString() }))} />

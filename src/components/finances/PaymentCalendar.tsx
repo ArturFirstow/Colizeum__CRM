@@ -135,7 +135,7 @@ export function PaymentCalendar({
           <table className="w-full border-separate border-spacing-1 text-sm">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-ink-850 px-2 py-1 text-left text-xs font-medium uppercase tracking-wide text-ink-500">
+                <th className="sticky left-0 z-20 bg-ink-850 shadow-[10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-left text-xs font-medium uppercase tracking-wide text-ink-500">
                   Рекламодатель
                 </th>
                 {months.map((m) => (
@@ -143,7 +143,7 @@ export function PaymentCalendar({
                     {monthLabel(m)}
                   </th>
                 ))}
-                <th className="sticky right-0 z-10 bg-ink-850 px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">Итого</th>
+                <th className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">Итого</th>
               </tr>
             </thead>
             <tbody>
@@ -151,7 +151,7 @@ export function PaymentCalendar({
                 const rowTotal = payments.filter((p) => p.advertiserId === a.id).reduce((s, p) => s + p.amount, 0);
                 return (
                   <tr key={a.id}>
-                    <td className="sticky left-0 z-10 bg-ink-850 px-2 py-1 text-sm font-medium text-ink-100">
+                    <td className="sticky left-0 z-20 bg-ink-850 shadow-[10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-sm font-medium text-ink-100">
                       {a.nameRu}
                     </td>
                     {months.map((m) => {
@@ -210,14 +210,14 @@ export function PaymentCalendar({
                         </td>
                       );
                     })}
-                    <td className="sticky right-0 z-10 bg-ink-850 px-2 py-1 text-right text-sm font-semibold text-ink-100">
+                    <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-sm font-semibold text-ink-100">
                       {formatMoney(rowTotal)}
                     </td>
                   </tr>
                 );
               })}
               <tr>
-                <td className="sticky left-0 z-10 bg-ink-850 px-2 py-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+                <td className="sticky left-0 z-20 bg-ink-850 shadow-[10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-xs font-medium uppercase tracking-wide text-ink-500">
                   Итого
                 </td>
                 {colTotals.map((t, i) => (
@@ -225,7 +225,7 @@ export function PaymentCalendar({
                     {t > 0 ? compact(t) : ""}
                   </td>
                 ))}
-                <td className="sticky right-0 z-10 bg-ink-850 px-2 py-2 text-right text-sm font-bold text-brand">{formatMoney(grandTotal)}</td>
+                <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">{formatMoney(grandTotal)}</td>
               </tr>
             </tbody>
           </table>

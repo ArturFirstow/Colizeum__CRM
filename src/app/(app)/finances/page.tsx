@@ -49,7 +49,7 @@ export default async function FinancesPage() {
   return (
     <div>
       <PageHeader
-        title="Финансы"
+        title="Деньги"
         subtitle="Счёт → Платёж → УПД → Отчёт → Акт сверки"
         icon="₽"
       />

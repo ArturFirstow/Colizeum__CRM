@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { RuValidation } from "@/components/ui/RuValidation";
 
 export const metadata: Metadata = {
   title: "Colizeum Agency",
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <RuValidation />
+        {children}
+      </body>
     </html>
   );
 }

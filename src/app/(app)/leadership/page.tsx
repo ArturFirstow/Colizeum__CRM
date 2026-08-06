@@ -81,8 +81,8 @@ export default async function LeadershipPage() {
   return (
     <div>
       <PageHeader
-        title="Обзор отдела"
-        subtitle="Сводная и по-сотрудная картина по всей команде коллабораций"
+        title="Пульс отдела"
+        subtitle="Кто чем занят и как идут сделки по всей команде"
         icon="◎"
       />
 

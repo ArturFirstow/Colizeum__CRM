@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
-import { PageHeader, Field, UrgencyBadge, EmptyState, WarningFlag } from "@/components/ui/primitives";
+import { PageHeader, Field, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
 import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
@@ -11,7 +11,6 @@ import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
-import { hasWarningFlag } from "@/lib/ui-tokens";
 import {
   CLOSING_KINDS,
   CONTRACT_CONSTRUCTIONS,
@@ -356,11 +355,6 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 <Field label="Ответственный">{deal.assignee?.name}</Field>
               </div>
             </div>
-            {hasWarningFlag(deal.notes) && (
-              <div className="mt-4">
-                <WarningFlag />
-              </div>
-            )}
             {deal.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-ink-400">{deal.notes}</p>}
           </section>
 

@@ -37,8 +37,8 @@ export default async function BudgetPage({
   return (
     <div>
       <PageHeader
-        title="Бюджет отдела"
-        subtitle="Планируемые доходы и реестр согласования расходов — формулы как в рабочей таблице"
+        title="Деньги отдела"
+        subtitle="Сколько можно потратить, что ждёт согласования и что придёт в этом месяце"
         icon="₽"
       />
       <BudgetView

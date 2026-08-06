@@ -69,7 +69,13 @@ export const ARENA_BOOKING_STATUSES = ["Ожидание", "Подтвержде
 export type ArenaBookingStatus = (typeof ARENA_BOOKING_STATUSES)[number];
 export const ARENA_TIME_SLOTS = ["Весь день", "Утро", "День", "Вечер"] as const;
 // Зона — свободное поле; по умолчанию «Вся арена». Реальные зоны впишет Артём.
-export const ARENA_ZONE_PRESETS = ["Вся арена"] as const;
+// Что именно занимает заказчик на площадке (Шелепиха).
+export const ARENA_ZONE_PRESETS = [
+  "Вся арена",
+  "Сцена с LED-экраном",
+  "Сцена с LED-экраном + комнаты",
+] as const;
+export type ArenaZone = (typeof ARENA_ZONE_PRESETS)[number];
 
 export const ADVERTISER_TYPES = [
   "Рекламодатель",
@@ -118,14 +124,6 @@ export const URGENCIES = [
   "Разово",
 ] as const;
 export type Urgency = (typeof URGENCIES)[number];
-
-// 4 актуальных флага «на выверку» (v2, п.1.7). Ровно эти четыре.
-export const VERIFY_FLAGS = [
-  "КПП МТС (ПАО) разный в документах: 770901001 / 997750001 — сверять по документу.",
-  "Алабуга: канон суммы 9 955 200 ₽; в старых текстах опечатки 9 995 200 / 9 555 200 — проследить в финальном ДС.",
-  "Нумерация терминов в договорах иногда сбоит (два «1.3») — вычитывать.",
-  "Директория людей: две «Миланы», неоднозначный @izovsehsil13.",
-] as const;
 
 export const DOCUMENT_TYPES = [
   "Договор",

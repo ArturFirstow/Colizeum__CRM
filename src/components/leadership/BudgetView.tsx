@@ -2,25 +2,38 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, ChevronLeft, ChevronRight, Check, Wallet, Plus, ChevronDown } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { formatMoney } from "@/lib/format";
-import { INCOME_SOURCES, EXPENSE_CATEGORIES, EXPENSE_STATUSES, EXPENSE_PERIODICITY, PAY_FORMATS } from "@/lib/enums";
+import { INCOME_SOURCES, EXPENSE_CATEGORIES, EXPENSE_PERIODICITY, PAY_FORMATS } from "@/lib/enums";
 import {
-  netOfExpense, vatOfExpense, daysBetween, needsJustification, weekOfMonth, monthSummary,
+  netOfExpense, needsJustification, weekOfMonth, monthSummary,
   type ExpenseRow,
 } from "@/lib/dept-budget";
 
 type Income = { id: string; month: string; source: string; w1: number; w2: number; w3: number; w4: number };
 
-const MONTHS_RU = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const MONTHS_RU = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
 function monthLabel(ym: string) {
   const [y, m] = ym.split("-").map(Number);
   return `${MONTHS_RU[(m ?? 1) - 1]} ${y}`;
 }
+function shiftMonth(ym: string, delta: number) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// «Деньги отдела». Экран отвечает на три вопроса подряд, сверху вниз:
+// 1. Сколько можно потратить и сколько уже разобрано → карточка месяца.
+// 2. Что ждёт моего решения → блок согласования (кнопка прямо в строке).
+// 3. Куда уходят деньги и что приходит → простые списки.
+// Бухгалтерские детали (НДС, недели, акты) не мозолят глаза — они в строке
+// расхода и в разделе «Подробности» формы.
+// ─────────────────────────────────────────────────────────────────────────────
 export function BudgetView({
   month,
   months,
@@ -35,97 +48,236 @@ export function BudgetView({
   expenses: ExpenseRow[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<"income" | "expense">("expense");
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<ExpenseRow | null>(null);
+  const [addingIncome, setAddingIncome] = useState(false);
 
   const summary = useMemo(() => monthSummary(expenses), [expenses]);
   const incomeTotal = incomes.reduce((s, i) => s + i.w1 + i.w2 + i.w3 + i.w4, 0);
-  const balance = incomeTotal - summary.approvedTotal;
-  const budgetLeft = plannedBudget - summary.approvedTotal;
+  const waiting = expenses.filter((e) => e.status === "Не согласовано");
+  const settled = expenses.filter((e) => e.status !== "Не согласовано");
+  const refresh = () => router.refresh();
 
   function goMonth(m: string) {
     router.push(`/leadership/budget?month=${m}`);
   }
 
   return (
-    <div>
-      {/* Переключатель месяца + выгрузка */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-ink-400">Месяц:</label>
-          <input
-            type="month"
-            className="input h-9 w-40"
-            value={month}
-            onChange={(e) => goMonth(e.target.value)}
-          />
-          {months.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {months.slice(0, 6).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => goMonth(m)}
-                  className={`rounded-lg border px-2.5 py-1 text-xs transition ${
-                    m === month ? "border-brand/50 bg-brand/15 text-brand-200" : "border-ink-700 bg-ink-800/50 text-ink-300 hover:bg-ink-700"
-                  }`}
-                >
-                  {monthLabel(m)}
-                </button>
-              ))}
-            </div>
-          )}
+    <div className="space-y-8">
+      {/* Месяц: стрелками, как в календаре */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1 rounded-xl border border-ink-700 bg-ink-900/60 p-1">
+          <button className="btn-icon h-8 w-8 border-0 bg-transparent" onClick={() => goMonth(shiftMonth(month, -1))} title="Предыдущий месяц">
+            <ChevronLeft size={16} />
+          </button>
+          <span className="min-w-[9.5rem] text-center text-sm font-semibold capitalize text-ink-50">{monthLabel(month)}</span>
+          <button className="btn-icon h-8 w-8 border-0 bg-transparent" onClick={() => goMonth(shiftMonth(month, 1))} title="Следующий месяц">
+            <ChevronRight size={16} />
+          </button>
         </div>
-        <a href={`/api/dept/export?month=${month}`} className="btn btn-ghost btn-sm">
-          <Download size={14} /> Выгрузить в CSV
+        {months.length > 1 && (
+          <label className="flex items-center gap-2 text-sm text-ink-400">
+            Перейти к
+            <select className="input h-9 w-auto py-0 text-sm capitalize" value={month} onChange={(e) => goMonth(e.target.value)}>
+              {months.map((m) => (
+                <option key={m} value={m}>
+                  {monthLabel(m)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <a href={`/api/dept/export?month=${month}`} className="btn btn-ghost btn-sm ml-auto">
+          <Download size={14} /> Выгрузить в Excel
         </a>
       </div>
 
-      {/* Сводка месяца */}
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Доходы за месяц" value={incomeTotal} accent="text-emerald-300" />
-        <Kpi label="Согласованные расходы" value={summary.approvedTotal} accent="text-ink-50" />
-        <Kpi label="Сальдо (доходы − расходы)" value={balance} accent={balance >= 0 ? "text-emerald-300" : "text-red-300"} />
-        <BudgetKpi month={month} planned={plannedBudget} left={budgetLeft} onSaved={() => router.refresh()} />
-      </div>
+      {/* 1. Главная карточка: сколько осталось */}
+      <MonthMoneyCard
+        month={month}
+        planned={plannedBudget}
+        approved={summary.approvedTotal}
+        spent={summary.spentTotal}
+        income={incomeTotal}
+        vat={summary.vatTotal}
+        onSaved={refresh}
+      />
 
-      {/* Вкладки */}
-      <div className="mb-4 flex rounded-xl border border-ink-700 bg-ink-800/50 p-0.5">
-        <button
-          onClick={() => setTab("expense")}
-          className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition ${tab === "expense" ? "bg-brand text-ink-950" : "text-ink-300"}`}
-        >
-          Расходы ({expenses.length})
-        </button>
-        <button
-          onClick={() => setTab("income")}
-          className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition ${tab === "income" ? "bg-brand text-ink-950" : "text-ink-300"}`}
-        >
-          Доходы
-        </button>
-      </div>
-
-      {tab === "expense" ? (
-        <ExpensesTab month={month} expenses={expenses} summary={summary} onChanged={() => router.refresh()} />
-      ) : (
-        <IncomeTab month={month} incomes={incomes} total={incomeTotal} onChanged={() => router.refresh()} />
+      {/* 2. Что ждёт согласования */}
+      {waiting.length > 0 && (
+        <section>
+          <SectionTitle
+            title="Ждут вашего решения"
+            hint={`${waiting.length} ${plural(waiting.length, "расход", "расхода", "расходов")} на ${formatMoney(summary.notApprovedTotal)}`}
+            accent
+          />
+          <div className="stagger space-y-2">
+            {waiting.map((e) => (
+              <ExpenseLine key={e.id} expense={e} onEdit={() => setEditing(e)} onChanged={refresh} highlight />
+            ))}
+          </div>
+        </section>
       )}
+
+      {/* 3. Куда уходят деньги */}
+      <section>
+        <SectionTitle
+          title="Куда уходят деньги"
+          hint="Всё, что уже согласовано или оплачено в этом месяце"
+          action={
+            <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
+              <Plus size={14} /> Добавить расход
+            </button>
+          }
+        />
+        {settled.length === 0 ? (
+          <EmptyHint
+            text={waiting.length > 0 ? "Согласованных расходов пока нет." : `За ${monthLabel(month)} расходов ещё не заводили.`}
+            hint="Нажмите «Добавить расход» — нужно всего название, сумма и дата оплаты."
+          />
+        ) : (
+          <div className="stagger space-y-2">
+            {settled.map((e) => (
+              <ExpenseLine key={e.id} expense={e} onEdit={() => setEditing(e)} onChanged={refresh} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. Что приходит */}
+      <section>
+        <SectionTitle
+          title="Что приходит"
+          hint="План поступлений по неделям — сколько денег ждём"
+          action={
+            <button className="btn btn-ghost btn-sm" onClick={() => setAddingIncome(true)}>
+              <Plus size={14} /> Источник дохода
+            </button>
+          }
+        />
+        {incomes.length === 0 ? (
+          <EmptyHint
+            text="Источники дохода не заведены."
+            hint="Добавьте источник (например «Реклама») и впишите ожидаемые суммы по неделям."
+          />
+        ) : (
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead>
+                <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
+                  <th className="px-4 py-2.5 font-medium">Откуда деньги</th>
+                  <th className="px-3 py-2.5 text-right font-medium">1 неделя</th>
+                  <th className="px-3 py-2.5 text-right font-medium">2 неделя</th>
+                  <th className="px-3 py-2.5 text-right font-medium">3 неделя</th>
+                  <th className="px-3 py-2.5 text-right font-medium">4 неделя</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Всего</th>
+                  <th className="px-3 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-800">
+                {incomes.map((i) => (
+                  <IncomeRow key={i.id} income={i} onChanged={refresh} />
+                ))}
+                <tr className="bg-ink-900/40 font-semibold">
+                  <td className="px-4 py-2.5 text-ink-200">Итого ждём</td>
+                  {(["w1", "w2", "w3", "w4"] as const).map((w) => (
+                    <td key={w} className="px-3 py-2.5 text-right text-ink-400">
+                      {formatMoney(incomes.reduce((s, i) => s + i[w], 0))}
+                    </td>
+                  ))}
+                  <td className="px-4 py-2.5 text-right text-brand">{formatMoney(incomeTotal)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="border-t border-ink-800 px-4 py-2.5 text-xs text-ink-500">
+              Суммы правятся прямо в таблице — кликните по числу и введите новое.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {(adding || editing) && (
+        <ExpenseModal
+          month={month}
+          expense={editing}
+          onClose={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
+          onSaved={refresh}
+        />
+      )}
+      {addingIncome && <IncomeModal month={month} onClose={() => setAddingIncome(false)} onSaved={refresh} />}
     </div>
   );
 }
 
-function Kpi({ label, value, accent }: { label: string; value: number; accent: string }) {
+function plural(n: number, one: string, few: string, many: string) {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+function SectionTitle({
+  title,
+  hint,
+  action,
+  accent,
+}: {
+  title: string;
+  hint?: string;
+  action?: React.ReactNode;
+  accent?: boolean;
+}) {
   return (
-    <div className="card p-4">
-      <div className="text-xs uppercase tracking-wide text-ink-400">{label}</div>
-      <div className={`mt-1.5 font-display text-xl font-semibold ${accent}`}>{formatMoney(value)}</div>
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 className={`font-display text-lg font-semibold uppercase tracking-wide ${accent ? "text-brand" : "text-ink-50"}`}>
+          {title}
+        </h2>
+        {hint && <p className="mt-0.5 text-sm text-ink-400">{hint}</p>}
+      </div>
+      {action}
     </div>
   );
 }
 
-// Планируемый бюджет — редактируется инлайн.
-function BudgetKpi({ month, planned, left, onSaved }: { month: string; planned: number; left: number; onSaved: () => void }) {
+function EmptyHint({ text, hint }: { text: string; hint: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-ink-700 bg-ink-900/30 px-6 py-8 text-center">
+      <div className="text-sm text-ink-200">{text}</div>
+      <div className="mt-1 text-xs text-ink-500">{hint}</div>
+    </div>
+  );
+}
+
+// ── Карточка месяца: одна большая цифра + полоса ─────────────────────────────
+function MonthMoneyCard({
+  month,
+  planned,
+  approved,
+  spent,
+  income,
+  vat,
+  onSaved,
+}: {
+  month: string;
+  planned: number;
+  approved: number;
+  spent: number;
+  income: number;
+  vat: number;
+  onSaved: () => void;
+}) {
   const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(String(planned));
+  const [val, setVal] = useState(String(planned || ""));
   const [busy, setBusy] = useState(false);
+  const left = planned - approved;
+  const usedPct = planned > 0 ? Math.min(100, Math.round((approved / planned) * 100)) : 0;
+  const over = left < 0;
 
   async function save() {
     setBusy(true);
@@ -139,159 +291,176 @@ function BudgetKpi({ month, planned, left, onSaved }: { month: string; planned: 
   }
 
   return (
-    <div className="card !border-brand/25 p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wide text-ink-400">Планируемый бюджет</div>
-        <button className="text-ink-400 hover:text-brand" onClick={() => setEditing((v) => !v)} title="Изменить">
-          <Pencil size={13} />
-        </button>
-      </div>
-      {editing ? (
-        <div className="mt-1.5 flex gap-1">
-          <input className="input h-8 w-full" type="number" value={val} onChange={(e) => setVal(e.target.value)} autoFocus />
-          <button className="btn btn-primary btn-sm" disabled={busy} onClick={save}>ОК</button>
+    <div className="card relative overflow-hidden p-6">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/10 blur-3xl" />
+      <div className="relative">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+          <Wallet size={14} className="text-brand" /> Свободно в этом месяце
         </div>
-      ) : (
-        <>
-          <div className="mt-1.5 font-display text-xl font-semibold text-brand">{formatMoney(planned)}</div>
-          <div className={`text-xs ${left >= 0 ? "text-ink-500" : "text-red-300"}`}>
-            {left >= 0 ? `остаток ${formatMoney(left)}` : `перерасход ${formatMoney(-left)}`}
+
+        {planned > 0 ? (
+          <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-1">
+            <div className={`font-display text-4xl font-semibold ${over ? "text-red-300" : "text-brand"}`}>
+              {formatMoney(Math.abs(left))}
+            </div>
+            <div className="pb-1.5 text-sm text-ink-400">
+              {over ? "перерасход сверх плана" : "из плана"} <b className="text-ink-200">{formatMoney(planned)}</b>
+            </div>
           </div>
-        </>
-      )}
+        ) : (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <div className="font-display text-2xl font-semibold text-ink-200">План на месяц не задан</div>
+            {!editing && (
+              <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>
+                Задать план
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Полоса: сколько плана уже разобрано */}
+        {planned > 0 && (
+          <div className="mt-4">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-ink-800">
+              <div
+                className={`h-full rounded-full transition-[width] duration-700 ease-out ${over ? "bg-red-400/80" : "bg-brand"}`}
+                style={{ width: `${usedPct}%` }}
+              />
+            </div>
+            <div className="mt-1.5 text-xs text-ink-500">
+              Согласовано {formatMoney(approved)} — это {usedPct}% плана
+            </div>
+          </div>
+        )}
+
+        {/* Три спокойные подписи вместо россыпи плиток */}
+        <div className="mt-5 grid gap-4 border-t border-ink-800 pt-4 sm:grid-cols-3">
+          <Metric label="Ждём прихода" value={income} hint="план поступлений" />
+          <Metric label="Уже потрачено" value={spent} hint="по факту" />
+          <div>
+            <div className="text-xs uppercase tracking-wide text-ink-500">План на месяц</div>
+            {editing ? (
+              <div className="mt-1 flex gap-1.5">
+                <input
+                  className="input h-8 w-full text-sm"
+                  type="number"
+                  value={val}
+                  onChange={(e) => setVal(e.target.value)}
+                  placeholder="например 3000000"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && save()}
+                />
+                <button className="btn btn-primary btn-sm shrink-0" disabled={busy} onClick={save}>
+                  ОК
+                </button>
+              </div>
+            ) : (
+              <button
+                className="group mt-1 flex items-center gap-1.5 text-lg font-semibold text-ink-100 hover:text-brand"
+                onClick={() => setEditing(true)}
+              >
+                {planned > 0 ? formatMoney(planned) : "задать"}
+                <Pencil size={12} className="opacity-0 transition group-hover:opacity-100" />
+              </button>
+            )}
+            <div className="mt-0.5 text-[11px] text-ink-500">сколько отдел может потратить</div>
+          </div>
+        </div>
+
+        {vat > 0 && (
+          <div className="mt-3 text-xs text-ink-500">
+            В согласованных расходах НДС: <b className="text-ink-300">{formatMoney(vat)}</b>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// ── Реестр расходов ──────────────────────────────────────────────────────────
-function ExpensesTab({
-  month,
-  expenses,
-  summary,
-  onChanged,
-}: {
-  month: string;
-  expenses: ExpenseRow[];
-  summary: ReturnType<typeof monthSummary>;
-  onChanged: () => void;
-}) {
-  const [editing, setEditing] = useState<ExpenseRow | null>(null);
-  const [adding, setAdding] = useState(false);
-
+function Metric({ label, value, hint }: { label: string; value: number; hint: string }) {
   return (
     <div>
-      {/* Шапка-сводка месяца */}
-      <div className="mb-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-6">
-        <Sum label="Согласовано" value={summary.approvedTotal} />
-        <Sum label="— с НДС" value={summary.withVatTotal} />
-        <Sum label="— без НДС" value={summary.withoutVatTotal} />
-        <Sum label="НДС итого" value={summary.vatTotal} />
-        <Sum label="Не согласовано" value={summary.notApprovedTotal} warn />
-        <Sum label="Потрачено" value={summary.spentTotal} />
-      </div>
-      <div className="mb-4 grid grid-cols-4 gap-2">
-        {summary.weeks.map((w, i) => (
-          <div key={i} className="rounded-lg border border-ink-800 bg-ink-900/50 px-3 py-2 text-center">
-            <div className="text-[10px] uppercase text-ink-500">{i + 1} неделя</div>
-            <div className="text-sm font-semibold text-ink-100">{formatMoney(w)}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mb-3 flex justify-end">
-        <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>+ Расход</button>
-      </div>
-
-      {expenses.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-ink-700 py-10 text-center text-sm text-ink-400">
-          Расходов за {monthLabel(month)} нет. Добавьте первый — «+ Расход».
-        </div>
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
-            <thead>
-              <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
-                <th className="px-3 py-2 font-medium">Наименование</th>
-                <th className="px-3 py-2 font-medium">Статья</th>
-                <th className="px-3 py-2 text-right font-medium">Сумма</th>
-                <th className="px-3 py-2 text-right font-medium">Без НДС / НДС</th>
-                <th className="px-3 py-2 font-medium">Оплата → поставка</th>
-                <th className="px-3 py-2 font-medium">Нед.</th>
-                <th className="px-3 py-2 font-medium">Статус</th>
-                <th className="px-3 py-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-800">
-              {expenses.map((e) => {
-                const days = daysBetween(e.payDate, e.deliveryDate);
-                const warn = needsJustification(e.payDate, e.deliveryDate) && !e.justification;
-                return (
-                  <tr key={e.id} className="hover:bg-ink-800/40">
-                    <td className="px-3 py-2">
-                      <div className="font-medium text-ink-100">{e.title}</div>
-                      {e.legalEntity && <div className="text-xs text-ink-500">{e.legalEntity}</div>}
-                    </td>
-                    <td className="px-3 py-2 text-ink-300">{e.category ?? "—"}</td>
-                    <td className="px-3 py-2 text-right font-mono text-ink-100">
-                      {formatMoney(e.amountTotal)}
-                      <div className="text-[10px] text-ink-500">{e.vatRate === 22 ? "с НДС 22%" : "без НДС"}</div>
-                    </td>
-                    <td className="px-3 py-2 text-right font-mono text-xs text-ink-300">
-                      {formatMoney(netOfExpense(e.amountTotal, e.vatRate))}
-                      <div className="text-ink-500">НДС {formatMoney(vatOfExpense(e.amountTotal, e.vatRate))}</div>
-                    </td>
-                    <td className="px-3 py-2 text-xs text-ink-400">
-                      {e.payDate ? new Date(e.payDate).toLocaleDateString("ru-RU") : "—"}
-                      {" → "}
-                      {e.deliveryDate ? new Date(e.deliveryDate).toLocaleDateString("ru-RU") : "—"}
-                      {days != null && (
-                        <span className={warn ? "text-amber-300" : "text-ink-500"}> ({days} дн.{warn ? " ⚠" : ""})</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center text-ink-300">{weekOfMonth(e.payDate) ?? "—"}</td>
-                    <td className="px-3 py-2">
-                      <span className={`badge ${e.status === "Не согласовано" ? "badge-muted" : "badge-brand"}`}>{e.status}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-end gap-1">
-                        <button className="btn-icon h-8 w-8 text-ink-300 hover:text-brand" onClick={() => setEditing(e)} title="Изменить">
-                          <Pencil size={13} />
-                        </button>
-                        <DeleteButton endpoint={`/api/dept/expenses/${e.id}`} what={`расход «${e.title}»`} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {(adding || editing) && (
-        <ExpenseModal
-          month={month}
-          expense={editing}
-          onClose={() => {
-            setAdding(false);
-            setEditing(null);
-          }}
-          onSaved={onChanged}
-        />
-      )}
+      <div className="text-xs uppercase tracking-wide text-ink-500">{label}</div>
+      <div className="mt-1 text-lg font-semibold text-ink-100">{formatMoney(value)}</div>
+      <div className="mt-0.5 text-[11px] text-ink-500">{hint}</div>
     </div>
   );
 }
 
-function Sum({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+// ── Строка расхода: читается как предложение, действия под рукой ─────────────
+function ExpenseLine({
+  expense: e,
+  onEdit,
+  onChanged,
+  highlight,
+}: {
+  expense: ExpenseRow;
+  onEdit: () => void;
+  onChanged: () => void;
+  highlight?: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const week = weekOfMonth(e.payDate);
+
+  async function setStatus(status: string) {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/dept/expenses/${e.id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="rounded-lg border border-ink-800 bg-ink-900/50 px-3 py-2">
-      <div className="text-[10px] uppercase text-ink-500">{label}</div>
-      <div className={`text-sm font-semibold ${warn && value > 0 ? "text-amber-300" : "text-ink-100"}`}>{formatMoney(value)}</div>
+    <div
+      className={`card card-hover group flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 ${
+        highlight ? "!border-brand/35 !bg-brand/[0.05]" : ""
+      } ${busy ? "opacity-50" : ""}`}
+    >
+      <div className="min-w-[12rem] flex-1">
+        <div className="font-medium text-ink-50">{e.title}</div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-500">
+          {e.category && <span>{e.category}</span>}
+          {e.legalEntity && <span>· {e.legalEntity}</span>}
+          {e.payDate && (
+            <span>
+              · оплата {new Date(e.payDate).toLocaleDateString("ru-RU")}
+              {week ? ` (${week}-я неделя)` : ""}
+            </span>
+          )}
+          {e.status === "Оплачено" && <span className="text-emerald-400">· оплачено</span>}
+        </div>
+      </div>
+
+      <div className="text-right">
+        <div className="font-display text-lg font-semibold text-ink-50">{formatMoney(e.amountTotal)}</div>
+        <div className="text-[11px] text-ink-500">
+          {e.vatRate === 22 ? `в т.ч. НДС · без НДС ${formatMoney(netOfExpense(e.amountTotal, e.vatRate))}` : "без НДС"}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        {e.status === "Не согласовано" && (
+          <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => setStatus("Согласовано")}>
+            <Check size={14} /> Согласовать
+          </button>
+        )}
+        {e.status === "Согласовано" && (
+          <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setStatus("Оплачено")} title="Отметить, что деньги ушли">
+            Оплачено
+          </button>
+        )}
+        <button className="btn-icon h-8 w-8 text-ink-400 hover:text-brand" onClick={onEdit} title="Изменить">
+          <Pencil size={13} />
+        </button>
+        <DeleteButton endpoint={`/api/dept/expenses/${e.id}`} what={`расход «${e.title}»`} />
+      </div>
     </div>
   );
 }
 
+// ── Форма расхода: главное сразу, бухгалтерия — по кнопке ────────────────────
 function ExpenseModal({
   month,
   expense,
@@ -321,8 +490,9 @@ function ExpenseModal({
     actClosedDate: dateVal(expense?.actClosedDate ?? null),
     justification: expense?.justification ?? "",
     description: expense?.description ?? "",
-    status: expense?.status ?? EXPENSE_STATUSES[0],
+    status: expense?.status ?? "Не согласовано",
   });
+  const [details, setDetails] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -330,7 +500,6 @@ function ExpenseModal({
     setF((s) => ({ ...s, [k]: v }));
   }
 
-  // Живой пересчёт для подсказки в форме.
   const amount = Number(f.amountTotal) || 0;
   const vatRate = Number(f.vatRate);
   const net = netOfExpense(amount, vatRate);
@@ -340,7 +509,8 @@ function ExpenseModal({
     e.preventDefault();
     setError(null);
     if (warnJust && !f.justification.trim()) {
-      setError("Оплата и поставка расходятся больше чем на 2 недели — заполните «Обоснование».");
+      setDetails(true);
+      setError("Оплата и поставка расходятся больше чем на 2 недели — напишите в «Подробностях», почему так.");
       return;
     }
     setSaving(true);
@@ -381,94 +551,190 @@ function ExpenseModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={expense ? "Изменить расход" : "Новый расход"} size="lg">
-      <form onSubmit={submit} className="space-y-4">
+    <Modal
+      open
+      onClose={onClose}
+      title={expense ? "Изменить расход" : "Новый расход"}
+      subtitle="Заполните четыре поля сверху — этого достаточно. Остальное можно добавить позже."
+      size="lg"
+    >
+      <form onSubmit={submit} className="space-y-5">
         <div>
-          <label className="label">Наименование *</label>
-          <input className="input" value={f.title} onChange={(e) => set("title", e.target.value)} required autoFocus />
+          <label className="label">За что платим *</label>
+          <input
+            className="input"
+            value={f.title}
+            onChange={(e) => set("title", e.target.value)}
+            placeholder="Например: печать баннеров для турнира"
+            required
+            autoFocus
+          />
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Статья</label>
+            <label className="label">Сколько, ₽ *</label>
+            <input
+              className="input"
+              type="number"
+              value={f.amountTotal}
+              onChange={(e) => set("amountTotal", e.target.value)}
+              placeholder="45000"
+              required
+            />
+            <p className="mt-1 text-xs text-ink-500">Полная сумма к оплате, как в счёте.</p>
+          </div>
+          <div>
+            <label className="label">Когда платим</label>
+            <input className="input" type="date" value={f.payDate} onChange={(e) => set("payDate", e.target.value)} />
+            <p className="mt-1 text-xs text-ink-500">Дата списания — по ней расход попадёт в нужную неделю.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Статья расхода</label>
             <select className="input" value={f.category} onChange={(e) => set("category", e.target.value)}>
-              {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {EXPENSE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label className="label">Юр.лицо</label>
-            <input className="input" value={f.legalEntity} onChange={(e) => set("legalEntity", e.target.value)} placeholder="ИП … / уточняется" />
-          </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <label className="label">Сумма ИТОГО ₽ *</label>
-            <input className="input" type="number" value={f.amountTotal} onChange={(e) => set("amountTotal", e.target.value)} required />
-          </div>
-          <div>
-            <label className="label">НДС</label>
+            <label className="label">Сумма с НДС?</label>
             <select className="input" value={f.vatRate} onChange={(e) => set("vatRate", e.target.value)}>
-              <option value="0">Нет</option>
-              <option value="22">22 %</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Периодичность</label>
-            <select className="input" value={f.periodicity} onChange={(e) => set("periodicity", e.target.value)}>
-              {EXPENSE_PERIODICITY.map((p) => <option key={p} value={p}>{p}</option>)}
+              <option value="0">Без НДС</option>
+              <option value="22">В сумме есть НДС 22 %</option>
             </select>
           </div>
         </div>
+
         {amount > 0 && (
-          <div className="rounded-lg bg-ink-900/60 px-3 py-2 text-xs text-ink-400">
-            Без НДС ≈ <b className="text-ink-200">{formatMoney(net)}</b> · НДС {formatMoney(amount - net)}
+          <div className="rounded-xl border border-ink-800 bg-ink-900/60 px-4 py-2.5 text-sm text-ink-300">
+            {vatRate === 22 ? (
+              <>
+                Без НДС <b className="text-ink-100">{formatMoney(net)}</b> · НДС{" "}
+                <b className="text-ink-100">{formatMoney(amount - net)}</b>
+              </>
+            ) : (
+              <>
+                К оплате <b className="text-ink-100">{formatMoney(amount)}</b>, НДС нет
+              </>
+            )}
           </div>
         )}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <label className="label">Формат оплаты</label>
-            <select className="input" value={f.payFormat} onChange={(e) => set("payFormat", e.target.value)}>
-              {PAY_FORMATS.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Дата оплаты</label>
-            <input className="input" type="date" value={f.payDate} onChange={(e) => set("payDate", e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Дата поставки</label>
-            <input className="input" type="date" value={f.deliveryDate} onChange={(e) => set("deliveryDate", e.target.value)} />
-          </div>
+
+        {/* Подробности — не нужны, чтобы завести расход */}
+        <div className="rounded-xl border border-ink-800">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-ink-200 hover:text-brand"
+            onClick={() => setDetails((v) => !v)}
+          >
+            <span>Подробности для бухгалтерии {warnJust && !f.justification && <span className="text-amber-300">· нужно обоснование</span>}</span>
+            <ChevronDown size={16} className={`transition-transform duration-200 ${details ? "rotate-180" : ""}`} />
+          </button>
+          {details && (
+            <div className="space-y-4 border-t border-ink-800 px-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Кому платим (юр.лицо)</label>
+                  <input
+                    className="input"
+                    value={f.legalEntity}
+                    onChange={(e) => set("legalEntity", e.target.value)}
+                    placeholder="ИП Иванов / ООО «Ромашка»"
+                  />
+                </div>
+                <div>
+                  <label className="label">Как платим</label>
+                  <select className="input" value={f.payFormat} onChange={(e) => set("payFormat", e.target.value)}>
+                    {PAY_FORMATS.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Это разовый расход или повторяющийся</label>
+                  <select className="input" value={f.periodicity} onChange={(e) => set("periodicity", e.target.value)}>
+                    {EXPENSE_PERIODICITY.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Когда получим товар/услугу</label>
+                  <input className="input" type="date" value={f.deliveryDate} onChange={(e) => set("deliveryDate", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="label">
+                  Почему платим заранее{" "}
+                  {warnJust && <span className="text-amber-300">— обязательно: между оплатой и поставкой больше 2 недель</span>}
+                </label>
+                <textarea
+                  className="input"
+                  value={f.justification}
+                  onChange={(e) => set("justification", e.target.value)}
+                  placeholder="Например: предоплата фиксирует цену до повышения"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Потрачено по факту, ₽</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={f.spentTotal}
+                    onChange={(e) => set("spentTotal", e.target.value)}
+                    placeholder="если отличается от суммы"
+                  />
+                </div>
+                <div>
+                  <label className="label">Дата закрытия актом</label>
+                  <input className="input" type="date" value={f.actClosedDate} onChange={(e) => set("actClosedDate", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="label">Комментарий</label>
+                <textarea
+                  className="input"
+                  value={f.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  placeholder="Всё, что важно помнить про этот расход"
+                />
+              </div>
+            </div>
+          )}
         </div>
-        <div>
-          <label className="label">
-            Обоснование {warnJust && <span className="text-amber-300">(обязательно — разрыв дат &gt; 2 недель)</span>}
-          </label>
-          <textarea className="input" value={f.justification} onChange={(e) => set("justification", e.target.value)} />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <label className="label">Статус</label>
-            <select className="input" value={f.status} onChange={(e) => set("status", e.target.value)}>
-              {EXPENSE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Потрачено (факт) ₽</label>
-            <input className="input" type="number" value={f.spentTotal} onChange={(e) => set("spentTotal", e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Дата закрытия актом</label>
-            <input className="input" type="date" value={f.actClosedDate} onChange={(e) => set("actClosedDate", e.target.value)} />
-          </div>
-        </div>
-        <div>
-          <label className="label">Описание</label>
-          <textarea className="input" value={f.description} onChange={(e) => set("description", e.target.value)} />
-        </div>
+
         <FormError message={error} />
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Отмена</button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "…" : "Сохранить"}</button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm text-ink-300">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand"
+              checked={f.status !== "Не согласовано"}
+              onChange={(e) => set("status", e.target.checked ? "Согласовано" : "Не согласовано")}
+            />
+            Сразу согласовать
+          </label>
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Отмена
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? "Сохраняю…" : "Сохранить"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>
@@ -476,65 +742,6 @@ function ExpenseModal({
 }
 
 // ── Доходы ───────────────────────────────────────────────────────────────────
-function IncomeTab({
-  month,
-  incomes,
-  total,
-  onChanged,
-}: {
-  month: string;
-  incomes: Income[];
-  total: number;
-  onChanged: () => void;
-}) {
-  const [adding, setAdding] = useState(false);
-
-  return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm text-ink-400">Планируемые доходы за {monthLabel(month)}, по неделям</div>
-        <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>+ Источник</button>
-      </div>
-      {incomes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-ink-700 py-10 text-center text-sm text-ink-400">
-          Доходов за этот месяц нет. Добавьте источник — «+ Источник».
-        </div>
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
-                <th className="px-4 py-2 font-medium">Источник</th>
-                <th className="px-3 py-2 text-right font-medium">1 нед</th>
-                <th className="px-3 py-2 text-right font-medium">2 нед</th>
-                <th className="px-3 py-2 text-right font-medium">3 нед</th>
-                <th className="px-3 py-2 text-right font-medium">4 нед</th>
-                <th className="px-4 py-2 text-right font-medium">Итого</th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-800">
-              {incomes.map((i) => (
-                <IncomeRow key={i.id} income={i} onChanged={onChanged} />
-              ))}
-              <tr className="bg-ink-900/40 font-semibold">
-                <td className="px-4 py-2 text-ink-200">Планируемые доходы</td>
-                <td className="px-3 py-2 text-right text-ink-400">{formatMoney(incomes.reduce((s, i) => s + i.w1, 0))}</td>
-                <td className="px-3 py-2 text-right text-ink-400">{formatMoney(incomes.reduce((s, i) => s + i.w2, 0))}</td>
-                <td className="px-3 py-2 text-right text-ink-400">{formatMoney(incomes.reduce((s, i) => s + i.w3, 0))}</td>
-                <td className="px-3 py-2 text-right text-ink-400">{formatMoney(incomes.reduce((s, i) => s + i.w4, 0))}</td>
-                <td className="px-4 py-2 text-right text-brand">{formatMoney(total)}</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-      {adding && <IncomeModal month={month} onClose={() => setAdding(false)} onSaved={onChanged} />}
-    </div>
-  );
-}
-
 function IncomeRow({ income, onChanged }: { income: Income; onChanged: () => void }) {
   const total = income.w1 + income.w2 + income.w3 + income.w4;
   async function patchWeek(field: "w1" | "w2" | "w3" | "w4", value: number) {
@@ -542,14 +749,15 @@ function IncomeRow({ income, onChanged }: { income: Income; onChanged: () => voi
     onChanged();
   }
   return (
-    <tr className="hover:bg-ink-800/40">
+    <tr className="transition hover:bg-ink-800/40">
       <td className="px-4 py-2 font-medium text-ink-100">{income.source}</td>
       {(["w1", "w2", "w3", "w4"] as const).map((w) => (
         <td key={w} className="px-3 py-1.5 text-right">
           <input
             className="input h-8 w-24 text-right font-mono text-xs"
             type="number"
-            defaultValue={income[w]}
+            defaultValue={income[w] || ""}
+            placeholder="0"
             onBlur={(e) => {
               const v = Number(e.target.value) || 0;
               if (v !== income[w]) patchWeek(w, v);
@@ -589,23 +797,37 @@ function IncomeModal({ month, onClose, onSaved }: { month: string; onClose: () =
   }
 
   return (
-    <Modal open onClose={onClose} title="Источник дохода" size="sm">
+    <Modal open onClose={onClose} title="Откуда ждём деньги" size="sm">
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="label">Источник</label>
+          <label className="label">Источник дохода</label>
           <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
-            {INCOME_SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
-            <option value="__custom__">➕ Свой источник…</option>
+            {INCOME_SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+            <option value="__custom__">Свой вариант…</option>
           </select>
           {source === "__custom__" && (
-            <input className="input mt-2" placeholder="Название источника" value={custom} onChange={(e) => setCustom(e.target.value)} autoFocus />
+            <input
+              className="input mt-2"
+              placeholder="Название источника"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              autoFocus
+            />
           )}
         </div>
-        <p className="text-xs text-ink-500">Суммы по неделям впишете в таблице после добавления.</p>
+        <p className="text-xs text-ink-500">Суммы по неделям впишете в таблице — сразу после добавления.</p>
         <FormError message={error} />
         <div className="flex justify-end gap-2">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Отмена</button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "…" : "Добавить"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Отмена
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "…" : "Добавить"}
+          </button>
         </div>
       </form>
     </Modal>

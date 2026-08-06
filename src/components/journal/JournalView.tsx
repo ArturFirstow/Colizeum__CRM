@@ -98,8 +98,8 @@ export function JournalView({ entries }: { entries: Entry[] }) {
             ✎
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-ink-50">Дневной журнал</h1>
-            <p className="mt-0.5 text-sm text-ink-300">EOD-сводки и транскрипты встреч</p>
+            <h1 className="text-2xl font-bold text-ink-50">Дневник</h1>
+            <p className="mt-0.5 text-sm text-ink-300">Итоги дня и заметки со встреч — чтобы ничего не забылось</p>
           </div>
         </div>
         <WeeklyAiSummary />

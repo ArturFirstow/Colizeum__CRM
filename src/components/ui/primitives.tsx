@@ -62,12 +62,26 @@ export function EmptyState({
   title,
   hint,
   action,
+  compact,
 }: {
   icon?: string;
   title: string;
   hint?: string;
   action?: React.ReactNode;
+  // compact — когда «пусто» это хорошая новость (нет блокеров, нет долгов):
+  // такой блок не должен занимать пол-экрана.
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-dashed border-ink-700 bg-ink-900/40 px-4 py-3">
+        <span className="text-lg opacity-80">{icon}</span>
+        <span className="text-sm text-ink-200">{title}</span>
+        {hint && <span className="text-xs text-ink-500">· {hint}</span>}
+        {action && <span className="ml-auto">{action}</span>}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-700 bg-ink-900/40 px-6 py-14 text-center">
       <div className="mb-3 text-4xl opacity-80">{icon}</div>
@@ -103,14 +117,6 @@ export function StatCard({
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
-export function WarningFlag({ text = "На выверку" }: { text?: string }) {
-  return (
-    <span className="badge bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30">
-      ⚠️ {text}
-    </span>
-  );
 }
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {

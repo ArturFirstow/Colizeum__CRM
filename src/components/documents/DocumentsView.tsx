@@ -129,12 +129,14 @@ export function DocumentsView({
                 </span>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3">
                 {sections.map((sec) => (
-                  <div key={sec.key} className="surface p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="badge badge-brand">{sec.key}</span>
-                      <span className="text-xs text-ink-500">{sec.docs.length}</span>
+                  <div key={sec.key} className={sec.docs.length === 0 ? "surface px-4 py-2.5" : "surface p-4"}>
+                    <div className={`flex items-center gap-2 ${sec.docs.length === 0 ? "" : "mb-3"}`}>
+                      <span className={`badge ${sec.docs.length === 0 ? "badge-muted" : "badge-brand"}`}>{sec.key}</span>
+                      <span className="text-xs text-ink-500">
+                        {sec.docs.length === 0 ? "пока пусто" : sec.docs.length}
+                      </span>
                       <button
                         onClick={() => openNewDoc(sec.key)}
                         className="ml-auto text-xs text-ink-400 transition hover:text-brand"
@@ -143,8 +145,7 @@ export function DocumentsView({
                       </button>
                     </div>
                     {sec.docs.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-ink-800 py-4 text-center text-xs text-ink-600">
-                        пусто
+                      <div className="hidden">
                       </div>
                     ) : (
                       <div className="space-y-2">

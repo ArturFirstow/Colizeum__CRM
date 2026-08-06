@@ -27,8 +27,8 @@ export default async function ArenaPage() {
   return (
     <div>
       <PageHeader
-        title="Бронь арены"
-        subtitle="Colizeum Шелепиха — календарь дат под заказчиков"
+        title="Арена"
+        subtitle="Шелепиха: кто и когда занимает площадку"
         icon="▦"
       />
       <ArenaCalendar

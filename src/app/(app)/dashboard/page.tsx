@@ -5,7 +5,6 @@ import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
-import { VERIFY_FLAGS } from "@/lib/enums";
 import { requireSession } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
 import { netOfVat } from "@/lib/format";
@@ -132,34 +131,13 @@ export default async function DashboardPage() {
         <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
 
-      {/* На выверку — только в кабинете владельца данных: флаги касаются его
-          клиентов и не должны светиться в чужих ЛК (ТЗ р.2, п.1). */}
-      {session.role === "Owner" && (
-        <section className="mb-8">
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
-            <span>⚠️</span> На выверку
-          </h2>
-          <div className="grid gap-2 md:grid-cols-2">
-            {VERIFY_FLAGS.map((flag) => (
-              <div
-                key={flag}
-                className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-sm text-amber-100"
-              >
-                <span className="shrink-0">⚠️</span>
-                <span>{flag}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Решения, которые ждут */}
       <section className="mb-8">
         <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
           <span className="text-brand">◆</span> Решения, которые ждут вас
         </h2>
         {decisions.length === 0 ? (
-          <EmptyState icon="✅" title="Нет ожидающих решений" hint="Всё под контролем — можно выдохнуть." />
+          <EmptyState compact icon="✅" title="Решать сейчас нечего" hint="всё под контролем" />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {decisions.map((d) => (
@@ -239,7 +217,7 @@ export default async function DashboardPage() {
           <div>
             <h2 className="mb-3 text-lg font-bold text-ink-50">Активные блокеры</h2>
             {blockers.length === 0 ? (
-              <EmptyState icon="🟢" title="Блокеров нет" />
+              <EmptyState compact icon="🟢" title="Блокеров нет" />
             ) : (
               <div className="space-y-2">
                 {blockers.slice(0, 5).map((d) => (

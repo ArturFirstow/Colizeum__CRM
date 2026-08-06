@@ -12,7 +12,6 @@ import { Creatives } from "@/components/advertisers/Creatives";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { AiSummaryButton } from "@/components/ai/AiButtons";
 import { formatMoney } from "@/lib/format";
-import { hasWarningFlag } from "@/lib/ui-tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -56,13 +55,6 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           </>
         }
       />
-
-      {hasWarningFlag(advertiser.notes) && (
-        <div className="mb-5 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          <span>⚠️</span>
-          <span>{advertiser.notes}</span>
-        </div>
-      )}
 
       {/* Фиксированный порядок блоков (v2, п.1.3): Информация и контекст → Документы → Креативы */}
       <div className="grid gap-6 lg:grid-cols-3">

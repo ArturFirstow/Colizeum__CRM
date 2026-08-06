@@ -23,7 +23,7 @@ export default async function TeamPage() {
     <div>
       <PageHeader
         title="Команда"
-        subtitle="Личные кабинеты сотрудников: у каждого — свои клиенты; база знаний и календарь размещений общие."
+        subtitle="У каждого свой кабинет и свои клиенты. Шпаргалки и сетка размещений — общие."
         icon="👥"
       />
       <TeamView members={members} isAdmin={session.role === "Owner"} />

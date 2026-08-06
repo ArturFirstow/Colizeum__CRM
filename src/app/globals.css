@@ -15,6 +15,7 @@
 @layer base {
   html {
     color-scheme: dark;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-ink-950 text-ink-100 antialiased;
@@ -53,7 +54,16 @@
 @layer components {
   /* Поверхности */
   .card {
-    @apply rounded-2xl border border-ink-700/70 bg-ink-850/80 shadow-card-dark backdrop-blur-sm;
+    @apply relative rounded-2xl border border-ink-700/70 shadow-card-dark backdrop-blur-sm;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 42%),
+      rgba(26, 26, 27, 0.82);
+  }
+  /* Тонкая световая кромка сверху — карточка «ловит свет», а не лежит плоско */
+  .card::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-2xl;
+    background: linear-gradient(90deg, transparent, rgba(252, 223, 59, 0.22), transparent);
   }
   /* «Кинетика»: карточки пружинят к курсору */
   .card-hover {
@@ -65,8 +75,13 @@
     @apply hover:border-ink-600 hover:bg-ink-800;
   }
   .card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.6);
+    transform: translateY(-3px);
+    box-shadow:
+      0 18px 40px -18px rgba(0, 0, 0, 0.75),
+      0 0 0 1px rgba(252, 223, 59, 0.14);
+  }
+  .card-hover:active {
+    transform: translateY(-1px) scale(0.995);
   }
   .surface {
     @apply rounded-xl border border-ink-700/60 bg-ink-900/60;
@@ -90,7 +105,24 @@
     transform: scale(0.96);
   }
   .btn-primary {
-    @apply bg-brand text-ink-950 hover:bg-brand-300 active:bg-brand-500 shadow-glow;
+    @apply relative overflow-hidden text-ink-950 shadow-glow;
+    background: linear-gradient(160deg, #ffe97c 0%, #fcdf3b 55%, #eacb25 100%);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow:
+      0 0 0 1px rgba(252, 223, 59, 0.5),
+      0 14px 38px -12px rgba(252, 223, 59, 0.45);
+  }
+  /* Блик пробегает по кнопке при наведении */
+  .btn-primary::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .btn-primary:hover:not(:disabled)::after {
+    transform: translateX(120%);
   }
   .btn-ghost {
     @apply border border-ink-700 bg-ink-800/60 text-ink-100 hover:bg-ink-700 hover:border-ink-600;
@@ -139,14 +171,31 @@
   /* Навигация в сайдбаре */
   .nav-link {
     @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-300
-      transition-all duration-150 hover:bg-ink-800 hover:text-ink-100;
+      hover:bg-ink-800 hover:text-ink-100;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nav-link:hover {
+    transform: translateX(2px);
   }
   .nav-link-active {
-    @apply bg-ink-800 text-brand;
+    @apply text-brand;
+    background: linear-gradient(90deg, rgba(252, 223, 59, 0.14), rgba(252, 223, 59, 0.03));
   }
   .nav-link-active::before {
     content: "";
-    @apply absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand;
+    @apply absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full bg-brand;
+    height: 1.25rem;
+    box-shadow: 0 0 12px 1px rgba(252, 223, 59, 0.55);
+    animation: nav-mark 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .nav-link .nav-icon {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nav-link:hover .nav-icon {
+    transform: scale(1.18);
   }
 
   .stat-chip {
@@ -233,9 +282,63 @@
     animation: none !important;
   }
   .card-hover,
-  .btn {
+  .btn,
+  .nav-link {
     transition: none !important;
   }
+  .stagger > *,
+  .animate-lift,
+  .pulse-brand,
+  .nav-link-active::before {
+    animation: none !important;
+  }
+  .btn-primary::after {
+    display: none;
+  }
+}
+
+
+/* Индикатор активного пункта меню «вырастает» */
+@keyframes nav-mark {
+  from { transform: translateY(-50%) scaleY(0.2); opacity: 0; }
+  to { transform: translateY(-50%) scaleY(1); opacity: 1; }
+}
+
+/* Список появляется каскадом: элементы подхватываются по очереди */
+.stagger > * {
+  animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.stagger > *:nth-child(6) { animation-delay: 0.22s; }
+.stagger > *:nth-child(7) { animation-delay: 0.26s; }
+.stagger > *:nth-child(8) { animation-delay: 0.3s; }
+.stagger > *:nth-child(n + 9) { animation-delay: 0.34s; }
+
+/* Шапка длинной таблицы не уезжает при прокрутке */
+.table-sticky thead th {
+  @apply sticky top-0 z-10 bg-ink-900/95 backdrop-blur;
+}
+
+/* Мягкое появление подсказок/поповеров */
+@keyframes lift-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-lift {
+  animation: lift-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Живой акцент на числах, которые только что изменились */
+@keyframes pulse-brand {
+  0% { box-shadow: 0 0 0 0 rgba(252, 223, 59, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(252, 223, 59, 0); }
+}
+.pulse-brand {
+  animation: pulse-brand 0.9s ease-out;
 }
 
 /* Таблицы контента (markdown из базы знаний) */

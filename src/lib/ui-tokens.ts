@@ -63,11 +63,6 @@ export const TASK_KIND_EMOJI: Record<string, string> = {
   Прочее: "•",
 };
 
-// Проверка «есть ли ⚠️» в тексте (для флагов на выверку, блупринт 16).
-export function hasWarningFlag(text?: string | null): boolean {
-  return !!text && text.includes("⚠️");
-}
-
 export function nextStages(stage: DealStage, all: readonly string[]): string[] {
   const idx = all.indexOf(stage);
   return all.slice(idx + 1) as string[];

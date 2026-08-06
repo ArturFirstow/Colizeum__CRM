@@ -349,13 +349,28 @@ function BookingModal({
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Зона арены</label>
-            <input className="input" list="zones" value={f.zone} onChange={(e) => set("zone", e.target.value)} placeholder="Вся арена" />
-            <datalist id="zones">
+            <label className="label">Что занимают</label>
+            <select
+              className="input"
+              value={ARENA_ZONE_PRESETS.includes(f.zone as (typeof ARENA_ZONE_PRESETS)[number]) ? f.zone : "__custom__"}
+              onChange={(e) => set("zone", e.target.value === "__custom__" ? "" : e.target.value)}
+            >
               {ARENA_ZONE_PRESETS.map((z) => (
-                <option key={z} value={z} />
+                <option key={z} value={z}>
+                  {z}
+                </option>
               ))}
-            </datalist>
+              <option value="__custom__">Другое — впишу сам…</option>
+            </select>
+            {!ARENA_ZONE_PRESETS.includes(f.zone as (typeof ARENA_ZONE_PRESETS)[number]) && (
+              <input
+                className="input mt-2"
+                value={f.zone}
+                onChange={(e) => set("zone", e.target.value)}
+                placeholder="Например: зона турнирных ПК"
+                autoFocus
+              />
+            )}
           </div>
           <div>
             <label className="label">Тайм-слот</label>

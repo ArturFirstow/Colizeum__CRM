@@ -28,7 +28,7 @@ export default async function OrdPage() {
   return (
     <div>
       <PageHeader
-        title="ОРД / маркировка"
+        title="Маркировка ОРД"
         subtitle="Реестр ЕРИД. Акты закрываются каждый месяц, посты живут до 1 месяца."
         icon="❖"
         actions={<NewOrdButton deals={dealOptions} />}
