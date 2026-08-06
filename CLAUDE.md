@@ -24,6 +24,8 @@
 - **Турнирный кабинет Артёма** (`track = "Tournaments"`, `/tournaments/*`): контрагенты (воронка статусов), турниры + смета (`TournamentBudgetLine`), бронь арены Шелепиха (`ArenaBooking`, помесячный календарь). Рекламные разделы у него скрыты (гейтинг по `track` в `nav.ts`/`Sidebar`).
 - **Поручения руководителя**: Director ставит задачу сотруднику (`Task.assignedById`, `/api/leadership/tasks`, кнопка «Поручить» в обзоре и на карточке сотрудника); у сотрудника — бейдж «🎯 Поручение» на доске задач.
 
+**Заявки с сайта** (`/leads`): поток обращений из формы на colizeum-agency.ru. Тянутся из рабочей Google-таблицы CSV-экспортом (`src/lib/services/leads-sync.ts`, разбор — `src/lib/leads-parse.ts`; ключи Google API не нужны, но таблице нужен доступ «по ссылке — Читатель»). Синк при открытии страницы (не чаще раза в 3 мин) + кнопка «Обновить» (`/api/leads/sync`). Дедуп по `requestid` формы (`Lead.externalId`). Статус/ответственный/заметка живут в CRM и синком не перетираются (`/api/leads/[id]`). Раздел общий для всех сотрудников (без гейтинга по `track`).
+
 **Мессенджер** (`/messenger`): каналы (Channel, «Общий» неудаляемый), сообщения (ChatMessage: закрепление, привязка к клиенту/сделке через денормализ. context), вложения (ChatAttachment через StorageProvider, ключи `chat/{channelId}/{messageId}/…`), поллинг ленты ~4с. Общий для всех сотрудников.
 **Команда** (`/team`): админ (Owner) создаёт доступы и правит имя/роль (PATCH `/api/users/[id]`).
 
@@ -80,6 +82,6 @@ npm run dev               # http://localhost:3000
 ## Карта кода
 
 - `src/lib/` — enums (стадии, разделы документов, слоты), prisma, auth, storage, validation, api, format, org, markdown, services (deal-stage, weekly-report).
-- `src/app/(app)/` — dashboard, deals, tasks, journal, advertisers, documents, knowledge, finances, placements, ord, promo.
-- `src/components/` — по модулям: advertisers, deals, tasks, documents, knowledge, journal, finances (PaymentCalendar), placements (PlacementCalendar), ord, promo, dashboard (DailyStatusPanel), ui (Modal, DeleteButton, primitives).
+- `src/app/(app)/` — dashboard, leads, deals, tasks, journal, advertisers, documents, knowledge, finances, placements, ord, promo.
+- `src/components/` — по модулям: advertisers, deals, tasks, documents, knowledge, journal, finances (PaymentCalendar), placements (PlacementCalendar), leads (LeadsTable), ord, promo, dashboard (DailyStatusPanel), ui (Modal, DeleteButton, primitives).
 - `prisma/seed.ts` — идемпотентный сид (демо-данные из баз знаний + рабочей таблицы размещений).

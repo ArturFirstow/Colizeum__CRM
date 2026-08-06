@@ -276,3 +276,7 @@ export type KnowledgeCategory = (typeof KNOWLEDGE_CATEGORIES)[number];
 export function vatRateForDate(date: Date = new Date()): number {
   return date.getFullYear() >= 2026 ? 22 : 20;
 }
+
+// Заявки с сайта colizeum-agency.ru (Google-форма → CRM).
+export const LEAD_STATUSES = ["Новая", "В работе", "Квалифицирована", "Отказ"] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];

@@ -95,3 +95,14 @@ export const TOURNAMENT_STATUS_STYLES: Record<string, string> = {
 export function tournamentStatusStyle(s?: string | null): string {
   return (s && TOURNAMENT_STATUS_STYLES[s]) || "bg-ink-600/50 text-ink-200 ring-ink-500/50";
 }
+
+export const LEAD_STATUS_STYLES: Record<string, string> = {
+  Новая: "bg-brand/15 text-brand-200 ring-brand/30",
+  "В работе": "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+  Квалифицирована: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+  Отказ: "bg-ink-600/50 text-ink-300 ring-ink-500/50",
+};
+
+export function leadStatusStyle(status?: string | null): string {
+  return (status && LEAD_STATUS_STYLES[status]) || "bg-ink-600/50 text-ink-200 ring-ink-500/50";
+}

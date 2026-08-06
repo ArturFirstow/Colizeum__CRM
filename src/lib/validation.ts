@@ -19,6 +19,7 @@ import {
   TOURNAMENT_FORMATS,
   TOURNAMENT_STATUSES,
   ARENA_BOOKING_STATUSES,
+  LEAD_STATUSES,
 } from "./enums";
 
 /** Zod-схема «значение из фиксированного набора» (замена native enum для SQLite). */
@@ -400,4 +401,12 @@ export const closingCreateSchema = z.object({
   appendixNo: optionalString,
   upDStatus: z.number().int().optional(),
   amount: z.number().optional(),
+});
+
+// ── Заявки с сайта ───────────────────────────────────────────────────────────
+export const leadPatchSchema = z.object({
+  status: inSet(LEAD_STATUSES).optional(),
+  comment: optionalString,
+  // null — снять ответственного, строка — назначить сотрудника
+  assignedToId: z.string().min(1).nullable().optional(),
 });
