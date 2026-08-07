@@ -62,11 +62,17 @@ async function main() {
     process.exit(1);
   }
 
-  if (provider === "qwen" && !/^sk-[a-f0-9]{20,}$/i.test(key)) {
-    console.log("⚠️  Похоже, это не ключ Model Studio (DashScope).");
-    console.log("   Рабочий ключ выглядит так: sk- и дальше длинная строка из букв и цифр без точек.");
-    console.log("   Где взять: bailian.console.aliyun.com (или Model Studio в консоли Alibaba Cloud) → API-KEY → Create.");
-    console.log("   Проверяем всё равно — вдруг формат новый…\n");
+  // Новые ключи Alibaba (sk-ws-…) привязаны к своей рабочей области и ходят
+  // на выделенный домен. Общий адрес dashscope для них не работает.
+  if (key.startsWith("sk-ws-") && /dashscope/i.test(baseUrl)) {
+    console.log("⚠️  У вашего ключа (sk-ws-…) выделенный домен рабочей области,");
+    console.log("   а в AI_BASE_URL указан общий адрес dashscope. Скорее всего, не пройдёт.");
+    console.log("   Возьмите адрес из карточки ключа в консоли — строка");
+    console.log("   «Совместимая конечная точка OpenAI», вида:");
+    console.log("   https://ws-XXXXXXXX.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1\n");
+  }
+  if (provider === "qwen" && !baseUrl) {
+    console.log("⚠️  Не задан AI_BASE_URL. Для ключей sk-ws-… он обязателен — возьмите его в карточке ключа.\n");
   }
 
   if (provider === "anthropic") {
@@ -113,7 +119,8 @@ async function main() {
       console.log("Причина: доступ запрещён — часто это регион или у ключа нет прав на эту модель.");
     } else if (res.status === 404) {
       console.log("Причина: не найден адрес или модель.");
-      console.log("• Если у вас китайская (не international) регистрация, адрес другой — пропишите AI_BASE_URL.");
+      console.log("• Проверьте AI_BASE_URL: для ключей sk-ws-… нужен адрес из карточки ключа");
+      console.log("  («Совместимая конечная точка OpenAI»), а не общий dashscope.");
       console.log("• Точное имя модели смотрите в кабинете и пропишите AI_MODEL.");
     } else if (res.status === 429) {
       console.log("Причина: лимит или нет средств на балансе провайдера.");
