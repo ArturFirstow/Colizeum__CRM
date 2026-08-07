@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { KNOWLEDGE_CATEGORIES } from "@/lib/enums";
+import { KnowledgeFiles, type KFile } from "@/components/knowledge/KnowledgeFiles";
 import { formatDate } from "@/lib/format";
 
 type Article = {
@@ -17,7 +18,7 @@ type Article = {
   updatedAt: string | Date;
 };
 
-export function KnowledgeView({ articles }: { articles: Article[] }) {
+export function KnowledgeView({ articles, files = [] }: { articles: Article[]; files?: KFile[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("");
@@ -67,6 +68,13 @@ export function KnowledgeView({ articles }: { articles: Article[] }) {
           + Статья
         </button>
       </div>
+
+      {/* Рабочие файлы: скачать договор, прайс, презентацию */}
+      {!q && cat === "" && (
+        <div className="mb-6">
+          <KnowledgeFiles files={files} />
+        </div>
+      )}
 
       {/* Материалы, которые отправляются рекламодателю — на видном месте */}
       {clientMaterials.length > 0 && !q && cat === "" && (

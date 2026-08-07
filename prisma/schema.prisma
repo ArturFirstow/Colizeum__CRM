@@ -786,3 +786,20 @@ model DecisionRequest {
   @@index([status])
   @@index([requesterId])
 }
+
+// ── Файл базы знаний (шаблон договора, прайс, презентация) ───────────────────
+// Живёт в StorageProvider, в БД — только метаданные. Нужен, чтобы новичок
+// скачал рабочий документ из того же места, где читает регламент.
+model KnowledgeFile {
+  id          String   @id @default(cuid())
+  title       String // как показываем в списке
+  category    String   @default("Материалы для клиента")
+  description String?
+  fileName    String
+  sizeBytes   Int
+  contentType String?
+  storageKey  String
+  uploadedAt  DateTime @default(now())
+
+  @@index([category])
+}
