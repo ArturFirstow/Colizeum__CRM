@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
     if (!(file instanceof File)) return fail("no_file", "Выберите файл", 400);
 
     const ownerType = String(form.get("ownerType") ?? "").trim();
-    const ownerId = String(form.get("ownerId") ?? "").trim();
+    // «Входящие» напарника всегда привязаны к самому сотруднику.
+    const ownerId = ownerType === "inbox" ? session.userId : String(form.get("ownerId") ?? "").trim();
     if (!ownerType || !ownerId) return fail("bad_request", "Не указан владелец файла", 400);
 
     const kind = String(form.get("kind") ?? "").trim() || "Прочее";

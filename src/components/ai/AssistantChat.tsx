@@ -1,24 +1,67 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Sparkles, Send } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Sparkles, Send, Paperclip, X, Inbox } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 
 type Msg = { role: "user" | "assistant"; content: string; html?: string };
 
 const SUGGESTIONS = [
-  "Саммари по моим клиентам за неделю",
+  "Разложи приложенный файл по разделам",
   "Что сегодня в приоритете?",
-  "Проверь клиента Алабуга и подскажи, как ускорить оплату",
+  "Саммари по моим клиентам за неделю",
   "По каким сделкам есть блокеры?",
 ];
+
+type InboxFile = { id: string; title: string; fileName: string; sizeBytes: number };
 
 export function AssistantChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inbox, setInbox] = useState<InboxFile[]>([]);
+  const [uploading, setUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // «Входящие» напарника: файлы, которые сотрудник закинул, но ещё не разложил.
+  const loadInbox = useCallback(async () => {
+    try {
+      const list = await apiFetch<InboxFile[]>("/api/ai/inbox");
+      setInbox(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error("inbox", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInbox();
+  }, [loadInbox]);
+
+  async function uploadFiles(list: FileList | File[] | null) {
+    const arr = list ? Array.from(list) : [];
+    if (arr.length === 0) return;
+    setUploading(true);
+    setError(null);
+    try {
+      for (const f of arr) {
+        const fd = new FormData();
+        fd.append("file", f);
+        fd.append("ownerType", "inbox");
+        fd.append("ownerId", "me");
+        fd.append("kind", "Входящее");
+        fd.append("title", f.name.replace(/\.[^.]+$/, ""));
+        await apiFetch("/api/files", { method: "POST", body: fd });
+      }
+      if (fileRef.current) fileRef.current.value = "";
+      await loadInbox();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось загрузить файл");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,6 +81,7 @@ export function AssistantChat() {
         body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })) }),
       });
       setMessages((m) => [...m, { role: "assistant", content: r.reply, html: r.html }]);
+      loadInbox();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка ИИ");
     } finally {
@@ -69,7 +113,8 @@ export function AssistantChat() {
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
             <Sparkles size={32} className="text-brand/70" />
             <p className="max-w-md text-sm text-ink-400">
-              Спросите что угодно про ваших клиентов и сделки. ИИ сам посмотрит нужные карточки и базу знаний.
+              Закиньте счёт, макет или расшифровку встречи — напарник поймёт, что это, и разложит по нужным разделам.
+              Или просто спросите про клиентов, сроки и приоритеты.
             </p>
             <div className="flex max-w-lg flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((s) => (
@@ -111,7 +156,48 @@ export function AssistantChat() {
         <div ref={endRef} />
       </div>
 
+      {inbox.length > 0 && (
+        <div className="mt-3 rounded-xl border border-brand/25 bg-brand/[0.05] px-3 py-2">
+          <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-200">
+            <Inbox size={13} /> На разбор ({inbox.length})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {inbox.map((f) => (
+              <span
+                key={f.id}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-ink-900/70 px-2 py-1 text-xs text-ink-200 ring-1 ring-inset ring-ink-700"
+              >
+                <Paperclip size={11} className="text-brand/70" />
+                <span className="max-w-[200px] truncate">{f.fileName}</span>
+                <button
+                  onClick={async () => {
+                    await apiFetch(`/api/files/${f.id}`, { method: "DELETE" });
+                    loadInbox();
+                  }}
+                  className="text-ink-500 hover:text-red-400"
+                  title="Убрать"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[11px] text-ink-500">
+            Напишите, к какому клиенту это относится — напарник разложит файл по разделам.
+          </p>
+        </div>
+      )}
+
       <div className="mt-3 flex items-end gap-2">
+        <button
+          className="btn btn-ghost shrink-0"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          title="Прикрепить счёт, макет, медиаплан или документ"
+        >
+          <Paperclip size={16} />
+        </button>
+        <input ref={fileRef} type="file" multiple hidden onChange={(e) => uploadFiles(e.target.files)} />
         <textarea
           className="input min-h-[48px] flex-1 resize-none"
           rows={1}
@@ -125,7 +211,9 @@ export function AssistantChat() {
           <Send size={16} />
         </button>
       </div>
-      <p className="mt-1.5 text-center text-[11px] text-ink-600">ИИ может ошибаться — проверяйте важное. Ответы строятся по данным вашего кабинета.</p>
+      <p className="mt-1.5 text-center text-[11px] text-ink-600">
+        Напарник видит только ваш кабинет и раскладывает файлы по разделам. Проверяйте важное — ИИ может ошибаться.
+      </p>
     </div>
   );
 }
