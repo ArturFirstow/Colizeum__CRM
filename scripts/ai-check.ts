@@ -126,8 +126,36 @@ async function main() {
       console.log("Причина: лимит или нет средств на балансе провайдера.");
     }
   } catch (e) {
-    console.log("\n❌ Не удалось достучаться до провайдера:", e instanceof Error ? e.message : String(e));
-    console.log("Проверьте интернет на этом компьютере и что адрес в AI_BASE_URL написан верно.");
+    // fetch failed прячет настоящую причину в cause — достаём её.
+    const cause = (e as { cause?: { code?: string; message?: string; errno?: number } })?.cause;
+    const code = cause?.code ?? "";
+    console.log("\n❌ Запрос не дошёл до провайдера:", e instanceof Error ? e.message : String(e));
+    if (cause) console.log("   Причина внутри:", code || cause.message || JSON.stringify(cause).slice(0, 200));
+    console.log("");
+
+    const host = (() => {
+      try {
+        return new URL(baseUrl).hostname;
+      } catch {
+        return baseUrl;
+      }
+    })();
+
+    if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+      console.log("Домен не удалось найти в DNS — компьютер не знает, где этот сервер.");
+      console.log(`Проверьте в PowerShell:  nslookup ${host}`);
+      console.log("Если DNS не отвечает, помогает смена DNS на 1.1.1.1 или 8.8.8.8, либо VPN.");
+    } else if (code === "ECONNREFUSED" || code === "ECONNRESET" || code === "ETIMEDOUT" || code === "UND_ERR_CONNECT_TIMEOUT") {
+      console.log("Домен нашёлся, но соединение не установилось — его режет сеть, фаервол или провайдер.");
+      console.log(`Проверьте в PowerShell:  Test-NetConnection ${host} -Port 443`);
+      console.log("Если соединения нет — нужен VPN на этом компьютере либо запуск сервиса на зарубежном сервере.");
+    } else if (code.includes("CERT") || code.includes("TLS") || code.includes("SSL")) {
+      console.log("Проблема с сертификатом — обычно так делает антивирус или корпоративный фильтр трафика.");
+      console.log("Попробуйте временно отключить проверку HTTPS в антивирусе.");
+    } else {
+      console.log(`Быстрая проверка доступности:  Test-NetConnection ${host} -Port 443`);
+      console.log("И откройте адрес в браузере — если и там не грузится, дело в сети, а не в ключе.");
+    }
   }
 }
 
