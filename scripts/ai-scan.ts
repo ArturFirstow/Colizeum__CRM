@@ -11,9 +11,9 @@ const TARGETS: { name: string; url: string; env: string }[] = [
   { name: "Kimi (Moonshot)", url: "https://api.moonshot.ai/v1/models", env: 'AI_PROVIDER=kimi' },
   { name: "Kimi (Китай)", url: "https://api.moonshot.cn/v1/models", env: 'AI_PROVIDER=kimi + AI_BASE_URL=https://api.moonshot.cn/v1' },
   { name: "Qwen (DashScope общий)", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models", env: "AI_PROVIDER=qwen" },
-  { name: "DeepSeek", url: "https://api.deepseek.com/models", env: 'AI_PROVIDER=openai + AI_BASE_URL=https://api.deepseek.com' },
+  { name: "DeepSeek", url: "https://api.deepseek.com/models", env: "AI_PROVIDER=deepseek" },
   { name: "GigaChat (Сбер)", url: "https://gigachat.devices.sberbank.ru/api/v1/models", env: "требует отдельной авторизации" },
-  { name: "YandexGPT", url: "https://llm.api.cloud.yandex.net/v1/models", env: 'AI_PROVIDER=openai + AI_BASE_URL=https://llm.api.cloud.yandex.net/v1' },
+  { name: "YandexGPT", url: "https://llm.api.cloud.yandex.net/v1/models", env: "AI_PROVIDER=yandex (модель: gpt://<каталог>/yandexgpt/latest)" },
   { name: "Anthropic (Claude)", url: "https://api.anthropic.com/v1/models", env: "AI_PROVIDER=anthropic" },
   { name: "OpenAI", url: "https://api.openai.com/v1/models", env: 'AI_PROVIDER=openai + AI_BASE_URL=https://api.openai.com/v1' },
 ];

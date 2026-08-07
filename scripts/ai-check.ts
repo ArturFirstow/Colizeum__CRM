@@ -31,10 +31,14 @@ function loadEnv() {
 }
 
 const PRESET_BASE_URL: Record<string, string> = {
+  deepseek: "https://api.deepseek.com/v1",
+  yandex: "https://llm.api.cloud.yandex.net/v1",
   qwen: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
   kimi: "https://api.moonshot.ai/v1",
 };
 const PRESET_MODEL: Record<string, string> = {
+  deepseek: "deepseek-chat",
+  yandex: "",
   qwen: "qwen-plus",
   kimi: "moonshot-v1-32k",
   openai: "gpt-4o-mini",
@@ -75,6 +79,12 @@ async function main() {
     console.log("⚠️  Не задан AI_BASE_URL. Для ключей sk-ws-… он обязателен — возьмите его в карточке ключа.\n");
   }
 
+  if (provider === "yandex" && !model.startsWith("gpt://")) {
+    console.log("⚠️  Для YandexGPT модель пишется целиком, вместе с каталогом:");
+    console.log('   AI_MODEL="gpt://ваш-идентификатор-каталога/yandexgpt/latest"');
+    console.log("   Идентификатор каталога виден в консоли Yandex Cloud.\n");
+  }
+
   if (provider === "anthropic") {
     console.log("ℹ️  Провайдер anthropic: из России такие запросы обычно отклоняются (403).");
     console.log("   Для Qwen поставьте AI_PROVIDER=\"qwen\".\n");
@@ -86,7 +96,10 @@ async function main() {
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: provider === "yandex" ? `Api-Key ${key}` : `Bearer ${key}`,
+      },
       body: JSON.stringify({
         model,
         max_tokens: 32,

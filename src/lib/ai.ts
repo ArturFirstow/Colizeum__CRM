@@ -4,6 +4,9 @@ import Anthropic from "@anthropic-ai/sdk";
 // ─────────────────────────────────────────────────────────────────────────────
 // Единый шов для ИИ. Провайдер выбирается в .env одной строкой AI_PROVIDER:
 //
+//   deepseek  — DeepSeek (OpenAI-совместимый, доступен из РФ)
+//   yandex    — YandexGPT (данные остаются в РФ; модель задаётся как
+//               gpt://<идентификатор-каталога>/yandexgpt/latest)
 //   qwen      — Alibaba Qwen (DashScope, OpenAI-совместимый)
 //   kimi      — Moonshot Kimi (OpenAI-совместимый)
 //   openai    — любой другой OpenAI-совместимый сервис (адрес в AI_BASE_URL)
@@ -14,12 +17,14 @@ import Anthropic from "@anthropic-ai/sdk";
 // и aiChat(). Смена провайдера = правка .env, код не трогаем.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type Provider = "qwen" | "kimi" | "openai" | "anthropic";
+type Provider = "deepseek" | "yandex" | "qwen" | "kimi" | "openai" | "anthropic";
 
 const PROVIDER = (process.env.AI_PROVIDER ?? "anthropic").toLowerCase() as Provider;
 
 // Адреса OpenAI-совместимых API (переопределяются через AI_BASE_URL).
 const PRESET_BASE_URL: Partial<Record<Provider, string>> = {
+  deepseek: "https://api.deepseek.com/v1",
+  yandex: "https://llm.api.cloud.yandex.net/v1",
   qwen: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
   kimi: "https://api.moonshot.ai/v1",
 };
@@ -27,6 +32,10 @@ const PRESET_BASE_URL: Partial<Record<Provider, string>> = {
 // Модель по умолчанию. Точное название смотрите в кабинете провайдера
 // и при необходимости задайте своё через AI_MODEL.
 const PRESET_MODEL: Record<Provider, string> = {
+  deepseek: "deepseek-chat",
+  // У Яндекса модель указывается вместе с каталогом, поэтому значение
+  // по умолчанию бессмысленно — его обязательно задаёт AI_MODEL.
+  yandex: "",
   qwen: "qwen-plus",
   kimi: "moonshot-v1-32k",
   openai: "gpt-4o-mini",
@@ -66,6 +75,9 @@ export function aiErrorMessage(e: unknown): string {
   if (status === 404 && /model/i.test(raw)) {
     return `Провайдер не знает модель «${MODEL}». Посмотрите точное название в кабинете провайдера и укажите его в .env строкой AI_MODEL.`;
   }
+  if (PROVIDER === "yandex" && !MODEL.startsWith("gpt://")) {
+    return 'Для YandexGPT модель задаётся полностью: AI_MODEL="gpt://ваш-идентификатор-каталога/yandexgpt/latest".';
+  }
   if (status === 429) return "Провайдер ИИ перегружен или исчерпан лимит (429). Попробуйте через минуту или проверьте баланс.";
   if (/insufficient|balance|credit|arrears/i.test(raw)) return "На счёте у провайдера ИИ закончились средства — пополните баланс.";
   return `Ошибка ИИ: ${raw}`;
@@ -92,7 +104,8 @@ async function chatCompletion(body: Record<string, unknown>): Promise<Record<str
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey() ?? ""}`,
+      // Яндекс принимает ключ как «Api-Key», остальные — как «Bearer».
+      Authorization: PROVIDER === "yandex" ? `Api-Key ${apiKey() ?? ""}` : `Bearer ${apiKey() ?? ""}`,
     },
     body: JSON.stringify(body),
   });
