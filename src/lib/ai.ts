@@ -7,10 +7,12 @@ import Anthropic from "@anthropic-ai/sdk";
 // позже = переписать только этот файл (например, на OpenAI-совместимый клиент
 // для Gemini/Groq/DeepSeek), не трогая функции-фичи и UI.
 //
-// Ключ: ANTHROPIC_API_KEY в .env. Модель — AI_MODEL (по умолчанию claude-opus-4-8).
+// Ключ: ANTHROPIC_API_KEY в .env. Модель — AI_MODEL (по умолчанию claude-sonnet-5:
+// разумный баланс цены и качества для разбора файлов и ответов по кабинету;
+// для самых сложных задач можно поставить claude-opus-5).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MODEL = process.env.AI_MODEL ?? "claude-opus-4-8";
+const MODEL = process.env.AI_MODEL ?? "claude-sonnet-5";
 
 /** Есть ли ключ для ИИ. */
 export function aiConfigured(): boolean {
