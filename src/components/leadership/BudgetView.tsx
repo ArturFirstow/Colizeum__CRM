@@ -54,6 +54,7 @@ export function BudgetView({
 
   const summary = useMemo(() => monthSummary(expenses), [expenses]);
   const incomeTotal = incomes.reduce((s, i) => s + i.w1 + i.w2 + i.w3 + i.w4, 0);
+  const plannedExpenseTotal = expenses.reduce((s, e) => s + e.amountTotal, 0);
   const waiting = expenses.filter((e) => e.status === "Не согласовано");
   const settled = expenses.filter((e) => e.status !== "Не согласовано");
   const refresh = () => router.refresh();
@@ -98,6 +99,7 @@ export function BudgetView({
         planned={plannedBudget}
         approved={summary.approvedTotal}
         spent={summary.spentTotal}
+        plannedExpense={plannedExpenseTotal}
         income={incomeTotal}
         vat={summary.vatTotal}
         onSaved={refresh}
@@ -119,32 +121,7 @@ export function BudgetView({
         </section>
       )}
 
-      {/* 3. Куда уходят деньги */}
-      <section>
-        <SectionTitle
-          title="Куда уходят деньги"
-          hint="Всё, что уже согласовано или оплачено в этом месяце"
-          action={
-            <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
-              <Plus size={14} /> Добавить расход
-            </button>
-          }
-        />
-        {settled.length === 0 ? (
-          <EmptyHint
-            text={waiting.length > 0 ? "Согласованных расходов пока нет." : `За ${monthLabel(month)} расходов ещё не заводили.`}
-            hint="Нажмите «Добавить расход» — нужно всего название, сумма и дата оплаты."
-          />
-        ) : (
-          <div className="stagger space-y-2">
-            {settled.map((e) => (
-              <ExpenseLine key={e.id} expense={e} onEdit={() => setEditing(e)} onChanged={refresh} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 4. Что приходит */}
+      {/* 3. Что приходит */}
       <section>
         <SectionTitle
           title="Что приходит"
@@ -193,6 +170,31 @@ export function BudgetView({
             <p className="border-t border-ink-800 px-4 py-2.5 text-xs text-ink-500">
               Суммы правятся прямо в таблице — кликните по числу и введите новое.
             </p>
+          </div>
+        )}
+      </section>
+
+      {/* 4. Куда уходят деньги */}
+      <section>
+        <SectionTitle
+          title="Куда уходят деньги"
+          hint="Всё, что уже согласовано или оплачено в этом месяце"
+          action={
+            <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
+              <Plus size={14} /> Добавить расход
+            </button>
+          }
+        />
+        {settled.length === 0 ? (
+          <EmptyHint
+            text={waiting.length > 0 ? "Согласованных расходов пока нет." : `За ${monthLabel(month)} расходов ещё не заводили.`}
+            hint="Нажмите «Добавить расход» — нужно всего название, сумма и дата оплаты."
+          />
+        ) : (
+          <div className="stagger space-y-2">
+            {settled.map((e) => (
+              <ExpenseLine key={e.id} expense={e} onEdit={() => setEditing(e)} onChanged={refresh} />
+            ))}
           </div>
         )}
       </section>
@@ -260,6 +262,7 @@ function MonthMoneyCard({
   planned,
   approved,
   spent,
+  plannedExpense,
   income,
   vat,
   onSaved,
@@ -268,6 +271,8 @@ function MonthMoneyCard({
   planned: number;
   approved: number;
   spent: number;
+  // Сумма всех заведённых расходов месяца — «сколько собираемся потратить».
+  plannedExpense: number;
   income: number;
   vat: number;
   onSaved: () => void;
@@ -336,7 +341,11 @@ function MonthMoneyCard({
         {/* Три спокойные подписи вместо россыпи плиток */}
         <div className="mt-5 grid gap-4 border-t border-ink-800 pt-4 sm:grid-cols-3">
           <Metric label="Ждём прихода" value={income} hint="план поступлений" />
-          <Metric label="Уже потрачено" value={spent} hint="по факту" />
+          <Metric
+            label="План расходов"
+            value={plannedExpense}
+            hint={spent > 0 ? `по факту ${formatMoney(spent)}` : "факт вносится в карточке расхода"}
+          />
           <div>
             <div className="text-xs uppercase tracking-wide text-ink-500">План на месяц</div>
             {editing ? (
@@ -503,6 +512,19 @@ function ExpenseModal({
   const amount = Number(f.amountTotal) || 0;
   const vatRate = Number(f.vatRate);
   const net = netOfExpense(amount, vatRate);
+
+  // Переключатель НДС сам пересчитывает сумму в поле: ввели 100 000 «без НДС»,
+  // выбрали «с НДС 22 %» → в поле станет 122 000. И наоборот.
+  function changeVat(next: string) {
+    const cur = Number(f.amountTotal) || 0;
+    const was22 = Number(f.vatRate) === 22;
+    const now22 = Number(next) === 22;
+    let sum = cur;
+    if (cur > 0 && was22 !== now22) {
+      sum = now22 ? Math.round(cur * 1.22) : Math.round(cur / 1.22);
+    }
+    setF((st) => ({ ...st, vatRate: next, amountTotal: sum ? String(sum) : st.amountTotal }));
+  }
   const warnJust = needsJustification(f.payDate || null, f.deliveryDate || null);
 
   async function submit(e: React.FormEvent) {
@@ -591,6 +613,22 @@ function ExpenseModal({
           </div>
         </div>
 
+        {expense && (
+          <div>
+            <label className="label">Потрачено по факту, ₽</label>
+            <input
+              className="input"
+              type="number"
+              value={f.spentTotal}
+              onChange={(e) => set("spentTotal", e.target.value)}
+              placeholder="заполните, когда деньги ушли"
+            />
+            <p className="mt-1 text-xs text-ink-500">
+              План выше — это сколько собирались потратить. Сюда впишите, сколько ушло на самом деле.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Статья расхода</label>
@@ -604,9 +642,9 @@ function ExpenseModal({
           </div>
           <div>
             <label className="label">Сумма с НДС?</label>
-            <select className="input" value={f.vatRate} onChange={(e) => set("vatRate", e.target.value)}>
+            <select className="input" value={f.vatRate} onChange={(e) => changeVat(e.target.value)}>
               <option value="0">Без НДС</option>
-              <option value="22">В сумме есть НДС 22 %</option>
+              <option value="22">С НДС 22 % (сумма пересчитается)</option>
             </select>
           </div>
         </div>
@@ -687,21 +725,9 @@ function ExpenseModal({
                   placeholder="Например: предоплата фиксирует цену до повышения"
                 />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="label">Потрачено по факту, ₽</label>
-                  <input
-                    className="input"
-                    type="number"
-                    value={f.spentTotal}
-                    onChange={(e) => set("spentTotal", e.target.value)}
-                    placeholder="если отличается от суммы"
-                  />
-                </div>
-                <div>
-                  <label className="label">Дата закрытия актом</label>
-                  <input className="input" type="date" value={f.actClosedDate} onChange={(e) => set("actClosedDate", e.target.value)} />
-                </div>
+              <div>
+                <label className="label">Дата закрытия актом</label>
+                <input className="input" type="date" value={f.actClosedDate} onChange={(e) => set("actClosedDate", e.target.value)} />
               </div>
               <div>
                 <label className="label">Комментарий</label>

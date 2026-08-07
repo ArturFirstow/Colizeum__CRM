@@ -81,7 +81,7 @@ export default async function LeadershipPage() {
   return (
     <div>
       <PageHeader
-        title="Пульс отдела"
+        title="Обзор отдела"
         subtitle="Кто чем занят и как идут сделки по всей команде"
         icon="◎"
       />

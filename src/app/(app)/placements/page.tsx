@@ -21,7 +21,7 @@ export default async function PlacementsPage() {
   return (
     <div>
       <PageHeader
-        title="Сетка размещений"
+        title="Календарь размещений"
         subtitle="Что и когда выходит: слоты по неделям"
         icon="▦"
       />

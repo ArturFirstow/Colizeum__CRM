@@ -41,6 +41,7 @@ model User {
   chatMessages     ChatMessage[]     @relation("ChatAuthor")
   channelMemberships ChannelMember[]
   assignedLeads    Lead[]            @relation("LeadAssignee")
+  decisionRequests DecisionRequest[] @relation("DecisionRequester")
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -79,6 +80,7 @@ model Advertiser {
   placements      Placement[]
   dailyStatuses   DailyStatus[]
   promoBatches    PromoBatch[]
+  decisionRequests DecisionRequest[]
 
   @@index([ownerId])
 }
@@ -176,6 +178,7 @@ model Deal {
   plannedPayments PlannedPayment[]
   placements      Placement[]
   dailyStatuses   DailyStatus[]
+  decisionRequests DecisionRequest[]
 
   @@index([advertiserId])
   @@index([stage])
@@ -755,4 +758,31 @@ model Lead {
   @@index([status])
   @@index([assignedToId])
   @@index([sentAt])
+}
+
+// ── Запрос на решение руководителю ───────────────────────────────────────────
+// Сотрудник отправляет вопрос, который не может решить сам (согласовать макет,
+// выдать доступ, утвердить скидку). У руководителя запрос появляется в блоке
+// «Решения, которые ждут вас» на «Сегодня» — с указанием, от кого он пришёл.
+model DecisionRequest {
+  id          String  @id @default(cuid())
+  title       String // что нужно решить
+  details     String? // подробности от сотрудника
+  kind        String  @default("Согласование") // Согласование | Доступ | Деньги | Другое
+  status      String  @default("Открыт") // Открыт | Решён | Отклонён
+  answer      String? // решение руководителя
+
+  requesterId String
+  requester   User    @relation("DecisionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  advertiserId String?
+  advertiser   Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
+  dealId       String?
+  deal         Deal?       @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([requesterId])
 }

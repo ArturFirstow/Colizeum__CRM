@@ -20,7 +20,7 @@ export default async function ContractorsPage() {
   return (
     <div>
       <PageHeader
-        title="Партнёры"
+        title="Контрагенты"
         subtitle="Заказчики турниров — от первого касания до проведённого"
         icon="◈"
       />

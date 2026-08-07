@@ -27,7 +27,7 @@ export default async function ArenaPage() {
   return (
     <div>
       <PageHeader
-        title="Арена"
+        title="Бронь арены"
         subtitle="Шелепиха: кто и когда занимает площадку"
         icon="▦"
       />

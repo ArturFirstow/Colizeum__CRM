@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
+import { AskLeaderButton, DecisionRequestCard, MyDecisionRequests, type DecisionItem } from "@/components/dashboard/DecisionRequests";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { requireSession } from "@/lib/auth";
-import { ownScope } from "@/lib/scope";
+import { ownScope, isLeadership } from "@/lib/scope";
 import { netOfVat } from "@/lib/format";
 import { CountUp } from "@/components/ui/CountUp";
 import { StageRing } from "@/components/ui/StageRing";
@@ -22,6 +23,33 @@ export default async function DashboardPage() {
   const myTask = ownScope(session);
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const leader = isLeadership(session);
+
+  // Запросы на решение: руководителю — все открытые от сотрудников,
+  // сотруднику — его собственные (чтобы видел статус и ответ).
+  const decisionRequests = await prisma.decisionRequest.findMany({
+    where: leader ? { status: "Открыт" } : { requesterId: session.userId },
+    include: {
+      requester: { select: { id: true, name: true } },
+      advertiser: { select: { id: true, nameRu: true } },
+      deal: { select: { id: true, title: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const decisionItems: DecisionItem[] = decisionRequests.map((r) => ({
+    id: r.id,
+    title: r.title,
+    details: r.details,
+    kind: r.kind,
+    status: r.status,
+    answer: r.answer,
+    createdAt: r.createdAt.toISOString(),
+    requester: r.requester,
+    advertiser: r.advertiser,
+    deal: r.deal,
+  }));
+  const openRequests = decisionItems.filter((r) => r.status === "Открыт");
 
   const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts, advertisers, dealOpts, todayStatuses] = await Promise.all([
     prisma.deal.findMany({
@@ -133,12 +161,37 @@ export default async function DashboardPage() {
 
       {/* Решения, которые ждут */}
       <section className="mb-8">
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
-          <span className="text-brand">◆</span> Решения, которые ждут вас
-        </h2>
-        {decisions.length === 0 ? (
-          <EmptyState compact icon="✅" title="Решать сейчас нечего" hint="всё под контролем" />
-        ) : (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-ink-50">
+            <span className="text-brand">◆</span> Решения, которые ждут вас
+          </h2>
+          {!leader && <AskLeaderButton advertisers={advertisers} deals={dealOpts} />}
+        </div>
+
+        {/* Вопросы от сотрудников — у руководителя сверху, с кнопкой решения */}
+        {leader && openRequests.length > 0 && (
+          <div className="mb-3 grid gap-3 md:grid-cols-2">
+            {openRequests.map((r) => (
+              <DecisionRequestCard key={r.id} item={r} canDecide />
+            ))}
+          </div>
+        )}
+
+        {/* Сотруднику — статус его вопросов */}
+        {!leader && decisionItems.length > 0 && (
+          <div className="mb-3">
+            <MyDecisionRequests items={decisionItems} />
+          </div>
+        )}
+
+        {decisions.length === 0 && (leader ? openRequests.length === 0 : true) ? (
+          <EmptyState
+            compact
+            icon="✅"
+            title="Решать сейчас нечего"
+            hint={leader ? "сотрудники ничего не спрашивали" : "всё под контролем"}
+          />
+        ) : decisions.length === 0 ? null : (
           <div className="grid gap-3 md:grid-cols-2">
             {decisions.map((d) => (
               <div key={d.id} className="card card-hover p-4 !border-brand/30">

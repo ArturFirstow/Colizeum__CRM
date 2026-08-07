@@ -88,7 +88,7 @@ export function TasksView({
             ✓
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-ink-50">Мои дела</h1>
+            <h1 className="text-2xl font-bold text-ink-50">Задачи</h1>
             <p className="mt-0.5 text-sm text-ink-300">
               Перетащите карточку на ту сторону, где сейчас согласование
             </p>

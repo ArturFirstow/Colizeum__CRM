@@ -410,3 +410,20 @@ export const leadPatchSchema = z.object({
   // null — снять ответственного, строка — назначить сотрудника
   assignedToId: z.string().min(1).nullable().optional(),
 });
+
+// ── Запросы на решение руководителю ──────────────────────────────────────────
+export const DECISION_KINDS = ["Согласование", "Доступ", "Деньги", "Другое"] as const;
+export const DECISION_STATUSES = ["Открыт", "Решён", "Отклонён"] as const;
+
+export const decisionCreateSchema = z.object({
+  title: z.string().trim().min(1, "Опишите, что нужно решить"),
+  details: optionalString,
+  kind: z.enum(DECISION_KINDS).optional(),
+  advertiserId: optionalString,
+  dealId: optionalString,
+});
+
+export const decisionPatchSchema = z.object({
+  status: z.enum(DECISION_STATUSES).optional(),
+  answer: optionalString,
+});

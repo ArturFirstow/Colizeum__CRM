@@ -37,7 +37,7 @@ export default async function BudgetPage({
   return (
     <div>
       <PageHeader
-        title="Деньги отдела"
+        title="Бюджет отдела"
         subtitle="Сколько можно потратить, что ждёт согласования и что придёт в этом месяце"
         icon="₽"
       />

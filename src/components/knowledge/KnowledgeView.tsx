@@ -59,7 +59,7 @@ export function KnowledgeView({ articles }: { articles: Article[] }) {
             ◈
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-ink-50">Шпаргалки</h1>
+            <h1 className="text-2xl font-bold text-ink-50">База знаний</h1>
             <p className="mt-0.5 text-sm text-ink-300">Как у нас всё устроено: форматы, цены, ОРД, промокоды, кейсы</p>
           </div>
         </div>
