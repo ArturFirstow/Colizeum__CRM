@@ -126,7 +126,11 @@ async function main() {
     console.log(text.slice(0, 600));
     console.log("");
 
-    if (res.status === 401) {
+    if (res.status === 402 || /insufficient|balance/i.test(text)) {
+      console.log("Причина: на счёте у провайдера нет денег — сам ключ рабочий, связь есть.");
+      console.log("Пополните баланс в кабинете провайдера и запустите проверку ещё раз.");
+      console.log("У DeepSeek это platform.deepseek.com → Top up. Хватит минимальной суммы.");
+    } else if (res.status === 401) {
       console.log("Причина: ключ не принят. Проверьте, что он скопирован целиком и не удалён в кабинете.");
     } else if (res.status === 403) {
       console.log("Причина: доступ запрещён — часто это регион или у ключа нет прав на эту модель.");

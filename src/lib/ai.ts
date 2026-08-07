@@ -78,8 +78,10 @@ export function aiErrorMessage(e: unknown): string {
   if (PROVIDER === "yandex" && !MODEL.startsWith("gpt://")) {
     return 'Для YandexGPT модель задаётся полностью: AI_MODEL="gpt://ваш-идентификатор-каталога/yandexgpt/latest".';
   }
+  if (status === 402 || /insufficient|balance|credit|arrears/i.test(raw)) {
+    return "На счёте у провайдера ИИ нет средств — ключ рабочий, нужно пополнить баланс в кабинете провайдера.";
+  }
   if (status === 429) return "Провайдер ИИ перегружен или исчерпан лимит (429). Попробуйте через минуту или проверьте баланс.";
-  if (/insufficient|balance|credit|arrears/i.test(raw)) return "На счёте у провайдера ИИ закончились средства — пополните баланс.";
   return `Ошибка ИИ: ${raw}`;
 }
 
