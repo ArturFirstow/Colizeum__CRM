@@ -13,7 +13,7 @@ import {
   type ExpenseRow,
 } from "@/lib/dept-budget";
 
-type Income = { id: string; month: string; source: string; w1: number; w2: number; w3: number; w4: number };
+type Income = { id: string; month: string; source: string; clientName: string | null; w1: number; w2: number; w3: number; w4: number };
 
 const MONTHS_RU = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
 function monthLabel(ym: string) {
@@ -142,7 +142,7 @@ export function BudgetView({
             <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
-                  <th className="px-4 py-2.5 font-medium">Откуда деньги</th>
+                  <th className="px-4 py-2.5 font-medium">Откуда деньги / клиент</th>
                   <th className="px-3 py-2.5 text-right font-medium">1 неделя</th>
                   <th className="px-3 py-2.5 text-right font-medium">2 неделя</th>
                   <th className="px-3 py-2.5 text-right font-medium">3 неделя</th>
@@ -156,7 +156,7 @@ export function BudgetView({
                   <IncomeRow key={i.id} income={i} onChanged={refresh} />
                 ))}
                 <tr className="bg-ink-900/40 font-semibold">
-                  <td className="px-4 py-2.5 text-ink-200">Итого ждём</td>
+                  <td className="px-4 py-2.5 text-ink-200">Итого по плану</td>
                   {(["w1", "w2", "w3", "w4"] as const).map((w) => (
                     <td key={w} className="px-3 py-2.5 text-right text-ink-400">
                       {formatMoney(incomes.reduce((s, i) => s + i[w], 0))}
@@ -340,7 +340,7 @@ function MonthMoneyCard({
 
         {/* Три спокойные подписи вместо россыпи плиток */}
         <div className="mt-5 grid gap-4 border-t border-ink-800 pt-4 sm:grid-cols-3">
-          <Metric label="Ждём прихода" value={income} hint="план поступлений" />
+          <Metric label="План дохода" value={income} hint="сколько денег ждём" />
           <Metric
             label="План расходов"
             value={plannedExpense}
@@ -776,7 +776,10 @@ function IncomeRow({ income, onChanged }: { income: Income; onChanged: () => voi
   }
   return (
     <tr className="transition hover:bg-ink-800/40">
-      <td className="px-4 py-2 font-medium text-ink-100">{income.source}</td>
+      <td className="px-4 py-2">
+        <div className="font-medium text-ink-100">{income.source}</div>
+        {income.clientName && <div className="mt-0.5 text-xs text-ink-500">{income.clientName}</div>}
+      </td>
       {(["w1", "w2", "w3", "w4"] as const).map((w) => (
         <td key={w} className="px-3 py-1.5 text-right">
           <input
@@ -802,6 +805,7 @@ function IncomeRow({ income, onChanged }: { income: Income; onChanged: () => voi
 function IncomeModal({ month, onClose, onSaved }: { month: string; onClose: () => void; onSaved: () => void }) {
   const [source, setSource] = useState(INCOME_SOURCES[0] as string);
   const [custom, setCustom] = useState("");
+  const [clientName, setClientName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -812,7 +816,10 @@ function IncomeModal({ month, onClose, onSaved }: { month: string; onClose: () =
     try {
       const src = source === "__custom__" ? custom.trim() : source;
       if (!src) throw new Error("Укажите источник");
-      await apiFetch("/api/dept/income", { method: "POST", body: JSON.stringify({ month, source: src }) });
+      await apiFetch("/api/dept/income", {
+        method: "POST",
+        body: JSON.stringify({ month, source: src, clientName: clientName.trim() || undefined }),
+      });
       onSaved();
       onClose();
     } catch (err) {
@@ -844,6 +851,16 @@ function IncomeModal({ month, onClose, onSaved }: { month: string; onClose: () =
               autoFocus
             />
           )}
+        </div>
+        <div>
+          <label className="label">От какого клиента</label>
+          <input
+            className="input"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder="например: Т-Банк — эквайринг"
+          />
+          <p className="mt-1 text-xs text-ink-500">Необязательно, но так видно, чьи деньги ждём.</p>
         </div>
         <p className="text-xs text-ink-500">Суммы по неделям впишете в таблице — сразу после добавления.</p>
         <FormError message={error} />

@@ -441,6 +441,7 @@ model DeptIncome {
   id        String   @id @default(cuid())
   month     String // «YYYY-MM»
   source    String // Реклама | Корпоративные турниры | …
+  clientName String? // от какого клиента ждём деньги
   w1        Float    @default(0)
   w2        Float    @default(0)
   w3        Float    @default(0)
@@ -482,6 +483,9 @@ model JournalEntry {
   // Чей журнал (личный кабинет); null = данные до разделения.
   ownerId          String?
   source           String // EOD | Транскрипт | Чат
+  // Встреча: с кем говорили и по какому клиенту — чтобы транскрипт не потерялся.
+  meetingWith      String?
+  advertiserId     String?
   rawText          String
   parsedSummary    String?
   routedTo         String? // Трекер | База | Архив
@@ -802,4 +806,32 @@ model KnowledgeFile {
   uploadedAt  DateTime @default(now())
 
   @@index([category])
+}
+
+// ── Универсальное вложение ───────────────────────────────────────────────────
+// Одно хранилище файлов на весь сервис: счёт, медиаплан, креатив, макет,
+// презентация в базе знаний. Прикрепили в карточке сделки — файл сразу виден
+// и в «Документах» клиента (связи advertiserId/dealId заполняются при загрузке).
+model FileAsset {
+  id          String  @id @default(cuid())
+  ownerType   String // knowledge | deal | advertiser | journal
+  ownerId     String
+  kind        String  @default("Прочее") // Счёт | Медиаплан | Креатив | Документ | Акт | Прочее
+  title       String
+  fileName    String
+  sizeBytes   Int
+  contentType String?
+  storageKey  String
+
+  // Денормализация для сквозной видимости по клиенту и сделке.
+  advertiserId String?
+  dealId       String?
+  uploadedById String?
+  uploadedByName String?
+
+  uploadedAt DateTime @default(now())
+
+  @@index([ownerType, ownerId])
+  @@index([advertiserId])
+  @@index([dealId])
 }

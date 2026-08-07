@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       data: {
         month: data.month,
         source: data.source,
+        clientName: data.clientName ?? null,
         w1: data.w1 ?? 0,
         w2: data.w2 ?? 0,
         w3: data.w3 ?? 0,

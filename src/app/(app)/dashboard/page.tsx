@@ -64,7 +64,7 @@ export default async function DashboardPage() {
     }),
     prisma.task.findMany({
       where: { status: { not: "Готова" }, ...myTask },
-      include: { advertiser: true, assignee: true, deal: true },
+      include: { advertiser: true, assignee: true, deal: true, assignedBy: { select: { name: true } } },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
       take: 8,
     }),
@@ -107,6 +107,9 @@ export default async function DashboardPage() {
   const activeDeals = dealOpts.filter((d) => d.stage !== "Закрытие");
   const portfolio = activeDeals.reduce((s, d) => s + (d.amount ?? 0), 0);
 
+  // Поручения: задачи, которые поставил кто-то другой (руководитель).
+  const assignedToMe = openTasks.filter((t) => t.assignedById && t.assignedById !== session.userId);
+
   return (
     <div>
       <PageHeader
@@ -134,29 +137,6 @@ export default async function DashboardPage() {
         <StatCard label="Задачи в работе" value={<CountUp value={activeTasks} />} href="/tasks" accent={activeTasks > 0} />
         <StatCard label="Рекламодатели" value={<CountUp value={advCount} />} href="/advertisers" />
         <StatCard label="Документы" value={<CountUp value={docCount} />} href="/documents" />
-      </div>
-
-      {/* Кольца стадий: где каждый проект на пути из 9 шагов */}
-      {activeDeals.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-lg font-bold text-ink-50">Проекты на пути к закрытию</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {activeDeals.slice(0, 5).map((d) => (
-              <Link key={d.id} href={`/deals/${d.id}`} className="card card-hover flex items-center gap-3 p-4">
-                <StageRing stage={d.stage} />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-ink-100">{d.advertiser.nameRu}</div>
-                  <div className="mt-0.5 truncate text-xs text-ink-400">{d.stage}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Статус дня по проектам + недельный отчёт */}
-      <div className="mb-8">
-        <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
 
       {/* Решения, которые ждут */}
@@ -216,6 +196,34 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+
+      {/* Поручения руководителя — видно сразу, не теряются среди задач */}
+      {assignedToMe.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-50">
+            <span>🎯</span> Поручения руководителя
+          </h2>
+          <div className="grid gap-2 md:grid-cols-2">
+            {assignedToMe.map((t) => (
+              <Link
+                key={t.id}
+                href="/tasks"
+                className="card card-hover flex items-start justify-between gap-3 p-4 !border-brand/25"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-ink-50">{t.title}</div>
+                  <div className="mt-0.5 text-xs text-ink-400">
+                    {t.advertiser?.nameRu ?? "без клиента"}
+                    {t.assignedBy?.name ? ` · поручил ${t.assignedBy.name}` : ""}
+                    {t.dueDate ? ` · до ${formatDate(t.dueDate)}` : ""}
+                  </div>
+                </div>
+                <span className="badge badge-brand shrink-0">{t.status}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Задачи */}
@@ -311,6 +319,29 @@ export default async function DashboardPage() {
             )}
           </div>
         </section>
+      </div>
+
+      {/* Кольца стадий: где каждый проект на пути из 9 шагов */}
+      {activeDeals.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-bold text-ink-50">Проекты на пути к закрытию</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {activeDeals.slice(0, 5).map((d) => (
+              <Link key={d.id} href={`/deals/${d.id}`} className="card card-hover flex items-center gap-3 p-4">
+                <StageRing stage={d.stage} />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-ink-100">{d.advertiser.nameRu}</div>
+                  <div className="mt-0.5 truncate text-xs text-ink-400">{d.stage}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Статус дня по проектам + недельный отчёт */}
+      <div className="mb-8">
+        <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
       </div>
 
       {/* Зависшие сделки */}

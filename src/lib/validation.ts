@@ -158,6 +158,8 @@ export const journalCreateSchema = z.object({
   rawText: z.string().trim().min(1, "Пустая запись"),
   routedTo: inSet(JOURNAL_ROUTES).optional(),
   parsedSummary: optionalString,
+  meetingWith: optionalString,
+  advertiserId: optionalString,
 });
 
 export const mediaPlanCreateSchema = z.object({
@@ -236,6 +238,7 @@ export const deptBudgetSchema = z.object({
 export const deptIncomeSchema = z.object({
   month: ym,
   source: z.string().trim().min(1, "Укажите источник"),
+  clientName: optionalString,
   w1: z.number().nonnegative().optional(),
   w2: z.number().nonnegative().optional(),
   w3: z.number().nonnegative().optional(),

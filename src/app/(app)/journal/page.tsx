@@ -8,6 +8,13 @@ export const dynamic = "force-dynamic";
 export default async function JournalPage() {
   // Личный кабинет: журнал у каждого сотрудника свой.
   const session = await requireSession();
-  const entries = await prisma.journalEntry.findMany({ where: ownScope(session), orderBy: { date: "desc" } });
-  return <JournalView entries={entries} />;
+  const [entries, advertisers] = await Promise.all([
+    prisma.journalEntry.findMany({ where: ownScope(session), orderBy: { date: "desc" } }),
+    prisma.advertiser.findMany({
+      where: { archived: false, ...ownScope(session) },
+      select: { id: true, nameRu: true },
+      orderBy: { nameRu: "asc" },
+    }),
+  ]);
+  return <JournalView entries={entries} advertisers={advertisers} />;
 }

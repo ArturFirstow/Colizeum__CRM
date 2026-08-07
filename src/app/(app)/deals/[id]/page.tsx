@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, Field, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
+import { FileCell } from "@/components/ui/FileCell";
 import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
@@ -143,8 +144,18 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
+            <div className="mb-3">
+              <FileCell
+                ownerType="deal"
+                ownerId={deal.id}
+                kind="Счёт"
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                label="Прикрепить счёт или платёжку"
+              />
+            </div>
             {deal.invoices.length === 0 ? (
-              <EmptyState icon="₽" title="Счетов нет" />
+              <EmptyState compact icon="₽" title="Счетов нет" hint="можно просто приложить файл выше" />
             ) : (
               <div className="space-y-3">
                 {deal.invoices.map((inv) => (
@@ -244,8 +255,18 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
+            <div className="mb-3">
+              <FileCell
+                ownerType="deal"
+                ownerId={deal.id}
+                kind="Медиаплан"
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                label="Прикрепить медиаплан (xlsx, pdf)"
+              />
+            </div>
             {deal.mediaPlans.length === 0 ? (
-              <EmptyState icon="📊" title="Медиапланов нет" />
+              <EmptyState compact icon="📊" title="Медиапланов нет" hint="можно просто приложить файл выше" />
             ) : (
               <div className="space-y-3">
                 {deal.mediaPlans.map((mp) => (
@@ -287,8 +308,18 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               </Link>
             }
           >
+            <div className="mb-3">
+              <FileCell
+                ownerType="deal"
+                ownerId={deal.id}
+                kind="Документ"
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                label="Прикрепить документ"
+              />
+            </div>
             {deal.documents.length === 0 ? (
-              <EmptyState icon="❐" title="Документов нет" hint="Загрузите во вкладке «Документы»." />
+              <EmptyState compact icon="❐" title="Документов с версиями нет" hint="файлы выше видны и в «Документах» клиента" />
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
                 {deal.documents.map((d) => (

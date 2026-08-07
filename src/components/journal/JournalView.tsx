@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/client";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { JOURNAL_SOURCES, JOURNAL_ROUTES } from "@/lib/enums";
+import { FileCell } from "@/components/ui/FileCell";
 import { formatDateTime } from "@/lib/format";
 
 // Недельное ИИ-саммари: собирает прогресс по каждому партнёру за 7 дней.
@@ -62,13 +63,19 @@ type Entry = {
   rawText: string;
   parsedSummary: string | null;
   routedTo: string | null;
+  meetingWith?: string | null;
+  advertiserId?: string | null;
 };
 
-export function JournalView({ entries }: { entries: Entry[] }) {
+type AdvOpt = { id: string; nameRu: string };
+
+export function JournalView({ entries, advertisers = [] }: { entries: Entry[]; advertisers?: AdvOpt[] }) {
   const router = useRouter();
-  const [source, setSource] = useState<string>("EOD");
+  const [source, setSource] = useState<string>("Транскрипт");
   const [routedTo, setRoutedTo] = useState<string>("Трекер");
   const [rawText, setRawText] = useState("");
+  const [meetingWith, setMeetingWith] = useState("");
+  const [advertiserId, setAdvertiserId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,9 +86,16 @@ export function JournalView({ entries }: { entries: Entry[] }) {
     try {
       await apiFetch("/api/journal", {
         method: "POST",
-        body: JSON.stringify({ source, routedTo, rawText }),
+        body: JSON.stringify({
+          source,
+          routedTo,
+          rawText,
+          meetingWith: meetingWith.trim() || undefined,
+          advertiserId: advertiserId || undefined,
+        }),
       });
       setRawText("");
+      setMeetingWith("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -99,7 +113,9 @@ export function JournalView({ entries }: { entries: Entry[] }) {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-ink-50">Дневник</h1>
-            <p className="mt-0.5 text-sm text-ink-300">Итоги дня и заметки со встреч — чтобы ничего не забылось</p>
+            <p className="mt-0.5 text-sm text-ink-300">
+              Транскрипты встреч и итоги дня. Всё, что прозвучало голосом, фиксируется здесь и не теряется.
+            </p>
           </div>
         </div>
         <WeeklyAiSummary />
@@ -108,10 +124,13 @@ export function JournalView({ entries }: { entries: Entry[] }) {
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         {/* Новая запись */}
         <form onSubmit={submit} className="card h-fit p-5">
-          <h2 className="mb-4 text-lg font-bold text-ink-50">Новая запись</h2>
+          <h2 className="mb-1 text-lg font-bold text-ink-50">Новая запись</h2>
+          <p className="mb-4 text-xs text-ink-500">
+            Вставьте текст расшифровки встречи или прикрепите файл — запись останется в вашем кабинете.
+          </p>
           <div className="mb-3 grid grid-cols-2 gap-3">
             <div>
-              <label className="label">Источник</label>
+              <label className="label">Что за запись</label>
               <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
                 {JOURNAL_SOURCES.map((s) => (
                   <option key={s} value={s}>
@@ -131,9 +150,38 @@ export function JournalView({ entries }: { entries: Entry[] }) {
               </select>
             </div>
           </div>
+          {source === "Транскрипт" && (
+            <div className="mb-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="label">С кем встреча</label>
+                <input
+                  className="input"
+                  value={meetingWith}
+                  onChange={(e) => setMeetingWith(e.target.value)}
+                  placeholder="Например: Мария, МТС Оплата"
+                />
+              </div>
+              <div>
+                <label className="label">По какому клиенту</label>
+                <select className="input" value={advertiserId} onChange={(e) => setAdvertiserId(e.target.value)}>
+                  <option value="">— не важно —</option>
+                  {advertisers.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nameRu}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           <textarea
-            className="input min-h-[160px]"
-            placeholder="Вставьте текст EOD-сводки или транскрипта…"
+            className="input min-h-[180px]"
+            placeholder={
+              source === "Транскрипт"
+                ? "Вставьте расшифровку встречи целиком — договорённости, сроки, кто что обещал…"
+                : "Что важного за сегодня…"
+            }
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             required
@@ -142,7 +190,9 @@ export function JournalView({ entries }: { entries: Entry[] }) {
             <FormError message={error} />
           </div>
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs text-ink-500">🤖 AI-разбор — в v2</span>
+            <span className="text-xs text-ink-500">
+              Напарник ИИ разберёт запись, когда будет подключён ключ
+            </span>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? "…" : "Добавить"}
             </button>
@@ -162,12 +212,25 @@ export function JournalView({ entries }: { entries: Entry[] }) {
                   <span className="ml-auto">{formatDateTime(e.date)}</span>
                   <DeleteButton endpoint={`/api/journal/${e.id}`} what="запись журнала" />
                 </div>
+                {e.meetingWith && (
+                  <div className="mb-1.5 text-xs text-ink-400">🎙 встреча с {e.meetingWith}</div>
+                )}
                 {e.parsedSummary && (
                   <p className="mb-2 rounded-lg bg-ink-900/60 px-3 py-2 text-sm text-brand-100">
                     {e.parsedSummary}
                   </p>
                 )}
                 <p className="whitespace-pre-wrap text-sm text-ink-300">{e.rawText}</p>
+                <div className="mt-3">
+                  <FileCell
+                    ownerType="journal"
+                    ownerId={e.id}
+                    kind="Запись встречи"
+                    advertiserId={e.advertiserId ?? undefined}
+                    label="Прикрепить запись или расшифровку"
+                    compact
+                  />
+                </div>
               </div>
             ))
           )}

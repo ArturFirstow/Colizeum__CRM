@@ -6,6 +6,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { KNOWLEDGE_CATEGORIES } from "@/lib/enums";
 import { KnowledgeFiles, type KFile } from "@/components/knowledge/KnowledgeFiles";
+import { FileCell } from "@/components/ui/FileCell";
 import { formatDate } from "@/lib/format";
 
 type Article = {
@@ -86,16 +87,19 @@ export function KnowledgeView({ articles, files = [] }: { articles: Article[]; f
             </h2>
             <span className="text-xs text-ink-400">— отправляем рекламодателю</span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {/* В каждой ячейке — свои файлы: медиакит, исследование, техтребования.
+              Файл можно заменить прямо здесь, когда придёт новая версия. */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {clientMaterials.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => openArticle(m.id, m.category)}
-                className="rounded-xl border border-ink-700/70 bg-ink-900/60 px-3.5 py-3 text-left transition hover:border-brand/40 hover:bg-ink-800"
-              >
-                <div className="text-sm font-semibold text-ink-100">{m.title}</div>
-                {m.notes && <div className="mt-0.5 truncate text-xs text-ink-500">{m.notes}</div>}
-              </button>
+              <div key={m.id} className="rounded-xl border border-ink-700/70 bg-ink-900/60 p-3.5">
+                <button onClick={() => openArticle(m.id, m.category)} className="block w-full text-left">
+                  <div className="text-sm font-semibold text-ink-100 hover:text-brand">{m.title}</div>
+                  {m.notes && <div className="mt-0.5 truncate text-xs text-ink-500">{m.notes}</div>}
+                </button>
+                <div className="mt-2.5">
+                  <FileCell ownerType="knowledge" ownerId={m.id} kind="Материал" label="Загрузить файл" compact />
+                </div>
+              </div>
             ))}
           </div>
         </section>

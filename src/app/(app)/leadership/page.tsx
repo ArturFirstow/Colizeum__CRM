@@ -6,8 +6,9 @@ import { isLeadership } from "@/lib/scope";
 import { PageHeader } from "@/components/ui/primitives";
 import { CountUp } from "@/components/ui/CountUp";
 import { AssignTaskButton } from "@/components/leadership/AssignTaskButton";
+import { DeptFunnel, AttentionWidget, type FunnelDeal } from "@/components/leadership/DeptFunnel";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
-import { ROLE_LABELS, DEAL_STAGES, type Role } from "@/lib/enums";
+import { ROLE_LABELS, type Role } from "@/lib/enums";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,21 @@ export default async function LeadershipPage() {
     prisma.advertiser.findMany({ where: { archived: false }, select: { id: true, ownerId: true } }),
     prisma.deal.findMany({
       where: { advertiser: { archived: false } },
-      select: { id: true, stage: true, amount: true, blocker: true, updatedAt: true, advertiser: { select: { ownerId: true } } },
+      select: {
+        id: true,
+        title: true,
+        stage: true,
+        amount: true,
+        blocker: true,
+        periodText: true,
+        updatedAt: true,
+        advertiser: { select: { ownerId: true, nameRu: true, owner: { select: { name: true } } } },
+      },
     }),
-    prisma.task.findMany({ where: { status: { not: "Готова" } }, select: { ownerId: true, dueDate: true } }),
+    prisma.task.findMany({
+      where: { status: { not: "Готова" } },
+      select: { id: true, title: true, ownerId: true, dueDate: true, owner: { select: { name: true } }, advertiser: { select: { nameRu: true } } },
+    }),
     prisma.plannedPayment.findMany({ select: { amount: true, status: true, advertiser: { select: { ownerId: true } } } }),
     prisma.dailyStatus.findMany({ select: { advertiser: { select: { ownerId: true } }, date: true } }),
   ]);
@@ -71,12 +84,39 @@ export default async function LeadershipPage() {
     stuck: rows.reduce((s, r) => s + r.stuck, 0),
   };
 
-  // Воронка по стадиям (весь отдел).
-  const funnel = DEAL_STAGES.map((stage) => ({
-    stage,
-    count: deals.filter((d) => d.stage === stage).length,
+  // Воронка: сделки с деталями, чтобы раскрывать «кто на этой стадии».
+  const funnelDeals: FunnelDeal[] = deals.map((d) => ({
+    id: d.id,
+    title: d.title,
+    stage: d.stage,
+    amount: d.amount,
+    periodText: d.periodText,
+    updatedAt: d.updatedAt.toISOString(),
+    advertiserName: d.advertiser.nameRu,
+    managerName: d.advertiser.owner?.name ?? null,
+    blocker: d.blocker,
   }));
-  const funnelMax = Math.max(1, ...funnel.map((f) => f.count));
+
+  // Списки под виджетами «требует внимания».
+  const blockerItems = deals
+    .filter((d) => d.blocker)
+    .map((d) => ({ id: d.id, href: `/deals/${d.id}`, title: d.advertiser.nameRu, sub: d.blocker ?? "" }));
+  const overdueItems = tasks
+    .filter((t) => t.dueDate && new Date(t.dueDate) < now)
+    .map((t) => ({
+      id: t.id,
+      href: "/tasks",
+      title: t.title,
+      sub: `${t.advertiser?.nameRu ?? "без клиента"} · ${t.owner?.name ?? "—"} · до ${formatDate(t.dueDate)}`,
+    }));
+  const stuckItems = deals
+    .filter((d) => d.stage !== "Закрытие" && new Date(d.updatedAt) < STUCK)
+    .map((d) => ({
+      id: d.id,
+      href: `/deals/${d.id}`,
+      title: d.advertiser.nameRu,
+      sub: `${d.title} · ${d.stage} · без движения с ${formatDate(d.updatedAt)}`,
+    }));
 
   return (
     <div>
@@ -105,9 +145,9 @@ export default async function LeadershipPage() {
 
       {/* Требует внимания */}
       <div className="mb-8 grid gap-3 sm:grid-cols-3">
-        <Alert label="Блокеров по отделу" value={totals.blockers} tone="red" />
-        <Alert label="Просроченных задач" value={totals.overdue} tone="amber" />
-        <Alert label="Зависших сделок (>7 дней)" value={totals.stuck} tone="amber" />
+        <AttentionWidget label="Блокеров по отделу — открыть" items={blockerItems} tone="red" />
+        <AttentionWidget label="Просроченных задач — открыть" items={overdueItems} tone="amber" />
+        <AttentionWidget label="Зависших сделок >7 дней — открыть" items={stuckItems} tone="amber" />
       </div>
 
       {/* Сотрудники — сравнение + провал внутрь */}
@@ -160,22 +200,11 @@ export default async function LeadershipPage() {
         </table>
       </div>
 
-      {/* Воронка по стадиям */}
-      <h2 className="mb-3 text-lg font-bold text-ink-50">Воронка отдела по стадиям</h2>
-      <div className="card space-y-2 p-5">
-        {funnel.map((f) => (
-          <div key={f.stage} className="flex items-center gap-3">
-            <div className="w-40 shrink-0 text-sm text-ink-300">{f.stage}</div>
-            <div className="h-5 flex-1 overflow-hidden rounded bg-ink-800">
-              <div
-                className="h-full rounded bg-brand/70"
-                style={{ width: `${(f.count / funnelMax) * 100}%` }}
-              />
-            </div>
-            <div className="w-8 text-right text-sm tabular-nums text-ink-200">{f.count}</div>
-          </div>
-        ))}
-      </div>
+      {/* Воронка по стадиям: клик раскрывает контрагентов, менеджера и суммы */}
+      <h2 className="mb-1 text-lg font-bold text-ink-50">Воронка отдела</h2>
+      <p className="mb-3 text-sm text-ink-400">Нажмите на стадию — увидите, кто на ней стоит, с менеджером, суммой и сроком.</p>
+      <DeptFunnel deals={funnelDeals} />
+
     </div>
   );
 }
@@ -192,12 +221,4 @@ function Card({ label, value, money, sub, accent }: { label: string; value: numb
   );
 }
 
-function Alert({ label, value, tone }: { label: string; value: number; tone: "red" | "amber" }) {
-  const c = tone === "red" ? "border-red-500/25 bg-red-500/[0.07] text-red-200" : "border-amber-500/25 bg-amber-500/[0.07] text-amber-100";
-  return (
-    <div className={`rounded-xl border px-4 py-3 ${c}`}>
-      <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <div className="text-xs">{label}</div>
-    </div>
-  );
-}
+

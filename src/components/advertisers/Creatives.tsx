@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/client";
+import { FileCell } from "@/components/ui/FileCell";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 
 const CREATIVE_STATUSES = ["В работе", "На согласовании", "Согласован", "Отклонён"] as const;
@@ -83,8 +84,19 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
         </form>
       )}
 
+      {/* Файлы макетов — можно просто перетащить сюда с компьютера */}
+      <div className="mb-3">
+        <FileCell
+          ownerType="advertiser"
+          ownerId={advertiserId}
+          kind="Креатив"
+          advertiserId={advertiserId}
+          label="Прикрепить макет (jpg, png, pdf)"
+        />
+      </div>
+
       {creatives.length === 0 ? (
-        <p className="text-sm text-ink-400">Макетов пока нет.</p>
+        <p className="text-sm text-ink-400">Карточек макетов пока нет — файлы можно приложить выше.</p>
       ) : (
         <div className="space-y-2">
           {creatives.map((c) => (

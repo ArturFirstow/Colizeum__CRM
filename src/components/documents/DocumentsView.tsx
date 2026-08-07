@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch, ApiError } from "@/lib/client";
+import { FileCell } from "@/components/ui/FileCell";
 import { DOCUMENT_TYPES, DOCUMENT_SECTIONS, sectionForDocType } from "@/lib/enums";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { advertiserTypeStyle } from "@/lib/ui-tokens";
@@ -127,6 +128,22 @@ export function DocumentsView({
                 <span className={`pill ring-1 ring-inset ${advertiserTypeStyle(selected.type)}`}>
                   {selected.type}
                 </span>
+              </div>
+
+              {/* Быстрая загрузка: файл ложится в общее хранилище клиента и
+                  виден там же, где его приложили (сделка, счёт, макет). */}
+              <div className="mb-4 rounded-2xl border border-ink-700/70 bg-ink-900/40 p-4">
+                <div className="mb-2 text-sm font-semibold text-ink-100">Файлы клиента</div>
+                <p className="mb-2.5 text-xs text-ink-500">
+                  Перетащите файл сюда или нажмите — счета, макеты и медиапланы из карточек сделок тоже попадают в этот список.
+                </p>
+                <FileCell
+                  ownerType="advertiser"
+                  ownerId={selected.id}
+                  kind="Документ"
+                  advertiserId={selected.id}
+                  label="Прикрепить файл с компьютера"
+                />
               </div>
 
               <div className="space-y-3">
