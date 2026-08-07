@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { withSession, ok, fail } from "@/lib/api";
-import { aiChat, aiConfigured, AI_NO_KEY_MESSAGE, type AiMessage } from "@/lib/ai";
+import { aiChat, aiConfigured, AI_NO_KEY_MESSAGE, aiErrorMessage, type AiMessage } from "@/lib/ai";
 import { aiTools, makeRunTool } from "@/lib/ai-tools";
 import { renderMarkdown } from "@/lib/markdown";
 import { z } from "zod";
@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
     const { messages } = schema.parse(await req.json());
     const aiMessages: AiMessage[] = messages.map((m) => ({ role: m.role, content: m.content }));
 
-    const text = await aiChat({
+    try {
+      const text = await aiChat({
       system:
         "Ты — напарник сотрудника Colizeum Agency (агентство рекламы и коллабораций для сети киберклубов COLIZEUM). " +
         "Ты не просто отвечаешь — ты РАСКЛАДЫВАЕШЬ информацию по сервису, как картотека. " +
@@ -40,10 +41,12 @@ export async function POST(req: NextRequest) {
       messages: aiMessages,
       tools: aiTools,
       runTool: makeRunTool(session),
-      maxTokens: 2200,
-      maxSteps: 8,
-    });
-
-    return ok({ reply: text, html: renderMarkdown(text) });
+        maxTokens: 2200,
+        maxSteps: 8,
+      });
+      return ok({ reply: text, html: renderMarkdown(text) });
+    } catch (e) {
+      return fail("ai_failed", aiErrorMessage(e), 502);
+    }
   });
 }

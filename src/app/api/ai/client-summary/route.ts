@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { canSeeOwned } from "@/lib/scope";
-import { aiComplete, aiConfigured, AI_NO_KEY_MESSAGE } from "@/lib/ai";
+import { aiComplete, aiConfigured, AI_NO_KEY_MESSAGE, aiErrorMessage } from "@/lib/ai";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatMoney } from "@/lib/format";
 import { z } from "zod";
@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
     if (adv.tasks.length === 0) ctx.push("- (нет)");
     for (const t of adv.tasks) ctx.push(`- ${t.title}${t.dueDate ? ` (до ${t.dueDate.toISOString().slice(0, 10)})` : ""}${t.notes ? ` — ${t.notes}` : ""}`);
 
-    const markdown = await aiComplete({
+    try {
+      const markdown = await aiComplete({
       maxTokens: 2000,
       system:
         "Ты — ассистент менеджера рекламных проектов Colizeum Agency. " +
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
       user: ctx.join("\n"),
     });
 
-    return ok({ markdown, html: renderMarkdown(markdown) });
+      return ok({ markdown, html: renderMarkdown(markdown) });
+    } catch (e) {
+      return fail("ai_failed", aiErrorMessage(e), 502);
+    }
   });
 }

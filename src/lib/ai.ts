@@ -14,6 +14,15 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const MODEL = process.env.AI_MODEL ?? "claude-sonnet-5";
 
+// Адрес API. По умолчанию — напрямую в Anthropic. Если прямые запросы из вашей
+// страны не принимаются (ответ 403 «Request not allowed»), сюда можно вписать
+// адрес совместимого шлюза/прокси — остальной код менять не нужно.
+const BASE_URL = process.env.ANTHROPIC_BASE_URL || undefined;
+
+function client() {
+  return new Anthropic({ baseURL: BASE_URL }); // ключ читается из ANTHROPIC_API_KEY
+}
+
 /** Есть ли ключ для ИИ. */
 export function aiConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
@@ -23,14 +32,31 @@ export function aiConfigured(): boolean {
 export const AI_NO_KEY_MESSAGE =
   'ИИ не подключён: не задан ANTHROPIC_API_KEY. Добавьте ключ в .env (строка ANTHROPIC_API_KEY="sk-ant-…") и перезапустите сервер.';
 
+/** Переводим технические ошибки провайдера в понятные человеку. */
+export function aiErrorMessage(e: unknown): string {
+  const status = (e as { status?: number })?.status;
+  const raw = e instanceof Error ? e.message : String(e);
+  if (status === 403 || /request not allowed/i.test(raw)) {
+    return (
+      "ИИ отказал в доступе (403): провайдер не принимает запросы из вашего региона. " +
+      "Ключ при этом рабочий. Варианты: запускать сервис на зарубежном сервере, " +
+      "пустить запросы через шлюз (переменная ANTHROPIC_BASE_URL в .env) " +
+      "или подключить провайдера, доступного в РФ."
+    );
+  }
+  if (status === 401) return "ИИ отклонил ключ (401): проверьте, что ANTHROPIC_API_KEY скопирован целиком и не удалён в консоли.";
+  if (status === 429) return "ИИ перегружен или исчерпан лимит (429). Попробуйте через минуту или проверьте баланс в консоли.";
+  if (status === 400 && /credit|balance/i.test(raw)) return "На счёте Anthropic закончились кредиты — пополните баланс в консоли.";
+  return `Ошибка ИИ: ${raw}`;
+}
+
 /** Один вызов ИИ: system-инструкция + пользовательский контекст → текст. */
 export async function aiComplete(opts: {
   system: string;
   user: string;
   maxTokens?: number;
 }): Promise<string> {
-  const client = new Anthropic(); // читает ANTHROPIC_API_KEY из окружения
-  const res = await client.messages.create({
+  const res = await client().messages.create({
     model: MODEL,
     max_tokens: opts.maxTokens ?? 3000,
     system: opts.system,
@@ -59,12 +85,12 @@ export async function aiChat(opts: {
   maxTokens?: number;
   maxSteps?: number;
 }): Promise<string> {
-  const client = new Anthropic();
+  const api = client();
   const messages: AiMessage[] = [...opts.messages];
   const maxSteps = opts.maxSteps ?? 6;
 
   for (let step = 0; step < maxSteps; step++) {
-    const res = await client.messages.create({
+    const res = await api.messages.create({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 2500,
       system: opts.system,
