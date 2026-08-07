@@ -1,6 +1,5 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-import OpenAI from "openai";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Единый шов для ИИ. Провайдер выбирается в .env одной строкой AI_PROVIDER:
@@ -83,8 +82,31 @@ export type AiMessage = { role: "user" | "assistant"; content: string };
 
 const isAnthropic = () => PROVIDER === "anthropic";
 
-function openaiClient() {
-  return new OpenAI({ apiKey: apiKey() ?? "", baseURL: BASE_URL });
+// OpenAI-совместимый запрос делаем обычным fetch — отдельная библиотека
+// не нужна, а значит и нечему ломаться при установке зависимостей.
+type ChatMsg = Record<string, unknown>;
+
+async function chatCompletion(body: Record<string, unknown>): Promise<Record<string, any>> {
+  const url = `${(BASE_URL ?? "").replace(/\/$/, "")}/chat/completions`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey() ?? ""}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    const err = new Error(text.slice(0, 500)) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Провайдер вернул не JSON: " + text.slice(0, 200));
+  }
 }
 
 function anthropicClient() {
@@ -107,7 +129,7 @@ export async function aiComplete(opts: { system: string; user: string; maxTokens
       .trim();
   }
 
-  const res = await openaiClient().chat.completions.create({
+  const res = await chatCompletion({
     model: MODEL,
     max_tokens: opts.maxTokens ?? 3000,
     messages: [
@@ -115,7 +137,7 @@ export async function aiComplete(opts: { system: string; user: string; maxTokens
       { role: "user", content: opts.user },
     ],
   });
-  return (res.choices[0]?.message?.content ?? "").trim();
+  return String(res.choices?.[0]?.message?.content ?? "").trim();
 }
 
 // ── Диалог с инструментами: ИИ сам решает, что вызвать ───────────────────────
@@ -178,40 +200,38 @@ async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> 
 }
 
 async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<string> {
-  const client = openaiClient();
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+  const messages: ChatMsg[] = [
     { role: "system", content: opts.system },
     ...opts.messages.map((m) => ({ role: m.role, content: m.content })),
   ];
-  const tools: OpenAI.Chat.ChatCompletionTool[] = opts.tools.map((t) => ({
+  const tools = opts.tools.map((t) => ({
     type: "function",
     function: { name: t.name, description: t.description, parameters: t.input_schema },
   }));
 
   for (let step = 0; step < maxSteps; step++) {
-    const res = await client.chat.completions.create({
+    const res = await chatCompletion({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 2500,
       messages,
       tools,
     });
-    const msg = res.choices[0]?.message;
+    const msg = res.choices?.[0]?.message;
     if (!msg) return "Провайдер вернул пустой ответ.";
 
-    const calls = msg.tool_calls ?? [];
-    if (calls.length === 0) return (msg.content ?? "").trim();
+    const calls: Array<{ id?: string; function?: { name?: string; arguments?: string } }> = msg.tool_calls ?? [];
+    if (calls.length === 0) return String(msg.content ?? "").trim();
 
-    messages.push(msg);
+    messages.push(msg as ChatMsg);
     for (const call of calls) {
-      const fn = (call as { function?: { name?: string; arguments?: string } }).function;
       let out: string;
       try {
-        const args = fn?.arguments ? (JSON.parse(fn.arguments) as Record<string, unknown>) : {};
-        out = await opts.runTool(fn?.name ?? "", args);
+        const args = call.function?.arguments ? (JSON.parse(call.function.arguments) as Record<string, unknown>) : {};
+        out = await opts.runTool(call.function?.name ?? "", args);
       } catch (e) {
         out = "Ошибка инструмента: " + (e instanceof Error ? e.message : String(e));
       }
-      messages.push({ role: "tool", tool_call_id: call.id, content: out });
+      messages.push({ role: "tool", tool_call_id: call.id ?? "", content: out });
     }
   }
   return "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.";
