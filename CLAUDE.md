@@ -39,7 +39,7 @@
 **Мессенджер** (`/messenger`): каналы (Channel, «Общий» неудаляемый), сообщения (ChatMessage: закрепление, привязка к клиенту/сделке через денормализ. context), вложения (ChatAttachment через StorageProvider, ключи `chat/{channelId}/{messageId}/…`), поллинг ленты ~4с. Общий для всех сотрудников.
 **Команда** (`/team`): админ (Owner) создаёт доступы и правит имя/роль (PATCH `/api/users/[id]`).
 
-**ИИ** (`src/lib/ai.ts` — единый шов, провайдер Claude/Anthropic, модель `AI_MODEL` (по умолчанию `claude-sonnet-5`; для сложных разборов — `claude-opus-5`), ключ `ANTHROPIC_API_KEY`). Кнопки: «Саммари ИИ» на карточке клиента (`/api/ai/client-summary`), «Драфт ДС» на карточке сделки (`/api/ai/draft-ds`) + недельная ИИ-сводка. Провайдера меняем переписыванием только `ai.ts`.
+**ИИ** (`src/lib/ai.ts` — единый шов). Провайдер выбирается в `.env` строкой `AI_PROVIDER`: `qwen` (DashScope) и `kimi` (Moonshot) — OpenAI-совместимые, работают из РФ; `anthropic` — Claude (из РФ отвечает 403 «Request not allowed»); `openai` — любой другой совместимый сервис. Ключ — `AI_API_KEY`, модель — `AI_MODEL` (по умолчанию qwen-plus / moonshot-v1-32k / claude-sonnet-5), адрес — `AI_BASE_URL` (подставляется по провайдеру). Инструменты напарника — `src/lib/ai-tools.ts`, типы `AiTool`/`AiMessage` нейтральные, поэтому смена провайдера кода не касается. Ошибки провайдера переводятся в человеческий текст (`aiErrorMessage`).
 
 **Дорожная карта:**
 1. ✅ Задачи от руководителя.

@@ -1,82 +1,124 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Единый шов для ИИ. Сейчас провайдер — Claude (Anthropic).
-// ВСЕ ИИ-вызовы сервиса идут через aiComplete(), поэтому сменить провайдера
-// позже = переписать только этот файл (например, на OpenAI-совместимый клиент
-// для Gemini/Groq/DeepSeek), не трогая функции-фичи и UI.
+// Единый шов для ИИ. Провайдер выбирается в .env одной строкой AI_PROVIDER:
 //
-// Ключ: ANTHROPIC_API_KEY в .env. Модель — AI_MODEL (по умолчанию claude-sonnet-5:
-// разумный баланс цены и качества для разбора файлов и ответов по кабинету;
-// для самых сложных задач можно поставить claude-opus-5).
+//   qwen      — Alibaba Qwen (DashScope, OpenAI-совместимый)
+//   kimi      — Moonshot Kimi (OpenAI-совместимый)
+//   openai    — любой другой OpenAI-совместимый сервис (адрес в AI_BASE_URL)
+//   anthropic — Claude (нужен доступ из вашей страны)
+//
+// Остальной код сервиса — напарник, его инструменты, кнопки «Саммари» и
+// «Драфт ДС» — не знает, какой провайдер стоит: всё идёт через aiComplete()
+// и aiChat(). Смена провайдера = правка .env, код не трогаем.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MODEL = process.env.AI_MODEL ?? "claude-sonnet-5";
+type Provider = "qwen" | "kimi" | "openai" | "anthropic";
 
-// Адрес API. По умолчанию — напрямую в Anthropic. Если прямые запросы из вашей
-// страны не принимаются (ответ 403 «Request not allowed»), сюда можно вписать
-// адрес совместимого шлюза/прокси — остальной код менять не нужно.
-const BASE_URL = process.env.ANTHROPIC_BASE_URL || undefined;
+const PROVIDER = (process.env.AI_PROVIDER ?? "anthropic").toLowerCase() as Provider;
 
-function client() {
-  return new Anthropic({ baseURL: BASE_URL }); // ключ читается из ANTHROPIC_API_KEY
+// Адреса OpenAI-совместимых API (переопределяются через AI_BASE_URL).
+const PRESET_BASE_URL: Partial<Record<Provider, string>> = {
+  qwen: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  kimi: "https://api.moonshot.ai/v1",
+};
+
+// Модель по умолчанию. Точное название смотрите в кабинете провайдера
+// и при необходимости задайте своё через AI_MODEL.
+const PRESET_MODEL: Record<Provider, string> = {
+  qwen: "qwen-plus",
+  kimi: "moonshot-v1-32k",
+  openai: "gpt-4o-mini",
+  anthropic: "claude-sonnet-5",
+};
+
+const MODEL = process.env.AI_MODEL || PRESET_MODEL[PROVIDER] || "qwen-plus";
+const BASE_URL = process.env.AI_BASE_URL || PRESET_BASE_URL[PROVIDER];
+
+/** Ключ провайдера: общий AI_API_KEY либо прежний ANTHROPIC_API_KEY. */
+function apiKey(): string | undefined {
+  return process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY || undefined;
 }
 
 /** Есть ли ключ для ИИ. */
 export function aiConfigured(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!apiKey();
 }
 
 /** Понятное сообщение, если ключ не задан. */
 export const AI_NO_KEY_MESSAGE =
-  'ИИ не подключён: не задан ANTHROPIC_API_KEY. Добавьте ключ в .env (строка ANTHROPIC_API_KEY="sk-ant-…") и перезапустите сервер.';
+  'ИИ не подключён: не задан ключ. Добавьте в .env строки AI_PROVIDER="qwen" (или kimi) и AI_API_KEY="…", затем перезапустите сервер.';
 
 /** Переводим технические ошибки провайдера в понятные человеку. */
 export function aiErrorMessage(e: unknown): string {
   const status = (e as { status?: number })?.status;
   const raw = e instanceof Error ? e.message : String(e);
-  if (status === 403 || /request not allowed/i.test(raw)) {
+  if (status === 403 || /request not allowed|forbidden/i.test(raw)) {
     return (
-      "ИИ отказал в доступе (403): провайдер не принимает запросы из вашего региона. " +
-      "Ключ при этом рабочий. Варианты: запускать сервис на зарубежном сервере, " +
-      "пустить запросы через шлюз (переменная ANTHROPIC_BASE_URL в .env) " +
-      "или подключить провайдера, доступного в РФ."
+      "Провайдер ИИ отклонил запрос (403) — обычно это значит, что обращения из вашей страны не принимаются. " +
+      "Ключ при этом рабочий. Смените провайдера в .env (AI_PROVIDER=qwen или kimi) либо запускайте сервис на зарубежном сервере."
     );
   }
-  if (status === 401) return "ИИ отклонил ключ (401): проверьте, что ANTHROPIC_API_KEY скопирован целиком и не удалён в консоли.";
-  if (status === 429) return "ИИ перегружен или исчерпан лимит (429). Попробуйте через минуту или проверьте баланс в консоли.";
-  if (status === 400 && /credit|balance/i.test(raw)) return "На счёте Anthropic закончились кредиты — пополните баланс в консоли.";
+  if (status === 401) {
+    return "Провайдер ИИ не принял ключ (401): проверьте, что AI_API_KEY скопирован целиком и не отозван в кабинете провайдера.";
+  }
+  if (status === 404 && /model/i.test(raw)) {
+    return `Провайдер не знает модель «${MODEL}». Посмотрите точное название в кабинете провайдера и укажите его в .env строкой AI_MODEL.`;
+  }
+  if (status === 429) return "Провайдер ИИ перегружен или исчерпан лимит (429). Попробуйте через минуту или проверьте баланс.";
+  if (/insufficient|balance|credit|arrears/i.test(raw)) return "На счёте у провайдера ИИ закончились средства — пополните баланс.";
   return `Ошибка ИИ: ${raw}`;
 }
 
-/** Один вызов ИИ: system-инструкция + пользовательский контекст → текст. */
-export async function aiComplete(opts: {
-  system: string;
-  user: string;
-  maxTokens?: number;
-}): Promise<string> {
-  const res = await client().messages.create({
-    model: MODEL,
-    max_tokens: opts.maxTokens ?? 3000,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.user }],
-  });
-  return res.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { text: string }).text)
-    .join("\n")
-    .trim();
+// ── Нейтральные типы: одинаковые для всех провайдеров ────────────────────────
+export type AiTool = {
+  name: string;
+  description: string;
+  /** JSON Schema параметров инструмента. */
+  input_schema: Record<string, unknown>;
+};
+export type AiMessage = { role: "user" | "assistant"; content: string };
+
+const isAnthropic = () => PROVIDER === "anthropic";
+
+function openaiClient() {
+  return new OpenAI({ apiKey: apiKey() ?? "", baseURL: BASE_URL });
 }
 
-export type AiTool = Anthropic.Tool;
-export type AiMessage = Anthropic.MessageParam;
+function anthropicClient() {
+  return new Anthropic({ apiKey: apiKey() ?? "", baseURL: process.env.AI_BASE_URL || undefined });
+}
 
-/**
- * Диалог с инструментами (для ИИ-чата ассистента). ИИ сам решает, какие
- * инструменты вызвать; runTool выполняет их (запросы к БД в области видимости).
- * Промежуточные tool_use/tool_result не возвращаем клиенту — только финальный текст.
- */
+// ── Один вызов: инструкция + текст → ответ ───────────────────────────────────
+export async function aiComplete(opts: { system: string; user: string; maxTokens?: number }): Promise<string> {
+  if (isAnthropic()) {
+    const res = await anthropicClient().messages.create({
+      model: MODEL,
+      max_tokens: opts.maxTokens ?? 3000,
+      system: opts.system,
+      messages: [{ role: "user", content: opts.user }],
+    });
+    return res.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { text: string }).text)
+      .join("\n")
+      .trim();
+  }
+
+  const res = await openaiClient().chat.completions.create({
+    model: MODEL,
+    max_tokens: opts.maxTokens ?? 3000,
+    messages: [
+      { role: "system", content: opts.system },
+      { role: "user", content: opts.user },
+    ],
+  });
+  return (res.choices[0]?.message?.content ?? "").trim();
+}
+
+// ── Диалог с инструментами: ИИ сам решает, что вызвать ───────────────────────
 export async function aiChat(opts: {
   system: string;
   messages: AiMessage[];
@@ -85,16 +127,27 @@ export async function aiChat(opts: {
   maxTokens?: number;
   maxSteps?: number;
 }): Promise<string> {
-  const api = client();
-  const messages: AiMessage[] = [...opts.messages];
-  const maxSteps = opts.maxSteps ?? 6;
+  const maxSteps = opts.maxSteps ?? 8;
+  return isAnthropic() ? anthropicChat(opts, maxSteps) : openAiChat(opts, maxSteps);
+}
+
+type ChatOpts = Parameters<typeof aiChat>[0];
+
+async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> {
+  const client = anthropicClient();
+  const messages: Anthropic.MessageParam[] = opts.messages.map((m) => ({ role: m.role, content: m.content }));
+  const tools = opts.tools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: t.input_schema,
+  })) as Anthropic.Tool[];
 
   for (let step = 0; step < maxSteps; step++) {
-    const res = await api.messages.create({
+    const res = await client.messages.create({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 2500,
       system: opts.system,
-      tools: opts.tools,
+      tools,
       messages,
     });
     messages.push({ role: "assistant", content: res.content });
@@ -121,6 +174,45 @@ export async function aiChat(opts: {
     }
     messages.push({ role: "user", content: results });
   }
+  return "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.";
+}
 
+async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<string> {
+  const client = openaiClient();
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: opts.system },
+    ...opts.messages.map((m) => ({ role: m.role, content: m.content })),
+  ];
+  const tools: OpenAI.Chat.ChatCompletionTool[] = opts.tools.map((t) => ({
+    type: "function",
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }));
+
+  for (let step = 0; step < maxSteps; step++) {
+    const res = await client.chat.completions.create({
+      model: MODEL,
+      max_tokens: opts.maxTokens ?? 2500,
+      messages,
+      tools,
+    });
+    const msg = res.choices[0]?.message;
+    if (!msg) return "Провайдер вернул пустой ответ.";
+
+    const calls = msg.tool_calls ?? [];
+    if (calls.length === 0) return (msg.content ?? "").trim();
+
+    messages.push(msg);
+    for (const call of calls) {
+      const fn = (call as { function?: { name?: string; arguments?: string } }).function;
+      let out: string;
+      try {
+        const args = fn?.arguments ? (JSON.parse(fn.arguments) as Record<string, unknown>) : {};
+        out = await opts.runTool(fn?.name ?? "", args);
+      } catch (e) {
+        out = "Ошибка инструмента: " + (e instanceof Error ? e.message : String(e));
+      }
+      messages.push({ role: "tool", tool_call_id: call.id, content: out });
+    }
+  }
   return "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.";
 }
