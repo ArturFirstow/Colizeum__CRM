@@ -34,3 +34,6 @@ yarn-error.log*
 *.pem
 .vscode/
 .idea/
+
+# Служебный кэш TypeScript — пересоздаётся при каждой сборке.
+tsconfig.tsbuildinfo
