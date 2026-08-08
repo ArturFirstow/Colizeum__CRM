@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import type { AiTool } from "@/lib/ai";
 import type { SessionPayload } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
+import { MANUAL, MANUAL_KEYS, MANUAL_TOC } from "@/lib/ai-manual";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Инструменты напарника ИИ. Делятся на две группы:
@@ -87,6 +88,24 @@ export const aiTools: AiTool[] = [
       type: "object",
       properties: { query: { type: "string", description: "Ключевые слова, 1–3 слова" } },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "read_manual",
+    description:
+      "Подробное руководство по работе в сервисе: как ставить задачи, как раскладывать документы, что происходит на каждой стадии сделки, когда нужна маркировка, как считать НДС, кто за что отвечает. " +
+      "Вызывай, когда сотрудник спрашивает «как правильно», «что дальше», «кому это отдать», «нужна ли маркировка» — и вообще всегда, когда сомневаешься в порядке работы. Лучше прочитать главу, чем ответить наугад.",
+    input_schema: {
+      type: "object",
+      properties: {
+        section: {
+          type: "string",
+          enum: MANUAL_KEYS,
+          description: "Ключ главы. Если не уверен, какая нужна — передай любую, в ответе будет оглавление",
+        },
+      },
+      required: ["section"],
       additionalProperties: false,
     },
   },
@@ -189,6 +208,8 @@ export function describeToolStep(name: string, input: Record<string, unknown>): 
       return `карточка клиента${s("name") ? `: ${s("name")}` : ""}`;
     case "search_knowledge":
       return `база знаний${s("query") ? `: «${s("query")}»` : ""}`;
+    case "read_manual":
+      return `руководство${s("section") ? `: ${s("section").replace(/_/g, " ")}` : ""}`;
     case "list_inbox_files":
       return "входящие файлы";
     case "route_file":
@@ -297,6 +318,15 @@ export function makeRunTool(session: SessionPayload) {
         out.push(`### Файлы и шаблоны\n${matchedFiles.map((f) => `- ${f.title} (${f.fileName})`).join("\n")}`);
       }
       return out.join("\n\n");
+    }
+
+    if (name === "read_manual") {
+      const key = String(input.section ?? "").trim();
+      const chapter = MANUAL[key];
+      if (!chapter) {
+        return `Такой главы нет. Доступные главы руководства:\n${MANUAL_TOC}\n\nВызови read_manual ещё раз с нужным ключом.`;
+      }
+      return `# ${chapter.title}\n\n${chapter.body}`;
     }
 
     if (name === "list_inbox_files") {
