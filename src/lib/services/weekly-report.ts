@@ -1,16 +1,26 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import type { SessionPayload } from "@/lib/auth";
+import { ownScope } from "@/lib/scope";
 
 function fmt(d: Date): string {
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
 }
 
 // Собирает недельный отчёт по проектам из ежедневных статусов + состояния сделок.
-export async function buildWeeklyReport(days = 7): Promise<{ markdown: string; filename: string }> {
+//
+// Отчёт строится строго в области видимости сотрудника: специалист получает
+// только своих клиентов, руководитель — весь отдел. Без этого каждый скачивал
+// отчёт по всему отделу, что ломало разделение данных между менеджерами.
+export async function buildWeeklyReport(
+  session: SessionPayload,
+  days = 7,
+): Promise<{ markdown: string; filename: string }> {
   const now = new Date();
   const from = new Date(now.getTime() - days * 86400000);
 
   const advertisers = await prisma.advertiser.findMany({
+    where: { ...ownScope(session), archived: false },
     orderBy: { nameRu: "asc" },
     include: {
       deals: { orderBy: { updatedAt: "desc" } },

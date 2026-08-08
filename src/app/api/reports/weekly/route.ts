@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return fail("unauthorized", "Требуется вход", 401);
 
-  const { markdown, filename } = await buildWeeklyReport();
+  const { markdown, filename } = await buildWeeklyReport(session);
   const download = new URL(req.url).searchParams.get("download");
 
   if (download) {
