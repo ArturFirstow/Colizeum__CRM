@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
 import { JournalView } from "@/components/journal/JournalView";
+import { meetingSheetConfigured } from "@/lib/services/meeting-sheet";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +17,7 @@ export default async function JournalPage() {
       orderBy: { nameRu: "asc" },
     }),
   ]);
-  return <JournalView entries={entries} advertisers={advertisers} />;
+  return (
+    <JournalView entries={entries} advertisers={advertisers} sheetConfigured={meetingSheetConfigured()} />
+  );
 }

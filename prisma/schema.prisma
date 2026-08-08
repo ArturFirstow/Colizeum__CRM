@@ -489,6 +489,17 @@ model JournalEntry {
   // Встреча: с кем говорили и по какому клиенту — чтобы транскрипт не потерялся.
   meetingWith      String?
   advertiserId     String?
+  // ── Показатели встречи для таблицы учёта ──────────────────────────────────
+  meetingDate      DateTime? // дата встречи
+  startTime        String?   // «HH:MM» начала
+  endTime          String?   // «HH:MM» окончания
+  durationHours    Float?    // продолжительность в часах, шаг 0,5
+  participants     String?   // участники встречи, через запятую
+  protocolUrl      String?   // ссылка на протокол/расшифровку
+  meetingUrl       String?   // ссылка на саму встречу (запись, Zoom/Meet)
+  // Выгрузка строки в Google-таблицу отчётности.
+  exportedAt       DateTime?
+  exportError      String?
   rawText          String
   parsedSummary    String?
   routedTo         String? // Трекер | База | Архив

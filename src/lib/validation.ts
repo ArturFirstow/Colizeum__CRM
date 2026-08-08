@@ -164,6 +164,14 @@ export const knowledgeCreateSchema = z.object({
 });
 export const knowledgeUpdateSchema = knowledgeCreateSchema.partial();
 
+// Показатели встречи — то, что затем уходит строкой в таблицу учёта.
+const timeOfDay = z
+  .string()
+  .trim()
+  .regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "Время в формате ЧЧ:ММ")
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
 export const journalCreateSchema = z.object({
   source: inSet(JOURNAL_SOURCES).default("EOD"),
   rawText: z.string().trim().min(1, "Пустая запись"),
@@ -171,6 +179,13 @@ export const journalCreateSchema = z.object({
   parsedSummary: optionalString,
   meetingWith: optionalString,
   advertiserId: optionalString,
+  meetingDate: z.string().optional().or(z.literal("").transform(() => undefined)),
+  startTime: timeOfDay,
+  endTime: timeOfDay,
+  durationHours: z.number().nonnegative().optional(),
+  participants: optionalString,
+  protocolUrl: optionalString,
+  meetingUrl: optionalString,
 });
 
 export const mediaPlanCreateSchema = z.object({
