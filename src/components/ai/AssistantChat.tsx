@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Sparkles, Send, Paperclip, X, Inbox } from "lucide-react";
+import { Sparkles, Send, Paperclip, X, Inbox, Search, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 
-type Msg = { role: "user" | "assistant"; content: string; html?: string };
+type Msg = { role: "user" | "assistant"; content: string; html?: string; steps?: string[] };
 
 const SUGGESTIONS = [
   "Разложи приложенный файл по разделам",
@@ -76,11 +76,11 @@ export function AssistantChat() {
     setInput("");
     setLoading(true);
     try {
-      const r = await apiFetch<{ reply: string; html: string }>("/api/ai/chat", {
+      const r = await apiFetch<{ reply: string; html: string; steps?: string[] }>("/api/ai/chat", {
         method: "POST",
         body: JSON.stringify({ messages: history.map((m) => ({ role: m.role, content: m.content })) }),
       });
-      setMessages((m) => [...m, { role: "assistant", content: r.reply, html: r.html }]);
+      setMessages((m) => [...m, { role: "assistant", content: r.reply, html: r.html, steps: r.steps ?? [] }]);
       loadInbox();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка ИИ");
@@ -138,11 +138,25 @@ export function AssistantChat() {
               </div>
             </div>
           ) : (
-            <div key={i} className="flex justify-start">
+            <div key={i} className="flex flex-col items-start gap-1">
               <div
                 className="prose-kb max-w-[85%] rounded-2xl rounded-bl-sm border border-ink-800 bg-ink-900/70 px-4 py-2 text-sm"
                 dangerouslySetInnerHTML={{ __html: m.html ?? m.content }}
               />
+              {/* Куда напарник заглянул. Пустой список — тревожный знак:
+                  значит, ответ придуман, а не взят из данных сервиса. */}
+              {m.steps &&
+                (m.steps.length > 0 ? (
+                  <p className="max-w-[85%] pl-1 text-xs text-ink-500">
+                    <Search size={11} className="mr-1 inline align-[-1px]" />
+                    Смотрел: {m.steps.join(" → ")}
+                  </p>
+                ) : (
+                  <p className="max-w-[85%] pl-1 text-xs text-amber-500/80">
+                    <AlertTriangle size={11} className="mr-1 inline align-[-1px]" />
+                    Ответил без обращения к данным сервиса — проверьте факты
+                  </p>
+                ))}
             </div>
           ),
         )}

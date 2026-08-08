@@ -178,6 +178,34 @@ export const aiTools: AiTool[] = [
   },
 ];
 
+/** Человеческое описание вызова инструмента — показываем сотруднику под ответом,
+ *  чтобы было видно, смотрел напарник в данные сервиса или сочинил из головы. */
+export function describeToolStep(name: string, input: Record<string, unknown>): string {
+  const s = (k: string) => (input[k] ? String(input[k]) : "");
+  switch (name) {
+    case "list_my_clients":
+      return "список клиентов";
+    case "get_client":
+      return `карточка клиента${s("name") ? `: ${s("name")}` : ""}`;
+    case "search_knowledge":
+      return `база знаний${s("query") ? `: «${s("query")}»` : ""}`;
+    case "list_inbox_files":
+      return "входящие файлы";
+    case "route_file":
+      return `разложил файл${s("clientName") ? ` к клиенту ${s("clientName")}` : ""}`;
+    case "create_task":
+      return `создал задачу${s("title") ? `: ${s("title")}` : ""}`;
+    case "add_daily_status":
+      return `записал статус дня${s("clientName") ? ` по ${s("clientName")}` : ""}`;
+    case "add_journal_entry":
+      return "записал в дневник";
+    case "ask_leader":
+      return "отправил вопрос руководителю";
+    default:
+      return name;
+  }
+}
+
 /** Исполнитель инструментов для конкретного сотрудника. */
 export function makeRunTool(session: SessionPayload) {
   const scope = ownScope(session);

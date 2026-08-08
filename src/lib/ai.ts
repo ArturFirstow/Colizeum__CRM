@@ -45,6 +45,12 @@ const PRESET_MODEL: Record<Provider, string> = {
 const MODEL = process.env.AI_MODEL || PRESET_MODEL[PROVIDER] || "qwen-plus";
 const BASE_URL = process.env.AI_BASE_URL || PRESET_BASE_URL[PROVIDER];
 
+// Насколько модели позволено «фантазировать». По умолчанию у провайдеров стоит
+// 1.0 — это режим свободной беседы, из-за которого напарник придумывает клиентов
+// и суммы вместо того, чтобы смотреть в данные. Нам нужен помощник-педант,
+// поэтому держим низкую температуру. Переопределяется через AI_TEMPERATURE.
+const TEMPERATURE = Number(process.env.AI_TEMPERATURE ?? 0.2);
+
 /** Ключ провайдера: общий AI_API_KEY либо прежний ANTHROPIC_API_KEY. */
 function apiKey(): string | undefined {
   return process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY || undefined;
@@ -134,6 +140,7 @@ export async function aiComplete(opts: { system: string; user: string; maxTokens
     const res = await anthropicClient().messages.create({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 3000,
+      temperature: TEMPERATURE,
       system: opts.system,
       messages: [{ role: "user", content: opts.user }],
     });
@@ -147,6 +154,7 @@ export async function aiComplete(opts: { system: string; user: string; maxTokens
   const res = await chatCompletion({
     model: MODEL,
     max_tokens: opts.maxTokens ?? 3000,
+    temperature: TEMPERATURE,
     messages: [
       { role: "system", content: opts.system },
       { role: "user", content: opts.user },
@@ -156,6 +164,12 @@ export async function aiComplete(opts: { system: string; user: string; maxTokens
 }
 
 // ── Диалог с инструментами: ИИ сам решает, что вызвать ───────────────────────
+/** Что вернул диалог: текст ответа и список инструментов, которые ИИ вызвал.
+ *  Список нужен, чтобы сотрудник видел, смотрел ли напарник в данные сервиса
+ *  или сочинил ответ из головы. */
+export type AiChatResult = { text: string; steps: ToolStep[] };
+export type ToolStep = { name: string; input: Record<string, unknown> };
+
 export async function aiChat(opts: {
   system: string;
   messages: AiMessage[];
@@ -163,14 +177,15 @@ export async function aiChat(opts: {
   runTool: (name: string, input: Record<string, unknown>) => Promise<string>;
   maxTokens?: number;
   maxSteps?: number;
-}): Promise<string> {
+}): Promise<AiChatResult> {
   const maxSteps = opts.maxSteps ?? 8;
   return isAnthropic() ? anthropicChat(opts, maxSteps) : openAiChat(opts, maxSteps);
 }
 
 type ChatOpts = Parameters<typeof aiChat>[0];
 
-async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> {
+async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<AiChatResult> {
+  const steps: ToolStep[] = [];
   const client = anthropicClient();
   const messages: Anthropic.MessageParam[] = opts.messages.map((m) => ({ role: m.role, content: m.content }));
   const tools = opts.tools.map((t) => ({
@@ -183,6 +198,7 @@ async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> 
     const res = await client.messages.create({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 2500,
+      temperature: TEMPERATURE,
       system: opts.system,
       tools,
       messages,
@@ -190,19 +206,22 @@ async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> 
     messages.push({ role: "assistant", content: res.content });
 
     if (res.stop_reason !== "tool_use") {
-      return res.content
+      const text = res.content
         .filter((b) => b.type === "text")
         .map((b) => (b as { text: string }).text)
         .join("\n")
         .trim();
+      return { text, steps };
     }
 
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const block of res.content) {
       if (block.type === "tool_use") {
+        const input = (block.input ?? {}) as Record<string, unknown>;
+        steps.push({ name: block.name, input });
         let out: string;
         try {
-          out = await opts.runTool(block.name, (block.input ?? {}) as Record<string, unknown>);
+          out = await opts.runTool(block.name, input);
         } catch (e) {
           out = "Ошибка инструмента: " + (e instanceof Error ? e.message : String(e));
         }
@@ -211,10 +230,11 @@ async function anthropicChat(opts: ChatOpts, maxSteps: number): Promise<string> 
     }
     messages.push({ role: "user", content: results });
   }
-  return "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.";
+  return { text: "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.", steps };
 }
 
-async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<string> {
+async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<AiChatResult> {
+  const steps: ToolStep[] = [];
   const messages: ChatMsg[] = [
     { role: "system", content: opts.system },
     ...opts.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -228,20 +248,23 @@ async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<string> {
     const res = await chatCompletion({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 2500,
+      temperature: TEMPERATURE,
       messages,
       tools,
     });
     const msg = res.choices?.[0]?.message;
-    if (!msg) return "Провайдер вернул пустой ответ.";
+    if (!msg) return { text: "Провайдер вернул пустой ответ.", steps };
 
     const calls: Array<{ id?: string; function?: { name?: string; arguments?: string } }> = msg.tool_calls ?? [];
-    if (calls.length === 0) return String(msg.content ?? "").trim();
+    if (calls.length === 0) return { text: String(msg.content ?? "").trim(), steps };
 
     messages.push(msg as ChatMsg);
     for (const call of calls) {
       let out: string;
+      let args: Record<string, unknown> = {};
       try {
-        const args = call.function?.arguments ? (JSON.parse(call.function.arguments) as Record<string, unknown>) : {};
+        args = call.function?.arguments ? (JSON.parse(call.function.arguments) as Record<string, unknown>) : {};
+        steps.push({ name: call.function?.name ?? "", input: args });
         out = await opts.runTool(call.function?.name ?? "", args);
       } catch (e) {
         out = "Ошибка инструмента: " + (e instanceof Error ? e.message : String(e));
@@ -249,5 +272,5 @@ async function openAiChat(opts: ChatOpts, maxSteps: number): Promise<string> {
       messages.push({ role: "tool", tool_call_id: call.id ?? "", content: out });
     }
   }
-  return "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.";
+  return { text: "Не удалось завершить ответ — слишком много шагов. Уточните вопрос.", steps };
 }

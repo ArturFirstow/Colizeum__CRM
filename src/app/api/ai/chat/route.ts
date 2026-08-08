@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { withSession, ok, fail } from "@/lib/api";
 import { aiChat, aiConfigured, AI_NO_KEY_MESSAGE, aiErrorMessage, type AiMessage } from "@/lib/ai";
-import { aiTools, makeRunTool } from "@/lib/ai-tools";
+import { aiTools, makeRunTool, describeToolStep } from "@/lib/ai-tools";
 import { SERVICE_MAP } from "@/lib/ai-service-map";
 import { buildAiContext } from "@/lib/ai-context";
 import { renderMarkdown } from "@/lib/markdown";
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const context = await buildAiContext(session);
-      const text = await aiChat({
+      const result = await aiChat({
         system: [
           "Ты — напарник менеджера в сервисе Colizeum Agency. Ты работаешь ВНУТРИ этого сервиса и",
           "имеешь доступ к его данным через инструменты. Ты не просто отвечаешь на вопросы — ты",
@@ -57,7 +57,15 @@ export async function POST(req: NextRequest) {
         maxTokens: 2200,
         maxSteps: 8,
       });
-      return ok({ reply: text, html: renderMarkdown(text) });
+
+      // Показываем сотруднику, куда напарник реально заглянул. Если список
+      // пуст — он отвечал по памяти, и такому ответу верить нельзя.
+      const steps = result.steps.map((s) => describeToolStep(s.name, s.input));
+      console.log(
+        `[напарник] ${session.name}: «${aiMessages[aiMessages.length - 1]?.content.slice(0, 60)}» → ` +
+          (steps.length > 0 ? steps.join(" → ") : "БЕЗ обращения к данным"),
+      );
+      return ok({ reply: result.text, html: renderMarkdown(result.text), steps });
     } catch (e) {
       return fail("ai_failed", aiErrorMessage(e), 502);
     }
