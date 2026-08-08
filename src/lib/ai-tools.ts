@@ -14,6 +14,54 @@ import { ownScope } from "@/lib/scope";
 // клиентов ассистент не видит и не трогает.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Поиск по базе знаний ─────────────────────────────────────────────────────
+// Приводим текст к единому виду: без регистра и без «ё», чтобы «Цены», «ЦЕНЫ»
+// и «цены» считались одним словом.
+function normalizeRu(s: string): string {
+  return s.toLowerCase().replace(/ё/g, "е");
+}
+
+const STOP_WORDS = new Set([
+  "как", "что", "где", "для", "это", "или", "при", "чем", "кто", "какой", "какие",
+  "на", "по", "из", "от", "до", "за", "не", "ли", "мы", "их", "его", "нас", "все",
+]);
+
+/** Отрезаем окончание: «скидки» и «скидка» должны находить одну и ту же статью.
+ *  Короткие слова (ЕРИД, ОРД, ДС, УПД) не трогаем — от них останется огрызок,
+ *  который начнёт совпадать с чем попало. */
+function stem(w: string): string | null {
+  return w.length >= 6 ? w.slice(0, 5) : null;
+}
+
+function searchWords(query: string): { word: string; stem: string | null }[] {
+  return normalizeRu(query)
+    .split(/[^a-zа-я0-9]+/i)
+    .filter((w) => w.length >= 2 && !STOP_WORDS.has(w))
+    .map((w) => ({ word: w, stem: stem(w) }));
+}
+
+/** Совпадение целым словом ценится выше, чем совпадение по огрызку. */
+function scoreText(text: string, words: { word: string; stem: string | null }[], weight: number): number {
+  return words.reduce((acc, w) => {
+    if (text.includes(w.word)) return acc + weight * 2;
+    if (w.stem && text.includes(w.stem)) return acc + weight;
+    return acc;
+  }, 0);
+}
+
+/** Оглавление базы знаний — отдаём, когда точных совпадений нет. */
+function knowledgeToc(
+  arts: { title: string; category: string }[],
+  files: { title: string }[],
+): string {
+  if (arts.length === 0) return "База знаний пока пустая.";
+  const byCategory = new Map<string, string[]>();
+  for (const a of arts) byCategory.set(a.category, [...(byCategory.get(a.category) ?? []), a.title]);
+  const out = [...byCategory.entries()].map(([cat, titles]) => `**${cat}**: ${titles.join("; ")}`);
+  if (files.length > 0) out.push(`**Файлы и шаблоны**: ${files.map((f) => f.title).join("; ")}`);
+  return out.join("\n");
+}
+
 export const aiTools: AiTool[] = [
   {
     name: "list_my_clients",
@@ -32,10 +80,12 @@ export const aiTools: AiTool[] = [
   },
   {
     name: "search_knowledge",
-    description: "Поиск по базе знаний агентства (регламенты, документооборот, форматы, цены, правила).",
+    description:
+      "Единственный источник правды о том, как устроено агентство: цены и пакеты, конструкции договоров, форматы размещения, ОРД, промокоды, реквизиты, глоссарий, шаблоны документов. " +
+      "Вызывай ВСЕГДА, когда вопрос про порядок работы, документы, цены или условия — не отвечай по памяти.",
     input_schema: {
       type: "object",
-      properties: { query: { type: "string", description: "Ключевые слова" } },
+      properties: { query: { type: "string", description: "Ключевые слова, 1–3 слова" } },
       required: ["query"],
       additionalProperties: false,
     },
@@ -75,7 +125,11 @@ export const aiTools: AiTool[] = [
         title: { type: "string", description: "Что нужно сделать" },
         clientName: { type: "string", description: "Клиент, если задача по нему" },
         dueDate: { type: "string", description: "Срок в формате ГГГГ-ММ-ДД" },
-        kind: { type: "string", description: "Юрист | Дизайн | Менеджер | Финансы | Прочее" },
+        kind: {
+          type: "string",
+          enum: ["Юрист", "Дизайн", "Менеджер", "Бухгалтерия", "ОРД", "Прочее"],
+          description: "Кто это делает. По умолчанию Менеджер",
+        },
       },
       required: ["title"],
       additionalProperties: false,
@@ -183,12 +237,38 @@ export function makeRunTool(session: SessionPayload) {
 
     if (name === "search_knowledge") {
       const q = String(input.query ?? "").trim();
-      const arts = await prisma.knowledgeArticle.findMany({
-        where: q ? { OR: [{ title: { contains: q } }, { bodyMarkdown: { contains: q } }] } : {},
-        take: 5,
-      });
-      if (arts.length === 0) return `По запросу «${q}» в базе знаний ничего не найдено.`;
-      return arts.map((a) => `### ${a.title}\n${a.bodyMarkdown.slice(0, 1200)}`).join("\n\n");
+      // Ищем в памяти, а не запросом в базу: SQLite не умеет искать по-русски
+      // без учёта регистра, поэтому «цены» не находили статью «Цены». Статей
+      // пара десятков — загрузить их целиком дешевле, чем городить полнотекст.
+      const [arts, files] = await Promise.all([
+        prisma.knowledgeArticle.findMany({ orderBy: { orderIndex: "asc" } }),
+        prisma.knowledgeFile.findMany({ orderBy: { uploadedAt: "desc" } }),
+      ]);
+
+      const words = searchWords(q);
+      if (words.length === 0 || arts.length === 0) return knowledgeToc(arts, files);
+
+      const scored = arts
+        .map((a) => ({
+          a,
+          // Заголовок весит втрое: совпадение в нём почти всегда точнее.
+          score: scoreText(normalizeRu(a.title), words, 3) + scoreText(normalizeRu(a.bodyMarkdown), words, 1),
+        }))
+        .filter((x) => x.score > 0)
+        .sort((x, y) => y.score - x.score)
+        .slice(0, 4);
+
+      const matchedFiles = files.filter((f) => scoreText(normalizeRu(f.title), words, 1) > 0);
+
+      if (scored.length === 0 && matchedFiles.length === 0) {
+        return `По запросу «${q}» точных совпадений нет. Вот что вообще есть в базе знаний — выбери подходящее и переспроси:\n\n${knowledgeToc(arts, files)}`;
+      }
+
+      const out = scored.map((x) => `### ${x.a.title} (${x.a.category})\n${x.a.bodyMarkdown.slice(0, 1500)}`);
+      if (matchedFiles.length > 0) {
+        out.push(`### Файлы и шаблоны\n${matchedFiles.map((f) => `- ${f.title} (${f.fileName})`).join("\n")}`);
+      }
+      return out.join("\n\n");
     }
 
     if (name === "list_inbox_files") {
