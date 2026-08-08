@@ -13,12 +13,26 @@ import { prisma } from "@/lib/prisma";
 import type { Role, UserTrack } from "@/lib/enums";
 
 const COOKIE_NAME = "colizeum_session";
+
+// Заглушки из .env.example и deploy/env.production.example — с ними на прод нельзя.
+const PLACEHOLDER_SECRETS = new Set([
+  "change-me-please-generate-a-long-random-secret-string",
+  "ВСТАВЬТЕ_СЮДА_СЛУЧАЙНУЮ_СТРОКУ",
+]);
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 дней
 
 function secretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
   if (!secret || secret.length < 16) {
     throw new Error("AUTH_SECRET не задан или слишком короткий (см. .env).");
+  }
+  // Значение из .env.example достаточно длинное, чтобы пройти проверку выше, но
+  // оно есть в репозитории — зная его, можно подделать cookie и войти любым
+  // сотрудником. На проде такой запуск останавливаем.
+  if (process.env.NODE_ENV === "production" && PLACEHOLDER_SECRETS.has(secret)) {
+    throw new Error(
+      "AUTH_SECRET оставлен из примера. Сгенерируйте свой: openssl rand -base64 32 — и впишите в .env.",
+    );
   }
   return new TextEncoder().encode(secret);
 }
