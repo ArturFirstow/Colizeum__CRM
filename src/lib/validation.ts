@@ -154,6 +154,13 @@ export const documentCreateSchema = z.object({
   title: z.string().trim().min(1, "Укажите название документа"),
 });
 
+// Правка карточки документа (рекламодателя не меняем — это переезд, а не правка).
+export const documentUpdateSchema = z.object({
+  type: inSet(DOCUMENT_TYPES, "Выберите тип документа").optional(),
+  title: z.string().trim().min(1, "Укажите название документа").optional(),
+  dealId: clearableString,
+});
+
 export const knowledgeCreateSchema = z.object({
   // Категория — свободная строка: помимо стандартных, можно создавать новые
   // категории прямо из формы «+ Статья» (ТЗ р.2, п.6).

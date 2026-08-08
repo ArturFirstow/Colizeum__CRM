@@ -25,7 +25,14 @@ type Advertiser = {
   signatory: string | null;
 };
 
-export function EditAdvertiserButton({ advertiser }: { advertiser: Advertiser }) {
+export function EditAdvertiserButton({
+  advertiser,
+  variant = "button",
+}: {
+  advertiser: Advertiser;
+  // "text" — компактная кнопка для списка клиентов, "button" — в карточке.
+  variant?: "button" | "text";
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -71,8 +78,12 @@ export function EditAdvertiserButton({ advertiser }: { advertiser: Advertiser })
 
   return (
     <>
-      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>
-        ✎ Реквизиты
+      <button
+        className={variant === "text" ? "btn-icon text-xs text-ink-400 hover:text-brand" : "btn btn-ghost btn-sm"}
+        onClick={() => setOpen(true)}
+        title="Редактировать карточку"
+      >
+        {variant === "text" ? "✎ Редактировать" : "✎ Реквизиты"}
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Карточка контрагента" size="lg">
         <form onSubmit={submit} className="space-y-4">

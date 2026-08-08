@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { TypeBadge } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
+import { DeleteButton } from "@/components/ui/DeleteButton";
+import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
 import { ADVERTISER_TYPES } from "@/lib/enums";
 
 type Advertiser = {
@@ -14,9 +16,17 @@ type Advertiser = {
   nameEn: string | null;
   legalEntity: string | null;
   inn: string | null;
+  kpp: string | null;
+  ogrn: string | null;
   type: string;
   status: string;
+  goals: string | null;
   notes: string | null;
+  address: string | null;
+  bankName: string | null;
+  bankAccount: string | null;
+  bik: string | null;
+  signatory: string | null;
   archived: boolean;
   _count: { deals: number; documents: number; contacts: number };
 };
@@ -92,26 +102,36 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((a) => (
-            <Link key={a.id} href={`/advertisers/${a.id}`} className="card card-hover p-5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-base font-bold text-ink-50">{a.nameRu}</span>
-                    {a.archived && <span className="badge badge-muted shrink-0">архив</span>}
+            <div key={a.id} className="card card-hover flex flex-col p-5">
+              <Link href={`/advertisers/${a.id}`} className="min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-base font-bold text-ink-50">{a.nameRu}</span>
+                      {a.archived && <span className="badge badge-muted shrink-0">архив</span>}
+                    </div>
+                    {a.legalEntity && (
+                      <div className="mt-0.5 truncate text-xs text-ink-400">{a.legalEntity}</div>
+                    )}
                   </div>
-                  {a.legalEntity && (
-                    <div className="mt-0.5 truncate text-xs text-ink-400">{a.legalEntity}</div>
-                  )}
+                  <TypeBadge type={a.type} />
                 </div>
-                <TypeBadge type={a.type} />
+                {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику. */}
+                <div className="mt-4 flex items-center gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
+                  <span>⑂ {a._count.deals} сделок</span>
+                  <span>❐ {a._count.documents} док.</span>
+                  <span>☎ {a._count.contacts}</span>
+                </div>
+              </Link>
+              {/* Правка и удаление — прямо в списке, без захода в карточку */}
+              <div className="mt-3 flex items-center justify-end gap-1 border-t border-ink-800 pt-2">
+                <EditAdvertiserButton advertiser={a} variant="text" />
+                <DeleteButton
+                  endpoint={`/api/advertisers/${a.id}`}
+                  what={`клиента «${a.nameRu}» со всеми сделками и документами`}
+                />
               </div>
-              {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику. */}
-              <div className="mt-4 flex items-center gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
-                <span>⑂ {a._count.deals} сделок</span>
-                <span>❐ {a._count.documents} док.</span>
-                <span>☎ {a._count.contacts}</span>
-              </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

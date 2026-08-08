@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
+import { EditDocumentButton } from "@/components/documents/EditDocumentButton";
 import { apiFetch, ApiError } from "@/lib/client";
 import { FileCell } from "@/components/ui/FileCell";
 import { DOCUMENT_TYPES, DOCUMENT_SECTIONS, sectionForDocType } from "@/lib/enums";
@@ -24,10 +25,12 @@ type Doc = {
   id: string;
   type: string;
   title: string;
+  dealId?: string | null;
   currentVersionId: string | null;
   versions: Version[];
 };
-type Advertiser = { id: string; nameRu: string; type: string; documents: Doc[] };
+type DealOpt = { id: string; title: string };
+type Advertiser = { id: string; nameRu: string; type: string; documents: Doc[]; deals?: DealOpt[] };
 
 export function DocumentsView({
   advertisers,
@@ -167,7 +170,12 @@ export function DocumentsView({
                     ) : (
                       <div className="space-y-2">
                         {sec.docs.map((doc) => (
-                          <DocumentCard key={doc.id} doc={doc} onUpload={() => setUploadDoc(doc)} />
+                          <DocumentCard
+                            key={doc.id}
+                            doc={doc}
+                            deals={selected?.deals ?? []}
+                            onUpload={() => setUploadDoc(doc)}
+                          />
                         ))}
                       </div>
                     )}
@@ -193,7 +201,15 @@ export function DocumentsView({
   );
 }
 
-function DocumentCard({ doc, onUpload }: { doc: Doc; onUpload: () => void }) {
+function DocumentCard({
+  doc,
+  deals = [],
+  onUpload,
+}: {
+  doc: Doc;
+  deals?: DealOpt[];
+  onUpload: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const current = doc.versions[0];
 
@@ -222,6 +238,7 @@ function DocumentCard({ doc, onUpload }: { doc: Doc; onUpload: () => void }) {
           <button className="btn btn-primary btn-sm" onClick={onUpload}>
             ↑ Версия
           </button>
+          <EditDocumentButton doc={doc} deals={deals} />
           <DeleteButton endpoint={`/api/documents/${doc.id}`} what={`документ «${doc.title}»`} />
         </div>
       </div>
