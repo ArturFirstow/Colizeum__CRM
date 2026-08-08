@@ -227,6 +227,13 @@ export const userUpdateSchema = z.object({
   role: z.enum(["Owner", "Manager", "Director"]).optional(),
 });
 
+// Смена пароля. Сотрудник меняет свой — тогда обязателен текущий пароль.
+// Администратор сбрасывает чужой — текущий не нужен (он его и не знает).
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(8, "Пароль должен быть не короче 8 символов"),
+});
+
 // ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────
 const ym = z.string().regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ");
 

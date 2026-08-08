@@ -8,11 +8,12 @@ import { NAV_GROUPS } from "@/lib/nav";
 import { ROLE_LABELS, type Role } from "@/lib/enums";
 import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
+import { ChangePassword } from "@/components/ChangePassword";
 
 export function Sidebar({
   user,
 }: {
-  user: { name: string; email: string; role: string; track: string };
+  user: { id: string; name: string; email: string; role: string; track: string };
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -76,6 +77,7 @@ export function Sidebar({
           <div className="truncate text-sm font-semibold text-ink-100">{user.name}</div>
           <div className="truncate text-xs text-ink-500">{ROLE_LABELS[user.role as Role] ?? user.role}</div>
         </div>
+        <ChangePassword userId={user.id} />
         <button
           onClick={logout}
           title="Выйти"

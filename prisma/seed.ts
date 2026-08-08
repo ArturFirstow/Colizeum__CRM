@@ -37,6 +37,34 @@ async function seedDoc(advertiserId: string, dealId: string, title: string, type
 }
 
 async function main() {
+  // ⚠️ ПЕРВЫМ ДЕЛОМ, до любой очистки: на боевом сервере запасные пароли из кода
+  // использовать нельзя — они видны каждому, у кого есть доступ к репозиторию.
+  // Проверяем здесь, а не при создании пользователей: иначе сид успел бы стереть
+  // базу и только потом упасть.
+  const SEED_PW_KEYS = [
+    "SEED_PW_FIRSTOV",
+    "SEED_PW_TURINOVA",
+    "SEED_PW_YANYUK",
+    "SEED_PW_CHEPELYUK",
+    "SEED_PW_IVANUSHKIN",
+  ];
+  const requirePasswords =
+    process.env.NODE_ENV === "production" || process.env.SEED_REQUIRE_PASSWORDS === "1";
+  if (requirePasswords) {
+    const missing = SEED_PW_KEYS.filter((k) => !process.env[k]);
+    if (missing.length > 0) {
+      throw new Error(
+        `Сид остановлен, база не тронута.\nНе заданы пароли: ${missing.join(", ")}.\n` +
+          `На боевом сервере пароли задаются в .env — запасные из кода использовать нельзя, ` +
+          `они видны всем, у кого есть доступ к репозиторию.`,
+      );
+    }
+  }
+  for (const k of SEED_PW_KEYS) {
+    const v = process.env[k];
+    if (v && v.length < 8) throw new Error(`${k}: пароль должен быть не короче 8 символов.`);
+  }
+
   console.log("🌱 Очистка…");
   await prisma.chatAttachment.deleteMany();
   await prisma.chatMessage.deleteMany();

@@ -8,7 +8,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar user={{ name: session.name, email: session.email, role: session.role, track: session.track }} />
+      <Sidebar user={{ id: session.userId, name: session.name, email: session.email, role: session.role, track: session.track }} />
       <main className="min-w-0 flex-1">
         <div className="page-enter mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
       </main>
