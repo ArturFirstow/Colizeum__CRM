@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
     const deal = await prisma.deal.create({
       data: {
         ...data,
+        // Указали причину при создании — сразу поднимаем флажок блокера.
+        ...(data.blocker && data.blockerActive === undefined ? { blockerActive: true } : {}),
         launchDate: launchDate ? new Date(launchDate) : undefined,
         nextStepDate: nextStepDate ? new Date(nextStepDate) : undefined,
         ownerId: data.ownerId || session.userId,

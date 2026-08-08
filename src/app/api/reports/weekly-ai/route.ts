@@ -33,7 +33,7 @@ export async function POST() {
         where: { ...advertiserScope(session), advertiser: { ...ownScope(session), archived: false } },
         select: {
           title: true, stage: true, urgency: true, amount: true,
-          blocker: true, situational: true, nextStep: true, nextStepDate: true,
+          blocker: true, blockerActive: true, situational: true, nextStep: true, nextStepDate: true,
           advertiser: { select: { nameRu: true } },
         },
       }),
@@ -56,7 +56,7 @@ export async function POST() {
       "## Текущее состояние сделок",
       ...deals.map(
         (d) =>
-          `- ${d.advertiser.nameRu} — «${d.title}»: стадия ${d.stage}, срочность ${d.urgency ?? "—"}${d.amount ? `, сумма ${d.amount} ₽` : ""}${d.blocker ? `; блокер: ${d.blocker}` : ""}${d.situational ? `; ситуативное: ${d.situational}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}${d.nextStepDate ? ` (до ${d.nextStepDate.toISOString().slice(0, 10)})` : ""}` : ""}`,
+          `- ${d.advertiser.nameRu} — «${d.title}»: стадия ${d.stage}, срочность ${d.urgency ?? "—"}${d.amount ? `, сумма ${d.amount} ₽` : ""}${d.blockerActive ? `; блокер: ${d.blocker ?? ""}` : ""}${d.situational ? `; ситуативное: ${d.situational}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}${d.nextStepDate ? ` (до ${d.nextStepDate.toISOString().slice(0, 10)})` : ""}` : ""}`,
       ),
     ].join("\n");
 

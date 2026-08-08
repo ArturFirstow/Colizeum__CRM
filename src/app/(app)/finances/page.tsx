@@ -45,6 +45,11 @@ export default async function FinancesPage() {
   const totalBudget = deals
     .filter((d) => d.stage !== "Закрытие")
     .reduce((s, d) => s + (d.contractTotal ?? d.amount ?? 0), 0);
+  // Плановые платежи — это РАЗБИВКА бюджета по месяцам, а не деньги сверх него.
+  // Показываем их отдельной строкой внутри карточки бюджета, чтобы числа
+  // не читались как два разных бюджета и нигде не складывались между собой.
+  const totalScheduled = plannedPayments.reduce((s, p) => s + p.amount, 0);
+  const notScheduled = Math.max(0, totalBudget - totalScheduled);
 
   return (
     <div>
@@ -60,6 +65,10 @@ export default async function FinancesPage() {
           <div className="text-xs uppercase tracking-wide text-ink-400">Общий бюджет по клиентам</div>
           <div className="mt-2 font-display text-2xl font-bold text-brand">{formatMoney(totalBudget)}</div>
           <div className="mt-0.5 text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(totalBudget))}</div>
+          <div className="mt-2 border-t border-ink-800 pt-2 text-xs text-ink-400">
+            в том числе разложено по месяцам {formatMoney(totalScheduled)}
+            {notScheduled > 0 && <> · ещё не разложено {formatMoney(notScheduled)}</>}
+          </div>
         </div>
         <SummaryCard label="Выставлено" value={totalInvoiced} color="text-ink-50" />
         <SummaryCard label="Оплачено" value={totalPaid} color="text-emerald-300" />

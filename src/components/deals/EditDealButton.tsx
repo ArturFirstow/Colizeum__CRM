@@ -19,6 +19,7 @@ type Deal = {
   contractNumber: string | null;
   legalResponsible: string | null;
   blocker: string | null;
+  blockerActive: boolean;
   situational: string | null;
   nextStep: string | null;
   nextStepDate: Date | null;
@@ -47,6 +48,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
     contractNumber: deal.contractNumber ?? "",
     legalResponsible: deal.legalResponsible ?? "",
     blocker: deal.blocker ?? "",
+    blockerActive: deal.blockerActive,
     situational: deal.situational ?? "",
     nextStep: deal.nextStep ?? "",
     nextStepDate: toDateInput(deal.nextStepDate),
@@ -77,6 +79,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
           contractNumber: f.contractNumber,
           legalResponsible: f.legalResponsible,
           blocker: f.blocker,
+          blockerActive: f.blockerActive,
           situational: f.situational,
           nextStep: f.nextStep,
           nextStepDate: f.nextStepDate,
@@ -177,6 +180,17 @@ export function EditDealButton({ deal }: { deal: Deal }) {
           <div>
             <label className="label">Блокер</label>
             <input className="input" value={f.blocker} onChange={(e) => set("blocker", e.target.value)} placeholder="что мешает двигаться" />
+            {/* Флажок отдельно от текста: комментарий может остаться историей,
+                а сделка перестаёт числиться заблокированной. */}
+            <label className="mt-2 flex items-center gap-2 text-sm text-ink-200">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-brand"
+                checked={f.blockerActive}
+                onChange={(e) => setF((s) => ({ ...s, blockerActive: e.target.checked }))}
+              />
+              Блокер активен — показывать в сводках и у руководителя
+            </label>
           </div>
           <div>
             <label className="label">Ситуативные блокеры и срочные задачи</label>

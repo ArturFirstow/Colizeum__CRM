@@ -112,7 +112,9 @@ export function PaymentCalendar({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-ink-50">Календарь платежей</h2>
-          <p className="mt-0.5 text-xs text-ink-500">Кто, сколько и когда платит — по месяцам</p>
+          <p className="mt-0.5 text-xs text-ink-500">
+            Кто, сколько и когда платит — по месяцам. Это разбивка бюджета по срокам, а не деньги сверх него.
+          </p>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setAddOpen(true)}>
           + Плановый платёж

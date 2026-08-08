@@ -20,6 +20,7 @@ type Deal = {
   amount: number | null;
   vatIncluded: boolean;
   blocker: string | null;
+  blockerActive: boolean;
   decisionPending: string | null;
   nextStep: string | null;
   advertiser: { id: string; nameRu: string };
@@ -201,7 +202,7 @@ export function DealsView({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium text-ink-100">{d.title}</span>
-                    {d.blocker && <span className="text-red-400" title="Блокер">⛔</span>}
+                    {d.blockerActive && <span className="text-red-400" title="Блокер">⛔</span>}
                   </div>
                   <div className="mt-0.5 text-sm text-ink-400">{d.advertiser.nameRu}</div>
                 </div>
@@ -295,7 +296,7 @@ function KanbanCard({ deal, onDragStart }: { deal: Deal; onDragStart: () => void
           ◆ {deal.decisionPending}
         </div>
       )}
-      {deal.blocker && (
+      {deal.blockerActive && (
         <div className="mt-2 rounded-lg bg-red-500/10 px-2.5 py-1.5 text-xs text-red-200">
           ⛔ {deal.blocker}
         </div>

@@ -43,6 +43,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       where: { id },
       data: {
         ...data,
+        // Стёрли текст блокера — значит блокера нет: снимаем и флажок.
+        ...(data.blocker === null ? { blockerActive: false } : {}),
         ...(launchDate !== undefined ? { launchDate: launchDate ? new Date(launchDate) : null } : {}),
         ...(nextStepDate !== undefined ? { nextStepDate: nextStepDate ? new Date(nextStepDate) : null } : {}),
       },

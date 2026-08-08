@@ -15,6 +15,7 @@ export type FunnelDeal = {
   advertiserName: string;
   managerName: string | null;
   blocker: string | null;
+  blockerActive: boolean;
 };
 
 // Руководителю важны шесть крупных шагов, а не все девять стадий.
@@ -78,7 +79,7 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
                         <span className="block truncate font-medium text-ink-50">{d.advertiserName}</span>
                         <span className="block truncate text-xs text-ink-500">
                           {d.title} · {d.stage}
-                          {d.blocker ? ` · ⛔ ${d.blocker}` : ""}
+                          {d.blockerActive ? ` · ⛔ ${d.blocker ?? ""}` : ""}
                         </span>
                       </span>
                       <span className="shrink-0 text-xs text-ink-300">{d.managerName ?? "без менеджера"}</span>

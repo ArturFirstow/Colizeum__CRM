@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
         kind: data.kind ?? "Согласование",
         advertiserId: data.advertiserId ?? null,
         dealId: data.dealId ?? null,
+        attachmentsKey: data.attachmentsKey ?? null,
         requesterId: session.userId,
       },
     });

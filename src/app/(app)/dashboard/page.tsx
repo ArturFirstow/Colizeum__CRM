@@ -45,6 +45,7 @@ export default async function DashboardPage() {
     status: r.status,
     answer: r.answer,
     createdAt: r.createdAt.toISOString(),
+    attachmentsKey: r.attachmentsKey,
     requester: r.requester,
     advertiser: r.advertiser,
     deal: r.deal,
@@ -58,7 +59,7 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.deal.findMany({
-      where: { blocker: { not: null }, ...notArchived },
+      where: { blockerActive: true, ...notArchived },
       include: { advertiser: true },
       orderBy: { urgency: "desc" },
     }),
@@ -145,8 +146,14 @@ export default async function DashboardPage() {
           <h2 className="flex items-center gap-2 text-lg font-bold text-ink-50">
             <span className="text-brand">◆</span> Решения, которые ждут вас
           </h2>
-          {!leader && <AskLeaderButton advertisers={advertisers} deals={dealOpts} />}
         </div>
+
+        {/* Небольшой заметный виджет: сотруднику всегда видно, куда идти с вопросом */}
+        {!leader && (
+          <div className="mb-3 sm:max-w-md">
+            <AskLeaderButton advertisers={advertisers} deals={dealOpts} />
+          </div>
+        )}
 
         {/* Вопросы от сотрудников — у руководителя сверху, с кнопкой решения */}
         {leader && openRequests.length > 0 && (

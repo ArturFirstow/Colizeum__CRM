@@ -31,6 +31,16 @@ function inSet<T extends readonly string[]>(values: T, message?: string) {
 
 const optionalString = z.string().trim().optional().or(z.literal("").transform(() => undefined));
 
+// То же самое, но пустая строка ОЧИЩАЕТ поле (пишем null), а не «оставить как было».
+// Нужно для свободных текстов, которые пользователь должен уметь стереть:
+// иначе снятый блокер превращался в пустую строку и сделка продолжала висеть.
+const clearableString = z
+  .string()
+  .trim()
+  .transform((v) => (v === "" ? null : v))
+  .nullable()
+  .optional();
+
 export const advertiserCreateSchema = z.object({
   nameRu: z.string().trim().min(1, "Укажите название"),
   nameEn: optionalString,
@@ -100,12 +110,13 @@ export const dealCreateSchema = z.object({
   paymentTerms: optionalString,
   contractNumber: optionalString,
   legalResponsible: optionalString,
-  blocker: optionalString,
-  situational: optionalString,
-  nextStep: optionalString,
+  blocker: clearableString,
+  blockerActive: z.boolean().optional(),
+  situational: clearableString,
+  nextStep: clearableString,
   nextStepDate: dealDate,
-  decisionPending: optionalString,
-  notes: optionalString,
+  decisionPending: clearableString,
+  notes: clearableString,
 });
 
 export const dealUpdateSchema = dealCreateSchema.partial().extend({
@@ -422,6 +433,7 @@ export const decisionCreateSchema = z.object({
   title: z.string().trim().min(1, "Опишите, что нужно решить"),
   details: optionalString,
   kind: z.enum(DECISION_KINDS).optional(),
+  attachmentsKey: optionalString,
   advertiserId: optionalString,
   dealId: optionalString,
 });

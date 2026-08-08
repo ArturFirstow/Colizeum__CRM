@@ -9,6 +9,7 @@ import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { DecisionButton } from "@/components/deals/DecisionButton";
+import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
@@ -93,12 +94,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
         )}
-        {deal.blocker && (
-          <div className="card p-4 !border-red-500/30">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-red-300">⛔ Блокер</div>
-            <p className="text-sm text-red-100">{deal.blocker}</p>
-          </div>
-        )}
+        <BlockerToggle dealId={deal.id} blocker={deal.blocker} blockerActive={deal.blockerActive} />
         {/* Ситуативные блокеры — отдельное временное поле, в базу знаний не уходит (v2, п.1.3). */}
         {deal.situational && (
           <div className="card p-4 !border-orange-500/30">
@@ -124,6 +120,103 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Основное */}
         <div className="space-y-6 lg:col-span-2">
+          {/* Документы */}
+          <Section
+            title="Документы"
+            action={
+              <Link href={`/documents?advertiser=${deal.advertiserId}`} className="btn btn-ghost btn-sm">
+                Хранилище →
+              </Link>
+            }
+          >
+            <div className="mb-3">
+              <FileCell
+                ownerType="deal"
+                ownerId={deal.id}
+                kind="Документ"
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                label="Прикрепить документ"
+              />
+            </div>
+            {deal.documents.length === 0 ? (
+              <EmptyState compact icon="❐" title="Документов с версиями нет" hint="файлы выше видны и в «Документах» клиента" />
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {deal.documents.map((d) => (
+                  <div key={d.id} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="badge badge-brand">{d.type}</span>
+                      <span className="text-xs text-ink-500">v{d.versions[0]?.versionNo ?? 0}</span>
+                    </div>
+                    <div className="mt-1.5 truncate text-sm text-ink-100">{d.title}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+          {/* Медиапланы */}
+          <Section
+            title="Медиапланы"
+            action={
+              <QuickAdd
+                label="+ МП"
+                title="Медиаплан"
+                endpoint={`${ep}/mediaplans`}
+                fields={[
+                  { name: "version", label: "Версия", type: "number", default: "1", half: true },
+                  { name: "vatRate", label: "НДС %", type: "number", default: "22", half: true },
+                  { name: "totalAmount", label: "Сумма итого", type: "number", half: true },
+                  { name: "reachTotal", label: "Охват", type: "number", half: true },
+                  { name: "notes", label: "Заметки", type: "textarea" },
+                ]}
+              />
+            }
+          >
+            <div className="mb-3">
+              <FileCell
+                ownerType="deal"
+                ownerId={deal.id}
+                kind="Медиаплан"
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                label="Прикрепить медиаплан (xlsx, pdf)"
+              />
+            </div>
+            {deal.mediaPlans.length === 0 ? (
+              <EmptyState compact icon="📊" title="Медиапланов нет" hint="можно просто приложить файл выше" />
+            ) : (
+              <div className="space-y-3">
+                {deal.mediaPlans.map((mp) => (
+                  <div key={mp.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-ink-100">Версия {mp.version}</span>
+                      <span className="text-ink-100">
+                        {formatMoney(mp.totalAmount)} {mp.vatRate ? `· НДС ${mp.vatRate}%` : ""}
+                      </span>
+                    </div>
+                    {mp.lines.length > 0 && (
+                      <div className="mt-3 overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <tbody className="divide-y divide-ink-800">
+                            {mp.lines.map((l) => (
+                              <tr key={l.id}>
+                                <td className="py-1.5 pr-3 text-ink-200">{l.formatName}</td>
+                                <td className="py-1.5 pr-3 text-right text-ink-400">{l.qty ?? ""}</td>
+                                <td className="py-1.5 text-right text-ink-200">{formatMoney(l.sum)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {mp.notes && <p className="mt-2 text-xs text-ink-400">{mp.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
           {/* Финансовая цепочка */}
           <Section
             title="Финансы"
@@ -237,103 +330,6 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             )}
           </Section>
 
-          {/* Медиапланы */}
-          <Section
-            title="Медиапланы"
-            action={
-              <QuickAdd
-                label="+ МП"
-                title="Медиаплан"
-                endpoint={`${ep}/mediaplans`}
-                fields={[
-                  { name: "version", label: "Версия", type: "number", default: "1", half: true },
-                  { name: "vatRate", label: "НДС %", type: "number", default: "22", half: true },
-                  { name: "totalAmount", label: "Сумма итого", type: "number", half: true },
-                  { name: "reachTotal", label: "Охват", type: "number", half: true },
-                  { name: "notes", label: "Заметки", type: "textarea" },
-                ]}
-              />
-            }
-          >
-            <div className="mb-3">
-              <FileCell
-                ownerType="deal"
-                ownerId={deal.id}
-                kind="Медиаплан"
-                advertiserId={deal.advertiserId}
-                dealId={deal.id}
-                label="Прикрепить медиаплан (xlsx, pdf)"
-              />
-            </div>
-            {deal.mediaPlans.length === 0 ? (
-              <EmptyState compact icon="📊" title="Медиапланов нет" hint="можно просто приложить файл выше" />
-            ) : (
-              <div className="space-y-3">
-                {deal.mediaPlans.map((mp) => (
-                  <div key={mp.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-ink-100">Версия {mp.version}</span>
-                      <span className="text-ink-100">
-                        {formatMoney(mp.totalAmount)} {mp.vatRate ? `· НДС ${mp.vatRate}%` : ""}
-                      </span>
-                    </div>
-                    {mp.lines.length > 0 && (
-                      <div className="mt-3 overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <tbody className="divide-y divide-ink-800">
-                            {mp.lines.map((l) => (
-                              <tr key={l.id}>
-                                <td className="py-1.5 pr-3 text-ink-200">{l.formatName}</td>
-                                <td className="py-1.5 pr-3 text-right text-ink-400">{l.qty ?? ""}</td>
-                                <td className="py-1.5 text-right text-ink-200">{formatMoney(l.sum)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                    {mp.notes && <p className="mt-2 text-xs text-ink-400">{mp.notes}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
-
-          {/* Документы */}
-          <Section
-            title="Документы"
-            action={
-              <Link href={`/documents?advertiser=${deal.advertiserId}`} className="btn btn-ghost btn-sm">
-                Хранилище →
-              </Link>
-            }
-          >
-            <div className="mb-3">
-              <FileCell
-                ownerType="deal"
-                ownerId={deal.id}
-                kind="Документ"
-                advertiserId={deal.advertiserId}
-                dealId={deal.id}
-                label="Прикрепить документ"
-              />
-            </div>
-            {deal.documents.length === 0 ? (
-              <EmptyState compact icon="❐" title="Документов с версиями нет" hint="файлы выше видны и в «Документах» клиента" />
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {deal.documents.map((d) => (
-                  <div key={d.id} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <span className="badge badge-brand">{d.type}</span>
-                      <span className="text-xs text-ink-500">v{d.versions[0]?.versionNo ?? 0}</span>
-                    </div>
-                    <div className="mt-1.5 truncate text-sm text-ink-100">{d.title}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
         </div>
 
         {/* Правая колонка */}
