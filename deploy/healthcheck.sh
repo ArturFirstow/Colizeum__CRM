@@ -20,8 +20,12 @@ head_() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 head_ "Приложение"
 if command -v pm2 >/dev/null 2>&1; then
-  if pm2 pid colizeum >/dev/null 2>&1 && [ -n "$(pm2 pid colizeum 2>/dev/null)" ]; then
+  count=$(pm2 jlist 2>/dev/null | grep -o '"name":"colizeum"' | wc -l)
+  if [ "$count" -eq 1 ]; then
     ok "pm2: процесс colizeum запущен"
+  elif [ "$count" -gt 1 ]; then
+    bad "pm2: процессов colizeum $count — они дерутся за порт, лишние надо убрать"
+    echo "      Исправить: pm2 delete all && pm2 start deploy/ecosystem.config.cjs && pm2 save"
   else
     bad "pm2: процесс colizeum не найден или упал → pm2 status; pm2 logs colizeum"
   fi
