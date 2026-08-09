@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { NAV_GROUPS } from "@/lib/nav";
+import { ChatBadge } from "@/components/ui/ChatBadge";
 import { ROLE_LABELS, type Role } from "@/lib/enums";
 import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
@@ -58,6 +59,7 @@ export function Sidebar({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{item.label}</span>
                 </span>
+                {item.href === "/messenger" && <ChatBadge />}
               </Link>
             ))}
           </div>

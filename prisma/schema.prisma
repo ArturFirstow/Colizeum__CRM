@@ -32,6 +32,9 @@ model User {
   // Куда слать уведомления (вопрос руководителю, поручение, блокер).
   // Пусто — сотрудник уведомления не получает. Настройка — docs/TELEGRAM.md.
   telegramChatId String?
+  // До какого момента сотрудник видел мессенджер: по нему считается маячок
+  // непрочитанного. Одно поле на человека — проще, чем отметки по каналам.
+  chatSeenAt   DateTime?
   createdAt    DateTime @default(now())
 
   ownedDeals       Deal[]            @relation("DealOwner")
