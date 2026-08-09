@@ -33,9 +33,13 @@ function newKey(): string {
 export function AskLeaderButton({
   advertisers,
   deals,
+  leaderAvatarUrl,
+  leaderName,
 }: {
   advertisers: { id: string; nameRu: string }[];
   deals: { id: string; title: string; advertiserId: string }[];
+  leaderAvatarUrl?: string | null;
+  leaderName?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -81,9 +85,18 @@ export function AskLeaderButton({
         onClick={() => setOpen(true)}
         className="card card-hover flex w-full items-center gap-3 p-4 text-left !border-brand/40"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand">
-          <HelpCircle size={18} />
-        </span>
+        {leaderAvatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={leaderAvatarUrl}
+            alt={leaderName ?? "Руководитель"}
+            className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-brand/40"
+          />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand">
+            <HelpCircle size={18} />
+          </span>
+        )}
         <span className="min-w-0">
           <span className="block text-sm font-semibold text-ink-50">Саша, окни пожалуйста</span>
           <span className="block text-xs text-ink-400">

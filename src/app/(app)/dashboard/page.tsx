@@ -51,6 +51,11 @@ export default async function DashboardPage() {
     deal: r.deal,
   }));
   const openRequests = decisionItems.filter((r) => r.status === "Открыт");
+  // Фото руководителя на кнопке вопроса — чтобы было понятно, к кому идёт запрос.
+  const leader_ = await prisma.user.findFirst({
+    where: { role: "Director" },
+    select: { name: true, avatarUrl: true },
+  });
 
   const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts, advertisers, dealOpts, todayStatuses] = await Promise.all([
     prisma.deal.findMany({
@@ -152,7 +157,12 @@ export default async function DashboardPage() {
             правая половина этой области пустовала. */}
         {!leader && (
           <div className="mb-3 grid gap-3 md:grid-cols-2">
-            <AskLeaderButton advertisers={advertisers} deals={dealOpts} />
+            <AskLeaderButton
+              advertisers={advertisers}
+              deals={dealOpts}
+              leaderAvatarUrl={leader_?.avatarUrl}
+              leaderName={leader_?.name}
+            />
             {decisionItems.length > 0 ? (
               <div className="card p-4">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
