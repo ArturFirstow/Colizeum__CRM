@@ -51,6 +51,24 @@ export default async function FinancesPage() {
   const totalScheduled = plannedPayments.reduce((s, p) => s + p.amount, 0);
   const notScheduled = Math.max(0, totalBudget - totalScheduled);
 
+  // Задвоенные платежи. Частая ошибка при заполнении: по клиенту заводят и
+  // помесячные части, и ещё одну строку на всю сумму договора. Тогда календарь
+  // честно складывает всё подряд, и «Итого» выглядит завышенным. Сравниваем по
+  // каждому клиенту разложенное с суммой его договоров и показываем расхождение.
+  const overscheduled = advertisers
+    .map((a) => {
+      const contract = deals
+        .filter((d) => d.advertiser.id === a.id && d.stage !== "Закрытие")
+        .reduce((s, d) => s + (d.contractTotal ?? d.amount ?? 0), 0);
+      const scheduled = plannedPayments
+        .filter((p) => p.advertiserId === a.id)
+        .reduce((s, p) => s + p.amount, 0);
+      return { id: a.id, name: a.nameRu, contract, scheduled, over: scheduled - contract };
+    })
+    // Порог в 1 ₽ — чтобы копеечные округления при делении на месяцы не всплывали.
+    .filter((r) => r.contract > 0 && r.over > 1)
+    .sort((a, b) => b.over - a.over);
+
   return (
     <div>
       <PageHeader
@@ -74,6 +92,30 @@ export default async function FinancesPage() {
         <SummaryCard label="Оплачено" value={totalPaid} color="text-emerald-300" />
         <SummaryCard label="Остаток" value={totalInvoiced - totalPaid} color="text-amber-300" />
       </div>
+
+      {/* Разложено больше, чем сумма договоров — почти всегда задвоенный платёж */}
+      {overscheduled.length > 0 && (
+        <div className="card mb-6 p-5 !border-amber-500/40">
+          <div className="text-sm font-semibold text-amber-200">
+            Проверьте платежи: разложено больше, чем сумма договоров
+          </div>
+          <p className="mt-1 text-xs text-ink-400">
+            Обычно так бывает, когда по клиенту завели и помесячные части, и ещё одну строку на всю
+            сумму договора. Лишнюю строку нужно удалить — тогда «Итого» в календаре сойдётся.
+          </p>
+          <div className="mt-3 space-y-1.5">
+            {overscheduled.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg bg-ink-900/50 px-3 py-2 text-sm">
+                <span className="font-medium text-ink-100">{r.name}</span>
+                <span className="text-xs text-ink-400">
+                  по договорам {formatMoney(r.contract)} · разложено {formatMoney(r.scheduled)} ·{" "}
+                  <span className="font-semibold text-amber-300">лишнее {formatMoney(r.over)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Помесячный календарь платежей */}
       <div className="mb-6">
