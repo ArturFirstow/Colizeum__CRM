@@ -465,3 +465,17 @@ export const decisionPatchSchema = z.object({
   status: z.enum(DECISION_STATUSES).optional(),
   answer: optionalString,
 });
+
+// ── Передача дел (отпуск, больничный) ────────────────────────────────────────
+export const handoverCreateSchema = z.object({
+  toUserId: z.string().min(1, "Выберите, кому передаём"),
+  advertiserIds: z.array(z.string().min(1)).min(1, "Выберите хотя бы одного клиента"),
+  reason: optionalString,
+  endsAt: z.string().optional().or(z.literal("").transform(() => undefined)),
+  note: optionalString,
+  summary: optionalString,
+});
+
+export const handoverPreviewSchema = z.object({
+  advertiserIds: z.array(z.string().min(1)).min(1, "Выберите хотя бы одного клиента"),
+});

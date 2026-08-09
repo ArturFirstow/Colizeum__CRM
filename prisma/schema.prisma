@@ -48,6 +48,8 @@ model User {
   channelMemberships ChannelMember[]
   assignedLeads    Lead[]            @relation("LeadAssignee")
   decisionRequests DecisionRequest[] @relation("DecisionRequester")
+  handoversGiven   Handover[]        @relation("HandoverFrom")
+  handoversTaken   Handover[]        @relation("HandoverTo")
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
@@ -857,4 +859,44 @@ model FileAsset {
   @@index([ownerType, ownerId])
   @@index([advertiserId])
   @@index([dealId])
+}
+
+
+// ── Передача дел на время отпуска ────────────────────────────────────────────
+// Клиенты временно переходят к замещающему вместе с саммари по каждому: где
+// сейчас, что подписано, что оплачено, что горит. По возвращении — один клик,
+// и всё встаёт обратно к прежнему владельцу.
+model Handover {
+  id         String    @id @default(cuid())
+  fromUserId String
+  from       User      @relation("HandoverFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  to         User      @relation("HandoverTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  reason     String?   // отпуск, больничный, командировка
+  startsAt   DateTime  @default(now())
+  endsAt     DateTime? // когда планируем вернуть
+  note       String?   // что важно знать замещающему
+  summary    String?   // общее саммари по всем клиентам (текст)
+  status     String    @default("Активна") // Активна | Завершена
+
+  createdAt  DateTime  @default(now())
+  returnedAt DateTime?
+
+  items HandoverItem[]
+
+  @@index([toUserId])
+  @@index([status])
+}
+
+model HandoverItem {
+  id           String  @id @default(cuid())
+  handoverId   String
+  handover     Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+  advertiserId String
+  // Кому клиент принадлежал ДО передачи — по этому полю возвращаем обратно.
+  previousOwnerId String?
+  summary      String? // саммари по конкретному клиенту
+
+  @@index([handoverId])
 }

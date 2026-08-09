@@ -53,6 +53,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
       { href: "/documents", label: "Документы", icon: "❐", hint: "Договоры, приложения, акты", track: "Ads" },
       { href: "/knowledge", label: "База знаний", icon: "◈", hint: "Как у нас всё устроено" },
       { href: "/leads", label: "Входящие с сайта", icon: "⚑", hint: "Обращения с colizeum-agency.ru" },
+      { href: "/handover", label: "Передача дел", icon: "⇄", hint: "Отпуск: клиенты уходят замещающему" },
       { href: "/team", label: "Команда", icon: "◉", hint: "Сотрудники и доступы" },
     ],
   },
