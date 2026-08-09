@@ -118,9 +118,15 @@ export function JournalView({
   const [meetingUrl, setMeetingUrl] = useState("");
   const [summary, setSummary] = useState("");
   const [parsing, setParsing] = useState(false);
+  // Блок показателей свёрнут: новичок видит два поля и кнопку, а не анкету.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const duration = durationFromTimes(startTime, endTime);
+  // Сколько показателей уже заполнено — короткая сводка на свёрнутом блоке.
+  const filledCount = [meetingDate, startTime, endTime, participants, protocolUrl, summary].filter(
+    (v) => v.trim() !== "",
+  ).length;
 
   // Кнопка «Разобрать транскрипт»: ИИ достаёт дату, время, участников и ссылки.
   async function parseTranscript() {
@@ -140,6 +146,7 @@ export function JournalView({
       if (d.protocolUrl) setProtocolUrl(d.protocolUrl);
       if (d.meetingUrl) setMeetingUrl(d.meetingUrl);
       if (d.summary) setSummary(d.summary);
+      setDetailsOpen(true);
       setNotice("Поля заполнены — проверьте и сохраните");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -266,16 +273,28 @@ export function JournalView({
                 </div>
               </div>
 
-              {/* Показатели для таблицы учёта: заполняются кнопкой ниже или руками */}
-              <div className="mb-3 rounded-xl border border-ink-800 bg-ink-900/40 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-medium uppercase tracking-wide text-ink-500">
-                    Показатели встречи для таблицы
+              {/* Показатели для таблицы учёта. Свёрнуты по умолчанию: заполняет их
+                  кнопка «Разобрать транскрипт», руками лезут только на проверку. */}
+              <div className="mb-3 rounded-xl border border-ink-800 bg-ink-900/40">
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen((v) => !v)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs font-medium uppercase tracking-wide text-ink-500">
+                      Показатели встречи для таблицы
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-ink-400">
+                      {filledCount === 0
+                        ? "Заполнит кнопка «Разобрать транскрипт» — трогать не обязательно"
+                        : `заполнено ${filledCount} из 6${duration != null ? ` · ${duration.toFixed(1).replace(".", ",")} ч` : ""}`}
+                    </span>
                   </span>
-                  <span className="text-xs text-ink-500">
-                    {duration != null ? `${duration.toFixed(1).replace(".", ",")} ч` : "продолжительность посчитается сама"}
-                  </span>
-                </div>
+                  <span className="shrink-0 text-xs text-ink-500">{detailsOpen ? "свернуть ▲" : "проверить ▼"}</span>
+                </button>
+                {detailsOpen && (
+                <div className="border-t border-ink-800 p-3">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <label className="label">Дата встречи</label>
@@ -323,6 +342,8 @@ export function JournalView({
                     ? "При сохранении строка уйдёт в таблицу отчётности автоматически."
                     : "Выгрузка в таблицу пока не настроена — строку можно будет скопировать из ленты."}
                 </p>
+                </div>
+                )}
               </div>
             </>
           )}
@@ -338,6 +359,12 @@ export function JournalView({
             onChange={(e) => setRawText(e.target.value)}
             required
           />
+          {source === "Транскрипт" && (
+            <p className="mt-2 text-xs text-ink-500">
+              Достаточно вставить расшифровку и нажать «Разобрать транскрипт» — дату, время,
+              участников и ссылки ИИ вытащит сам.
+            </p>
+          )}
           <div className="mt-3">
             <FormError message={error} />
           </div>
@@ -348,7 +375,7 @@ export function JournalView({
             {source === "Транскрипт" ? (
               <button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                className="btn btn-primary btn-sm"
                 onClick={parseTranscript}
                 disabled={parsing || rawText.trim().length < 20}
                 title="ИИ достанет дату, время, участников и ссылки из расшифровки"
