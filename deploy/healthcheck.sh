@@ -20,7 +20,14 @@ head_() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 head_ "Приложение"
 if command -v pm2 >/dev/null 2>&1; then
-  count=$(pm2 jlist 2>/dev/null | grep -o '"name":"colizeum"' | wc -l)
+  count=$(pm2 jlist 2>/dev/null | node -e "
+    let s = '';
+    process.stdin.on('data', (d) => (s += d)).on('end', () => {
+      try { console.log(JSON.parse(s).filter((p) => p.name === 'colizeum').length); }
+      catch { console.log(-1); }
+    });
+  " 2>/dev/null)
+  [ -z "$count" ] && count=-1
   if [ "$count" -eq 1 ]; then
     ok "pm2: процесс colizeum запущен"
   elif [ "$count" -gt 1 ]; then
@@ -29,8 +36,11 @@ if command -v pm2 >/dev/null 2>&1; then
   else
     bad "pm2: процесс colizeum не найден или упал → pm2 status; pm2 logs colizeum"
   fi
-  pm2 startup 2>/dev/null | grep -q "already" && ok "автозапуск после перезагрузки настроен" \
-    || warn "проверьте автозапуск: pm2 startup && pm2 save"
+  if systemctl list-unit-files 2>/dev/null | grep -q '^pm2-'; then
+    ok "автозапуск после перезагрузки настроен"
+  else
+    warn "автозапуск не настроен → pm2 startup, выполнить показанную команду, затем pm2 save"
+  fi
 else
   bad "pm2 не установлен"
 fi
@@ -65,6 +75,12 @@ fi
 
 head_ "База данных и файлы"
 db=$(grep -E '^DATABASE_URL=' "$APP_DIR/.env" 2>/dev/null | cut -d= -f2- | tr -d '"' | sed 's|^file:||')
+# Относительный путь SQLite Prisma отсчитывает от папки со схемой (prisma/).
+case "$db" in
+  "" ) ;;
+  /* ) ;;
+  *  ) db="$APP_DIR/prisma/${db#./}" ;;
+esac
 if [ -n "$db" ] && [ -f "$db" ]; then
   ok "база на месте: $db ($(du -h "$db" | cut -f1))"
 elif [ -n "$db" ]; then
