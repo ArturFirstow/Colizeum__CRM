@@ -85,7 +85,7 @@ export function AskLeaderButton({
           <HelpCircle size={18} />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-semibold text-ink-50">Спросить руководителя</span>
+          <span className="block text-sm font-semibold text-ink-50">Саша, окни пожалуйста</span>
           <span className="block text-xs text-ink-400">
             Вопрос, согласование, доступ — можно приложить файл
           </span>
@@ -95,7 +95,7 @@ export function AskLeaderButton({
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Вопрос руководителю"
+        title="Саша, окни пожалуйста"
         subtitle="Запрос появится у руководителя в блоке «Решения, которые ждут вас»"
       >
         <form onSubmit={submit} className="space-y-4">

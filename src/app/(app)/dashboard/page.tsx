@@ -148,10 +148,23 @@ export default async function DashboardPage() {
           </h2>
         </div>
 
-        {/* Небольшой заметный виджет: сотруднику всегда видно, куда идти с вопросом */}
+        {/* Слева — кнопка вопроса, справа — статусы уже отправленных: раньше
+            правая половина этой области пустовала. */}
         {!leader && (
-          <div className="mb-3 sm:max-w-md">
+          <div className="mb-3 grid gap-3 md:grid-cols-2">
             <AskLeaderButton advertisers={advertisers} deals={dealOpts} />
+            {decisionItems.length > 0 ? (
+              <div className="card p-4">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+                  Мои вопросы
+                </div>
+                <MyDecisionRequests items={decisionItems.slice(0, 3)} />
+              </div>
+            ) : (
+              <div className="card flex items-center p-4 text-xs text-ink-500">
+                Отправленные вопросы и ответы на них появятся здесь.
+              </div>
+            )}
           </div>
         )}
 
@@ -164,12 +177,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Сотруднику — статус его вопросов */}
-        {!leader && decisionItems.length > 0 && (
-          <div className="mb-3">
-            <MyDecisionRequests items={decisionItems} />
-          </div>
-        )}
+
 
         {decisions.length === 0 && (leader ? openRequests.length === 0 : true) ? (
           <EmptyState
