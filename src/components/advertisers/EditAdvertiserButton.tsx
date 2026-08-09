@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { ADVERTISER_TYPES } from "@/lib/enums";
@@ -79,11 +80,17 @@ export function EditAdvertiserButton({
   return (
     <>
       <button
-        className={variant === "text" ? "btn-icon text-xs text-ink-400 hover:text-brand" : "btn btn-ghost btn-sm"}
+        className={
+          // btn-icon — квадрат 36×36 под одну иконку, текст в него не влезал.
+          variant === "text"
+            ? "inline-flex items-center gap-1 text-xs font-medium text-ink-400 transition hover:text-brand"
+            : "btn btn-ghost btn-sm"
+        }
         onClick={() => setOpen(true)}
         title="Редактировать карточку"
       >
-        {variant === "text" ? "✎ Редактировать" : "✎ Реквизиты"}
+        <Pencil size={13} strokeWidth={2.2} />
+        {variant === "text" ? "Редактировать" : "Реквизиты"}
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Карточка контрагента" size="lg">
         <form onSubmit={submit} className="space-y-4">

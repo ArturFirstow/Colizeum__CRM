@@ -102,7 +102,7 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((a) => (
-            <div key={a.id} className="card card-hover flex flex-col p-5">
+            <div key={a.id} className="card card-hover flex h-full flex-col p-5">
               <Link href={`/advertisers/${a.id}`} className="min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -124,11 +124,12 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
                 </div>
               </Link>
               {/* Правка и удаление — прямо в списке, без захода в карточку */}
-              <div className="mt-3 flex items-center justify-end gap-1 border-t border-ink-800 pt-2">
+              <div className="mt-auto flex items-center justify-end gap-4 border-t border-ink-800 pt-2.5">
                 <EditAdvertiserButton advertiser={a} variant="text" />
                 <DeleteButton
                   endpoint={`/api/advertisers/${a.id}`}
                   what={`клиента «${a.nameRu}» со всеми сделками и документами`}
+                  variant="text"
                 />
               </div>
             </div>
