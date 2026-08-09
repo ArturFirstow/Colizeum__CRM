@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/format";
 type Member = {
   id: string;
   name: string;
+  telegramChatId?: string | null;
   email: string;
   role: string;
   createdAt: string | Date;
@@ -156,6 +157,7 @@ function EditMemberModal({
 }) {
   const [name, setName] = useState(member.name);
   const [role, setRole] = useState(member.role);
+  const [telegramChatId, setTelegramChatId] = useState(member.telegramChatId ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,7 +166,7 @@ function EditMemberModal({
     setError(null);
     setSaving(true);
     try {
-      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role }) });
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId }) });
       onSaved();
       onClose();
     } catch (err) {
@@ -188,6 +190,19 @@ function EditMemberModal({
             <option value="Director">Руководитель — видит весь отдел + бюджет</option>
             <option value="Owner">Админ — управление доступами</option>
           </select>
+        </div>
+        <div>
+          <label className="label">Telegram для уведомлений</label>
+          <input
+            className="input"
+            value={telegramChatId}
+            onChange={(e) => setTelegramChatId(e.target.value)}
+            placeholder="chat id, например 123456789"
+          />
+          <p className="mt-1 text-xs text-ink-500">
+            Сотрудник пишет боту «/start», после чего его chat id покажет команда
+            npx tsx scripts/telegram-chats.ts. Пусто — уведомления не приходят.
+          </p>
         </div>
         <FormError message={error} />
         <div className="flex justify-end gap-2">

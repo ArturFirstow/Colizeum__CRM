@@ -13,6 +13,7 @@ export default async function TeamPage() {
       name: true,
       email: true,
       role: true,
+      telegramChatId: true,
       createdAt: true,
       _count: { select: { ownedAdvertisers: true, ownedTasks: true } },
     },

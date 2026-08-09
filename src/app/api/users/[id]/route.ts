@@ -18,8 +18,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       data: {
         ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.role !== undefined ? { role: data.role } : {}),
+        ...(data.telegramChatId !== undefined ? { telegramChatId: data.telegramChatId } : {}),
       },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true, telegramChatId: true },
     });
     return ok(user);
   });

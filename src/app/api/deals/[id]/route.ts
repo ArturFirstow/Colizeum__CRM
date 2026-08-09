@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { dealUpdateSchema } from "@/lib/validation";
 import { checkStageTransition, isValidStage } from "@/lib/services/deal-stage";
+import { notifyBlockerRaised } from "@/lib/services/notify";
 import type { DealStage } from "@/lib/enums";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -20,7 +21,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
     const { confirm, launchDate, nextStepDate, ...data } = dealUpdateSchema.parse(await req.json());
 
@@ -49,6 +50,21 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(nextStepDate !== undefined ? { nextStepDate: nextStepDate ? new Date(nextStepDate) : null } : {}),
       },
     });
+    // Блокер только что подняли — руководитель узнаёт сразу.
+    if (deal.blockerActive && !existing.blockerActive) {
+      const advertiser = await prisma.advertiser.findUnique({
+        where: { id: deal.advertiserId },
+        select: { nameRu: true },
+      });
+      await notifyBlockerRaised({
+        dealId: deal.id,
+        dealTitle: deal.title,
+        clientName: advertiser?.nameRu ?? "клиент",
+        reason: deal.blocker,
+        byName: session.name,
+      });
+    }
+
     return ok(deal);
   });
 }

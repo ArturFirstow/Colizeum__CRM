@@ -29,6 +29,9 @@ model User {
   // Направление работы: Ads — реклама/коллаборации, Tournaments — турниры (Артём).
   // От track зависит набор разделов в кабинете (см. src/lib/nav.ts).
   track        String   @default("Ads") // Ads | Tournaments
+  // Куда слать уведомления (вопрос руководителю, поручение, блокер).
+  // Пусто — сотрудник уведомления не получает. Настройка — docs/TELEGRAM.md.
+  telegramChatId String?
   createdAt    DateTime @default(now())
 
   ownedDeals       Deal[]            @relation("DealOwner")

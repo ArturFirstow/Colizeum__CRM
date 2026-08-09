@@ -258,6 +258,7 @@ export const userCreateSchema = z.object({
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
   role: z.enum(["Owner", "Manager", "Director"]).optional(),
+  telegramChatId: clearableString,
 });
 
 // ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────

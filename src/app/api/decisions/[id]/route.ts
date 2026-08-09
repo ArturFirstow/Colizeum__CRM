@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { isLeadership } from "@/lib/scope";
 import { decisionPatchSchema } from "@/lib/validation";
+import { notifyDecisionResolved } from "@/lib/services/notify";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -11,7 +12,10 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
     const data = decisionPatchSchema.parse(await req.json());
-    const item = await prisma.decisionRequest.findUnique({ where: { id }, select: { requesterId: true } });
+    const item = await prisma.decisionRequest.findUnique({
+      where: { id },
+      select: { requesterId: true, title: true, status: true },
+    });
     if (!item) return fail("not_found", "Запрос не найден", 404);
     if (!isLeadership(session) && item.requesterId !== session.userId) {
       return fail("forbidden", "Решение принимает руководитель", 403);
@@ -24,6 +28,16 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(data.status && data.status !== "Открыт" ? { resolvedAt: new Date() } : {}),
       },
     });
+    // Автор узнаёт об ответе сразу, а не при следующем входе.
+    if (data.status && data.status !== "Открыт" && item.status === "Открыт") {
+      await notifyDecisionResolved({
+        requesterId: item.requesterId,
+        title: item.title,
+        status: data.status,
+        answer: updated.answer,
+      });
+    }
+
     return ok(updated);
   });
 }

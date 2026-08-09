@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { isLeadership } from "@/lib/scope";
 import { leadershipTaskSchema } from "@/lib/validation";
+import { notifyTaskAssigned } from "@/lib/services/notify";
 
 // Руководитель ставит задачу-поручение конкретному сотруднику.
 // Задача попадает в кабинет сотрудника (ownerId = сотрудник), помечена
@@ -29,6 +30,17 @@ export async function POST(req: NextRequest) {
         status: "Открыта",
       },
     });
+    const advertiser = task.advertiserId
+      ? await prisma.advertiser.findUnique({ where: { id: task.advertiserId }, select: { nameRu: true } })
+      : null;
+    await notifyTaskAssigned({
+      assigneeId: assignee.id,
+      title: task.title,
+      fromName: session.name,
+      clientName: advertiser?.nameRu ?? null,
+      dueDate: task.dueDate,
+    });
+
     return ok(task, { status: 201 });
   });
 }
