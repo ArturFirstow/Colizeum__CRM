@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { HelpCircle, CheckCircle2, Target, Ban, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { HelpCircle, CheckCircle2, Target, Ban, MessageSquare, X } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Всплывающие уведомления в правом нижнем углу.
@@ -15,7 +15,7 @@ import { HelpCircle, CheckCircle2, Target, Ban, X } from "lucide-react";
 
 type Item = {
   id: string;
-  kind: "decision" | "answer" | "task" | "blocker";
+  kind: "decision" | "answer" | "task" | "blocker" | "chat";
   title: string;
   body: string;
   href: string;
@@ -30,6 +30,7 @@ const ICON = {
   answer: CheckCircle2,
   task: Target,
   blocker: Ban,
+  chat: MessageSquare,
 } as const;
 
 const TONE: Record<Item["kind"], string> = {
@@ -37,6 +38,7 @@ const TONE: Record<Item["kind"], string> = {
   answer: "!border-emerald-500/40",
   task: "!border-brand/40",
   blocker: "!border-red-500/40",
+  chat: "!border-ink-600",
 };
 
 const ICON_TONE: Record<Item["kind"], string> = {
@@ -44,10 +46,12 @@ const ICON_TONE: Record<Item["kind"], string> = {
   answer: "bg-emerald-500/15 text-emerald-300",
   task: "bg-brand/15 text-brand",
   blocker: "bg-red-500/15 text-red-300",
+  chat: "bg-ink-700 text-ink-100",
 };
 
 export function Notifications() {
   const router = useRouter();
+  const pathname = usePathname();
   const [items, setItems] = useState<Item[]>([]);
   // Уже показанные не показываем повторно: поллинг может вернуть их снова.
   const seen = useRef<Set<string>>(new Set());
@@ -66,7 +70,12 @@ export function Notifications() {
       if (!payload) return;
 
       localStorage.setItem(STORAGE_KEY, payload.now);
-      const fresh = payload.items.filter((i) => !seen.current.has(i.id));
+      const fresh = payload.items.filter(
+        (i) =>
+          !seen.current.has(i.id) &&
+          // Мы уже в мессенджере — сообщения видно и без карточек.
+          !(i.kind === "chat" && pathname?.startsWith("/messenger")),
+      );
       if (fresh.length === 0) return;
       for (const i of fresh) seen.current.add(i.id);
       setItems((prev) => [...fresh, ...prev].slice(0, 4));
@@ -75,7 +84,7 @@ export function Notifications() {
     } catch {
       // Сеть моргнула — молча ждём следующей попытки.
     }
-  }, [router]);
+  }, [router, pathname]);
 
   useEffect(() => {
     poll();

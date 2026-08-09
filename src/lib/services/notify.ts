@@ -158,3 +158,23 @@ export async function notifyBlockerRaised(opts: {
   ];
   await notifyLeadership(withLink(lines.join("\n"), `/deals/${opts.dealId}`, "Открыть сделку"));
 }
+
+/**
+ * Личное сообщение в мессенджере. Уведомляем только про личку: сообщения из
+ * общих каналов в Telegram превратились бы в поток, и бот пошёл бы в mute.
+ * Общие каналы показываются всплывающим окном на сайте и маячком в меню.
+ */
+export async function notifyChatDm(opts: {
+  toUserId: string;
+  fromName: string;
+  text: string;
+}): Promise<void> {
+  const lines = [
+    `💬 <b>Личное сообщение</b>`,
+    ``,
+    `От: ${opts.fromName}`,
+    ``,
+    opts.text.slice(0, 600),
+  ];
+  await notifyUser(opts.toUserId, withLink(lines.join("\n"), "/messenger", "Открыть мессенджер"));
+}

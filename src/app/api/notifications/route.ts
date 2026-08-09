@@ -13,7 +13,7 @@ import { isLeadership } from "@/lib/scope";
 
 export type NotificationItem = {
   id: string;
-  kind: "decision" | "answer" | "task" | "blocker";
+  kind: "decision" | "answer" | "task" | "blocker" | "chat";
   title: string;
   body: string;
   href: string;
@@ -100,6 +100,53 @@ export async function GET(req: NextRequest) {
         body: d.answer ? `${d.title} — ${d.answer}` : d.title,
         href: "/dashboard",
         at: (d.resolvedAt ?? d.createdAt).toISOString(),
+      });
+    }
+
+    // Всем: новые сообщения в чате. Личку показываем поимённо, общий канал —
+    // одной строкой, иначе оживлённое обсуждение завалит экран карточками.
+    const messages = await prisma.chatMessage.findMany({
+      where: {
+        authorId: { not: session.userId },
+        createdAt: { gt: since },
+        channel: {
+          OR: [{ isDm: false }, { members: { some: { userId: session.userId } } }],
+        },
+      },
+      include: { author: { select: { name: true } }, channel: { select: { name: true, isDm: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    const dms = messages.filter((m) => m.channel.isDm);
+    const inChannels = messages.filter((m) => !m.channel.isDm);
+
+    // По одной карточке на собеседника — с последним его сообщением.
+    const byAuthor = new Map<string, (typeof dms)[number]>();
+    for (const m of dms) if (!byAuthor.has(m.authorId)) byAuthor.set(m.authorId, m);
+    for (const m of byAuthor.values()) {
+      items.push({
+        id: `dm:${m.authorId}:${m.createdAt.getTime()}`,
+        kind: "chat",
+        title: `Личное сообщение — ${m.author.name}`,
+        body: m.body,
+        href: "/messenger",
+        at: m.createdAt.toISOString(),
+      });
+    }
+
+    if (inChannels.length > 0) {
+      const last = inChannels[0];
+      items.push({
+        id: `chat:${last.id}`,
+        kind: "chat",
+        title:
+          inChannels.length === 1
+            ? `Новое сообщение — ${last.author.name}`
+            : `Новых сообщений в чате: ${inChannels.length}`,
+        body: `${last.author.name}: ${last.body}`,
+        href: "/messenger",
+        at: last.createdAt.toISOString(),
       });
     }
 
