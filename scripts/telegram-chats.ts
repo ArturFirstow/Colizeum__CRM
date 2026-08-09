@@ -11,7 +11,12 @@
 //   npx tsx scripts/telegram-chats.ts a.firstov@colizeum.ru 123456789
 // ─────────────────────────────────────────────────────────────────────────────
 
+import dns from "node:dns";
 import { PrismaClient } from "@prisma/client";
+
+// На серверах без IPv6 Node сначала пробует IPv6-адрес Telegram и ждёт таймаута.
+// Просим сначала IPv4 — иначе запрос падает с ETIMEDOUT на ровном месте.
+dns.setDefaultResultOrder("ipv4first");
 
 const prisma = new PrismaClient();
 

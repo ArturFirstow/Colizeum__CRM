@@ -17,6 +17,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "3000",
+        // Сервер без IPv6: иначе исходящие запросы (Telegram, ИИ) ждут таймаута.
+        NODE_OPTIONS: "--dns-result-order=ipv4first",
       },
       instances: 1,
       autorestart: true,

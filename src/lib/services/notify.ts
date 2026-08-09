@@ -9,7 +9,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import "server-only";
+import dns from "node:dns";
 import { prisma } from "@/lib/prisma";
+
+// На серверах без IPv6 Node сначала пробует IPv6-адрес Telegram и ждёт таймаута.
+// Просим сначала IPv4 — иначе отправка падает с ETIMEDOUT.
+dns.setDefaultResultOrder("ipv4first");
 
 function botToken(): string | undefined {
   return process.env.TELEGRAM_BOT_TOKEN || undefined;
@@ -27,20 +32,25 @@ export function telegramConfigured(): boolean {
 async function send(chatId: string, text: string): Promise<void> {
   const token = botToken();
   if (!token || !chatId) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch {
-    // Молчим намеренно: недоступный Telegram не должен ломать работу сервиса.
+  const body = JSON.stringify({
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  });
+  // Связь с Telegram из России бывает нестабильной — одна повторная попытка.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.ok) return;
+    } catch {
+      // Молчим намеренно: недоступный Telegram не должен ломать работу сервиса.
+    }
   }
 }
 
