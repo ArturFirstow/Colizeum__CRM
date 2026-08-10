@@ -84,6 +84,52 @@ export function AiSummaryButton({ advertiserId }: { advertiserId: string }) {
   );
 }
 
+// Кнопка «Пересказать хронологию»: ИИ читает ленту событий клиента целиком и
+// рассказывает историю отношений — как дошли до текущей точки и что дальше.
+// Отличается от «Саммари клиента»: то смотрит последний месяц и текущие цифры,
+// это — всю историю по датам.
+export function AiTimelineSummaryButton({ advertiserId }: { advertiserId: string }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<AiResult | null>(null);
+
+  async function run() {
+    setOpen(true);
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const r = await apiFetch<AiResult>("/api/ai/timeline-summary", {
+        method: "POST",
+        body: JSON.stringify({ advertiserId }),
+      });
+      setResult(r);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка ИИ");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <button className="btn btn-ghost btn-sm" onClick={run} title="ИИ пересказывает всю историю по клиенту">
+        <Sparkles size={14} className="text-brand" /> Пересказать историю
+      </button>
+      {open && (
+        <AiResultModal
+          title="История отношений с клиентом"
+          loading={loading}
+          error={error}
+          result={result}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
 // Кнопка «Драфт ДС по шаблону»: сначала спрашиваем, что меняем.
 export function AiDraftDsButton({ dealId }: { dealId: string }) {
   const [formOpen, setFormOpen] = useState(false);

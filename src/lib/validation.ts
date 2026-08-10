@@ -222,9 +222,19 @@ export const userCreateSchema = z.object({
 });
 
 // Правка сотрудника (переименование, смена роли; страница «Команда», только Owner).
+// sheetUrl — личная таблица учёта; её сотрудник меняет себе сам (см. API).
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
   role: z.enum(["Owner", "Manager", "Director"]).optional(),
+  sheetUrl: z
+    .string()
+    .trim()
+    .max(500, "Слишком длинная ссылка")
+    .refine((v) => v === "" || /\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(v), {
+      message:
+        "Это не похоже на ссылку на Google-таблицу. Скопируйте адрес из строки браузера — он начинается с https://docs.google.com/spreadsheets/d/…",
+    })
+    .optional(),
 });
 
 // Смена пароля. Сотрудник меняет свой — тогда обязателен текущий пароль.

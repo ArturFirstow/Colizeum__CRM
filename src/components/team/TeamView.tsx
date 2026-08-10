@@ -5,26 +5,30 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { formatDate } from "@/lib/format";
+import { parseSheetUrl, validateSheetUrl } from "@/lib/sheet-url";
 
 type Member = {
   id: string;
   name: string;
   email: string;
   role: string;
+  sheetUrl: string | null;
   createdAt: string | Date;
   _count: { ownedAdvertisers: number; ownedTasks: number };
 };
 
 // Страница «Команда»: выдача доступов сотрудникам. Каждый сотрудник получает
 // чистый личный кабинет со своими клиентами; общие — база знаний и календарь.
-export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boolean }) {
+export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmin: boolean; meId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
   const [edit, setEdit] = useState<Member | null>(null);
+  const [sheetEdit, setSheetEdit] = useState<Member | null>(null);
   const [f, setF] = useState({ name: "", email: "", password: "", role: "Manager" });
+  const me = members.find((m) => m.id === meId) ?? null;
 
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((s) => ({ ...s, [k]: v }));
@@ -69,6 +73,40 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
         </div>
       )}
 
+      {/* Своя таблица учёта — у каждого своя, а не одна на всех. */}
+      {me && (
+        <div className="mb-5 card p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="font-semibold text-ink-50">📊 Моя таблица учёта</div>
+              <p className="mt-1 text-sm text-ink-400">
+                Ваша личная Google-таблица. Вставьте ссылку целиком — вместе с хвостом{" "}
+                <span className="font-mono text-ink-300">?gid=…</span>, он указывает на нужный лист внизу таблицы.
+              </p>
+              {me.sheetUrl ? (
+                <a
+                  href={me.sheetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block max-w-full truncate text-sm text-brand hover:underline"
+                >
+                  {me.sheetUrl}
+                </a>
+              ) : (
+                <p className="mt-2 text-sm text-ink-500">Пока не указана.</p>
+              )}
+            </div>
+            <button className="btn btn-ghost btn-sm shrink-0" onClick={() => setSheetEdit(me)}>
+              {me.sheetUrl ? "Изменить ссылку" : "Указать таблицу"}
+            </button>
+          </div>
+          <p className="mt-3 border-t border-ink-800 pt-3 text-xs text-ink-500">
+            Чтобы сервис мог читать таблицу, откройте у неё доступ: «Настройки доступа» → «Все, у кого есть
+            ссылка» → «Читатель».
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         {members.map((m) => (
           <div key={m.id} className="card p-5">
@@ -88,10 +126,13 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
                 )}
               </div>
             </div>
-            <div className="mt-3 flex gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-ink-800 pt-3 text-xs text-ink-400">
               <span>☰ {m._count.ownedAdvertisers} клиентов</span>
               <span>✓ {m._count.ownedTasks} задач</span>
               <span>с {formatDate(m.createdAt)}</span>
+              <span className={m.sheetUrl ? "text-emerald-300" : "text-ink-500"}>
+                📊 {m.sheetUrl ? "таблица указана" : "таблицы нет"}
+              </span>
             </div>
           </div>
         ))}
@@ -141,7 +182,85 @@ export function TeamView({ members, isAdmin }: { members: Member[]; isAdmin: boo
       </Modal>
 
       {edit && <EditMemberModal member={edit} onClose={() => setEdit(null)} onSaved={() => router.refresh()} />}
+      {sheetEdit && (
+        <SheetUrlModal member={sheetEdit} onClose={() => setSheetEdit(null)} onSaved={() => router.refresh()} />
+      )}
     </div>
+  );
+}
+
+// Ссылка на личную таблицу учёта. Отдельная модалка, а не поле в «Изменить
+// сотрудника»: имя и роль правит только админ, а таблицу человек ставит себе сам.
+function SheetUrlModal({
+  member,
+  onClose,
+  onSaved,
+}: {
+  member: Member;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [url, setUrl] = useState(member.sheetUrl ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const problem = validateSheetUrl(url);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    try {
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ sheetUrl: url.trim() }) });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const ref = parseSheetUrl(url);
+
+  return (
+    <Modal open onClose={onClose} title="Моя таблица учёта" subtitle="Google-таблица, в которой вы ведёте свои записи">
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label className="label">Ссылка на таблицу</label>
+          <input
+            className="input"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            autoFocus
+            placeholder="https://docs.google.com/spreadsheets/d/…/edit?gid=989964510"
+          />
+          <p className="mt-1.5 text-xs text-ink-500">
+            Откройте нужный лист в таблице и скопируйте адрес прямо из строки браузера — так в ссылку попадёт
+            номер листа. Пустое поле — убрать таблицу.
+          </p>
+        </div>
+        {ref && (
+          <div className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3 text-xs text-ink-300">
+            Распознали таблицу <span className="font-mono text-ink-100">{ref.id.slice(0, 12)}…</span>, лист{" "}
+            <span className="font-mono text-ink-100">gid={ref.gid}</span>
+            {ref.gid === "0" && <span className="text-ink-500"> — это первый лист таблицы</span>}
+          </div>
+        )}
+        <FormError message={error} />
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Отмена
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "…" : "Сохранить"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

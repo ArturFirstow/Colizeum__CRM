@@ -13,6 +13,7 @@ export default async function TeamPage() {
       name: true,
       email: true,
       role: true,
+      sheetUrl: true,
       createdAt: true,
       _count: { select: { ownedAdvertisers: true, ownedTasks: true } },
     },
@@ -26,7 +27,7 @@ export default async function TeamPage() {
         subtitle="У каждого свой кабинет и свои клиенты. Шпаргалки и сетка размещений — общие."
         icon="👥"
       />
-      <TeamView members={members} isAdmin={session.role === "Owner"} />
+      <TeamView members={members} isAdmin={session.role === "Owner"} meId={session.userId} />
     </div>
   );
 }

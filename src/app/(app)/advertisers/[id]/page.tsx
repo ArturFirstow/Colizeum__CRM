@@ -9,6 +9,8 @@ import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserBut
 import { AgencyClients } from "@/components/advertisers/AgencyClients";
 import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
 import { Creatives } from "@/components/advertisers/Creatives";
+import { ClientTimeline } from "@/components/advertisers/ClientTimeline";
+import { buildClientTimeline } from "@/lib/services/client-timeline";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { AiSummaryButton } from "@/components/ai/AiButtons";
 import { formatMoney } from "@/lib/format";
@@ -33,6 +35,9 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
   // Чужого клиента не показываем (личные кабинеты).
   const session = await requireSession();
   if (!canSeeOwned(session, advertiser.ownerId)) notFound();
+
+  // Единая лента событий по клиенту — собирается из всех разделов сразу.
+  const timeline = await buildClientTimeline(advertiser.id);
 
   return (
     <div>
@@ -139,6 +144,9 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
 
           {/* 3. Креативы */}
           <Creatives advertiserId={advertiser.id} creatives={advertiser.creatives} />
+
+          {/* 4. Хронология: всё, что было с клиентом, одной лентой */}
+          <ClientTimeline advertiserId={advertiser.id} events={timeline} />
         </div>
 
         {/* Реквизиты + контакты */}

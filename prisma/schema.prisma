@@ -29,6 +29,10 @@ model User {
   // Направление работы: Ads — реклама/коллаборации, Tournaments — турниры (Артём).
   // От track зависит набор разделов в кабинете (см. src/lib/nav.ts).
   track        String   @default("Ads") // Ads | Tournaments
+  // Личная Google-таблица учёта сотрудника: ссылка целиком, вместе с «?gid=…»
+  // (адрес конкретного листа). Раньше таблица была одна на всех в настройках
+  // сервера — теперь каждый указывает свою (src/lib/sheet-url.ts).
+  sheetUrl     String?
   createdAt    DateTime @default(now())
 
   ownedDeals       Deal[]            @relation("DealOwner")
