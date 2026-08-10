@@ -4,12 +4,16 @@
 # Забирает новый код, пересобирает, обновляет схему БД и перезапускает.
 # ДАННЫЕ НЕ ТРОГАЕТ (сид не запускается — он бы очистил базу).
 #
-# Запуск на сервере:  bash /var/www/colizeum/deploy/update.sh
+# Запуск на сервере:  bash <папка сервиса>/deploy/update.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/var/www/colizeum}"
+# Папку сервиса берём от самого скрипта, а не жёстким путём: сервис ставят
+# в разные места (/var/www/colizeum, /root/Colizeum__CRM), и зашитый путь
+# приводил к «No such file or directory» на ровном месте.
+APP_DIR="${APP_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$APP_DIR"
+echo "==> Папка сервиса: $APP_DIR"
 
 echo "==> Резервная копия базы"
 bash deploy/backup.sh || echo "   (пропущено)"

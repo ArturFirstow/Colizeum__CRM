@@ -4,12 +4,11 @@
 # Ничего не меняет, только смотрит и печатает понятный отчёт.
 #
 # Запуск:  bash deploy/healthcheck.sh
-# Если проект лежит не в /var/www/colizeum:
-#          APP_DIR=/root/Colizeum__CRM bash deploy/healthcheck.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -uo pipefail
 
-APP_DIR="${APP_DIR:-/var/www/colizeum}"
+# Папку сервиса берём от самого скрипта — он лежит внутри неё, в deploy/.
+APP_DIR="${APP_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 PORT="${PORT:-3000}"
 
 problems=0
