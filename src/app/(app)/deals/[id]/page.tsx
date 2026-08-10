@@ -12,6 +12,7 @@ import { DecisionButton } from "@/components/deals/DecisionButton";
 import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
+import { RequestButtons } from "@/components/deals/RequestButtons";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import {
   CLOSING_KINDS,
@@ -60,6 +61,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         actions={
           <>
             <UrgencyBadge urgency={deal.urgency} />
+            {/* Порядок кнопок = порядок работы: сначала договор, потом макеты. */}
+            <RequestButtons deal={deal} stage={deal.stage} />
             <AiDraftDsButton dealId={deal.id} />
             <EditDealButton deal={deal} />
             <DeleteButton
