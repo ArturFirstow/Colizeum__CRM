@@ -46,6 +46,30 @@ model User {
   channelMemberships ChannelMember[]
   assignedLeads    Lead[]            @relation("LeadAssignee")
   decisionRequests DecisionRequest[] @relation("DecisionRequester")
+  absences         Absence[]         @relation("AbsencePerson")
+  coveringFor      Absence[]         @relation("AbsenceCover")
+}
+
+// ── Отсутствие сотрудника (календарь отпусков на странице «Команда») ─────────
+// Годовая сетка «кто когда не на месте»: отпуск, больничный, командировка,
+// отгул. Поле coverUserId — суть передачи дел: кто подхватывает клиентов,
+// пока человека нет.
+model Absence {
+  id          String   @id @default(cuid())
+  userId      String
+  kind        String   @default("Отпуск") // Отпуск | Больничный | Командировка | Отгул
+  startDate   DateTime
+  endDate     DateTime
+  coverUserId String? // кто на подхвате
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User  @relation("AbsencePerson", fields: [userId], references: [id], onDelete: Cascade)
+  coverUser User? @relation("AbsenceCover", fields: [coverUserId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([startDate])
 }
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────

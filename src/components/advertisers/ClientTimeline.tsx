@@ -35,6 +35,7 @@ export function ClientTimeline({
 }) {
   const [active, setActive] = useState<TimelineKind | null>(null);
   const [limit, setLimit] = useState(PAGE);
+  const [aheadOpen, setAheadOpen] = useState(false);
 
   // Сколько событий каждого типа — показываем прямо на кнопке фильтра,
   // чтобы не тыкать в пустые.
@@ -49,7 +50,12 @@ export function ClientTimeline({
     [events, active],
   );
 
-  const shown = filtered.slice(0, limit);
+  // Будущее отделено от прошлого. Иначе открытая карточка встречает стеной
+  // плановых платежей на год вперёд, а история — где-то под ними.
+  const ahead = useMemo(() => filtered.filter((e) => e.planned).reverse(), [filtered]);
+  const history = useMemo(() => filtered.filter((e) => !e.planned), [filtered]);
+
+  const shown = history.slice(0, limit);
   const groups = useMemo(() => groupByDay(shown), [shown]);
 
   const firstDate = events.length ? new Date(events[events.length - 1].date) : null;
@@ -95,6 +101,40 @@ export function ClientTimeline({
         </p>
       ) : (
         <div className="space-y-5">
+          {/* Что впереди: планы и сроки, ближайшее — сверху. Свёрнуто, потому
+              что открывают карточку обычно ради того, что уже было. */}
+          {ahead.length > 0 && (
+            <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
+              <button
+                className="flex w-full items-center justify-between text-left"
+                onClick={() => setAheadOpen((v) => !v)}
+              >
+                <span className="text-sm font-semibold text-ink-200">
+                  Впереди: {ahead.length} {plural(ahead.length, "событие", "события", "событий")}
+                </span>
+                <span className="text-xs text-ink-500">{aheadOpen ? "свернуть ▲" : "показать ▼"}</span>
+              </button>
+              {!aheadOpen && ahead[0] && (
+                <div className="mt-1.5 truncate text-xs text-ink-400">
+                  ближайшее — {new Date(ahead[0].date).toLocaleDateString("ru-RU")}: {ahead[0].title}
+                </div>
+              )}
+              {aheadOpen && (
+                <div className="mt-3 space-y-2">
+                  {ahead.map((e) => (
+                    <EventRow key={e.id} event={e} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {history.length === 0 && (
+            <p className="text-sm text-ink-500">
+              По этому фильтру ещё ничего не произошло — всё, что есть, ещё впереди.
+            </p>
+          )}
+
           {groups.map((g) => (
             <div key={g.key}>
               <div className="mb-2 flex items-center gap-3">
@@ -109,9 +149,9 @@ export function ClientTimeline({
             </div>
           ))}
 
-          {filtered.length > shown.length && (
+          {history.length > shown.length && (
             <button className="btn btn-ghost btn-sm" onClick={() => setLimit((l) => l + PAGE * 2)}>
-              Показать ещё ({filtered.length - shown.length})
+              Показать ещё ({history.length - shown.length})
             </button>
           )}
         </div>

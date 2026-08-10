@@ -20,6 +20,7 @@ import {
   TOURNAMENT_STATUSES,
   ARENA_BOOKING_STATUSES,
   LEAD_STATUSES,
+  ABSENCE_KINDS,
 } from "./enums";
 
 /** Zod-схема «значение из фиксированного набора» (замена native enum для SQLite). */
@@ -446,4 +447,27 @@ export const decisionCreateSchema = z.object({
 export const decisionPatchSchema = z.object({
   status: z.enum(DECISION_STATUSES).optional(),
   answer: optionalString,
+});
+
+// ── Отсутствия сотрудников (календарь отпусков на странице «Команда») ────────
+export const absenceCreateSchema = z
+  .object({
+    userId: z.string().trim().min(1, "Выберите сотрудника"),
+    kind: inSet(ABSENCE_KINDS).optional(),
+    startDate: z.string().min(1, "Первый день отсутствия"),
+    endDate: z.string().min(1, "Последний день отсутствия"),
+    coverUserId: optionalString,
+    note: optionalString,
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "Последний день не может быть раньше первого",
+    path: ["endDate"],
+  });
+
+export const absenceUpdateSchema = z.object({
+  kind: inSet(ABSENCE_KINDS).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  coverUserId: optionalString,
+  note: optionalString,
 });

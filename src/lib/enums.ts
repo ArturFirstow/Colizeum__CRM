@@ -278,3 +278,7 @@ export function vatRateForDate(date: Date = new Date()): number {
 // Заявки с сайта colizeum-agency.ru (Google-форма → CRM).
 export const LEAD_STATUSES = ["Новая", "В работе", "Квалифицирована", "Отказ"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+// Отсутствия сотрудников (календарь отпусков на странице «Команда»).
+export const ABSENCE_KINDS = ["Отпуск", "Больничный", "Командировка", "Отгул"] as const;
+export type AbsenceKind = (typeof ABSENCE_KINDS)[number];
