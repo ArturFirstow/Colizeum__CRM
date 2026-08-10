@@ -21,12 +21,14 @@ export default async function DocumentsPage({
       id: true,
       nameRu: true,
       type: true,
+      deals: { select: { id: true, title: true }, orderBy: { updatedAt: "desc" } },
       documents: {
         orderBy: { type: "asc" },
         select: {
           id: true,
           type: true,
           title: true,
+          dealId: true,
           currentVersionId: true,
           versions: {
             orderBy: { versionNo: "desc" },

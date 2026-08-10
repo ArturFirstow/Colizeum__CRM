@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       ctx.push(
         `- «${d.title}»: стадия ${d.stage}${d.urgency ? `, срочность ${d.urgency}` : ""}` +
           `${d.contractTotal || d.amount ? `, сумма ${formatMoney(d.contractTotal || d.amount)}` : ""}` +
-          `${d.blocker ? `; блокер: ${d.blocker}` : ""}` +
+          `${d.blockerActive ? `; блокер: ${d.blocker ?? ""}` : ""}` +
           `${d.nextStep ? `; следующий шаг: ${d.nextStep}` : ""}`,
       );
       for (const p of d.plannedPayments) {

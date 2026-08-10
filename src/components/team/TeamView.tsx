@@ -10,6 +10,8 @@ import { parseSheetUrl, validateSheetUrl } from "@/lib/sheet-url";
 type Member = {
   id: string;
   name: string;
+  telegramChatId?: string | null;
+  avatarUrl?: string | null;
   email: string;
   role: string;
   sheetUrl: string | null;
@@ -275,6 +277,26 @@ function EditMemberModal({
 }) {
   const [name, setName] = useState(member.name);
   const [role, setRole] = useState(member.role);
+  const [telegramChatId, setTelegramChatId] = useState(member.telegramChatId ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(member.avatarUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+
+  // Фото кладём в общее хранилище файлов и запоминаем ссылку на него.
+  async function uploadAvatar(file: File) {
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("ownerType", "avatar");
+      form.append("ownerId", member.id);
+      form.append("kind", "Фото");
+      const res = await fetch("/api/files", { method: "POST", body: form });
+      const json = (await res.json()) as { data?: { id: string } };
+      if (json.data?.id) setAvatarUrl(`/api/files/${json.data.id}`);
+    } finally {
+      setUploading(false);
+    }
+  }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -283,7 +305,7 @@ function EditMemberModal({
     setError(null);
     setSaving(true);
     try {
-      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role }) });
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId, avatarUrl }) });
       onSaved();
       onClose();
     } catch (err) {
@@ -307,6 +329,50 @@ function EditMemberModal({
             <option value="Director">Руководитель — видит весь отдел + бюджет</option>
             <option value="Owner">Админ — управление доступами</option>
           </select>
+        </div>
+        <div>
+          <label className="label">Фото</label>
+          <div className="flex items-center gap-3">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-800 text-sm text-ink-500">
+                нет
+              </span>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="text-xs text-ink-400"
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadAvatar(f);
+              }}
+            />
+            {avatarUrl && (
+              <button type="button" className="text-xs text-ink-500 hover:text-red-300" onClick={() => setAvatarUrl("")}>
+                убрать
+              </button>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-ink-500">
+            Фото руководителя показывается на кнопке «Саша, окни пожалуйста».
+          </p>
+        </div>
+        <div>
+          <label className="label">Telegram для уведомлений</label>
+          <input
+            className="input"
+            value={telegramChatId}
+            onChange={(e) => setTelegramChatId(e.target.value)}
+            placeholder="chat id, например 123456789"
+          />
+          <p className="mt-1 text-xs text-ink-500">
+            Сотрудник пишет боту «/start», после чего его chat id покажет команда
+            npx tsx scripts/telegram-chats.ts. Пусто — уведомления не приходят.
+          </p>
         </div>
         <FormError message={error} />
         <div className="flex justify-end gap-2">

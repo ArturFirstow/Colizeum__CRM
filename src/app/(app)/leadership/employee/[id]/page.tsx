@@ -135,7 +135,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="mt-1 text-xs text-ink-400">
                     {d.amount != null ? formatMoney(d.amount) : "—"}
-                    {d.blocker && <span className="text-red-300"> · ⛔ {d.blocker}</span>}
+                    {d.blockerActive && <span className="text-red-300"> · ⛔ {d.blocker}</span>}
                   </div>
                 </div>
               ))}

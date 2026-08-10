@@ -242,14 +242,14 @@ export function makeRunTool(session: SessionPayload) {
     if (name === "list_my_clients") {
       const advs = await prisma.advertiser.findMany({
         where: { ...scope, archived: false },
-        include: { deals: { select: { title: true, stage: true, amount: true, blocker: true, nextStep: true } } },
+        include: { deals: { select: { title: true, stage: true, amount: true, blocker: true, blockerActive: true, nextStep: true } } },
         orderBy: { nameRu: "asc" },
       });
       if (advs.length === 0) return "У сотрудника нет активных клиентов.";
       return advs
         .map((a) => {
           const deals = a.deals
-            .map((d) => `«${d.title}» — ${d.stage}${d.amount ? `, ${formatMoney(d.amount)}` : ""}${d.blocker ? `, блокер: ${d.blocker}` : ""}`)
+            .map((d) => `«${d.title}» — ${d.stage}${d.amount ? `, ${formatMoney(d.amount)}` : ""}${d.blockerActive ? `, блокер: ${d.blocker ?? ""}` : ""}`)
             .join("; ");
           return `- ${a.nameRu}${deals ? `: ${deals}` : " (без сделок)"}`;
         })
@@ -274,7 +274,7 @@ export function makeRunTool(session: SessionPayload) {
         out.push(
           `Сделка «${d.title}»: стадия ${d.stage}` +
             `${d.contractTotal || d.amount ? `, сумма ${formatMoney(d.contractTotal || d.amount)}` : ""}` +
-            `${d.blocker ? `; блокер: ${d.blocker}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}` : ""}`,
+            `${d.blockerActive ? `; блокер: ${d.blocker ?? ""}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}` : ""}`,
         );
         for (const p of d.plannedPayments) out.push(`  платёж ${p.periodMonth}: ${formatMoney(p.amount)} — ${p.status}`);
       }

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
+import { notifyChatDm } from "@/lib/services/notify";
 import { emitChatMessage } from "@/lib/chat-events";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -61,6 +62,23 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         contextLabel,
       },
     });
+
+    // Личка — уведомляем собеседника в Telegram. Общие каналы не трогаем:
+    // они показываются всплывающим окном на сайте и маячком в меню.
+    const channel = await prisma.channel.findUnique({
+      where: { id },
+      select: { isDm: true, members: { select: { userId: true } } },
+    });
+    if (channel?.isDm) {
+      const other = channel.members.find((m) => m.userId !== session.userId);
+      if (other) {
+        await notifyChatDm({
+          toUserId: other.userId,
+          fromName: session.name,
+          text: body || "прислал файл",
+        });
+      }
+    }
 
     const storage = getStorage();
     for (const file of files) {

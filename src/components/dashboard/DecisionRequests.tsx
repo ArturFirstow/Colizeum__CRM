@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, Check, X } from "lucide-react";
+import { HelpCircle, Check, X, Paperclip } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
+import { FileCell } from "@/components/ui/FileCell";
 import { formatDate } from "@/lib/format";
 
 export type DecisionItem = {
@@ -15,6 +16,7 @@ export type DecisionItem = {
   status: string;
   answer: string | null;
   createdAt: string;
+  attachmentsKey: string | null;
   requester: { id: string; name: string };
   advertiser: { id: string; nameRu: string } | null;
   deal: { id: string; title: string } | null;
@@ -22,19 +24,31 @@ export type DecisionItem = {
 
 const KINDS = ["Согласование", "Доступ", "Деньги", "Другое"] as const;
 
+// Ключ группы вложений для ещё не отправленного вопроса.
+function newKey(): string {
+  return `dr_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
 // Кнопка сотрудника: отправить вопрос руководителю.
 export function AskLeaderButton({
   advertisers,
   deals,
+  leaderAvatarUrl,
+  leaderName,
 }: {
   advertisers: { id: string; nameRu: string }[];
   deals: { id: string; title: string; advertiserId: string }[];
+  leaderAvatarUrl?: string | null;
+  leaderName?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [f, setF] = useState({ title: "", details: "", kind: "Согласование", advertiserId: "", dealId: "" });
+  // Ключ группы вложений заводим ДО отправки — тогда файлы можно приложить
+  // прямо в форме, а не «сначала создай, потом прикрепи».
+  const [attachmentsKey, setAttachmentsKey] = useState(() => newKey());
 
   const dealsForAdv = f.advertiserId ? deals.filter((d) => d.advertiserId === f.advertiserId) : [];
 
@@ -51,9 +65,11 @@ export function AskLeaderButton({
           kind: f.kind,
           advertiserId: f.advertiserId || undefined,
           dealId: f.dealId || undefined,
+          attachmentsKey,
         }),
       });
       setF({ title: "", details: "", kind: "Согласование", advertiserId: "", dealId: "" });
+      setAttachmentsKey(newKey());
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -65,13 +81,34 @@ export function AskLeaderButton({
 
   return (
     <>
-      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>
-        <HelpCircle size={14} /> Спросить руководителя
+      <button
+        onClick={() => setOpen(true)}
+        className="card card-hover flex w-full items-center gap-3 p-4 text-left !border-brand/40"
+      >
+        {leaderAvatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={leaderAvatarUrl}
+            alt={leaderName ?? "Руководитель"}
+            className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-brand/40"
+          />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand">
+            <HelpCircle size={18} />
+          </span>
+        )}
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-ink-50">Саша, окни пожалуйста</span>
+          <span className="block text-xs text-ink-400">
+            Вопрос, согласование, доступ — можно приложить файл
+          </span>
+        </span>
+        <span className="ml-auto shrink-0 text-xs font-medium text-brand">Задать →</span>
       </button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Вопрос руководителю"
+        title="Саша, окни пожалуйста"
         subtitle="Запрос появится у руководителя в блоке «Решения, которые ждут вас»"
       >
         <form onSubmit={submit} className="space-y-4">
@@ -138,6 +175,18 @@ export function AskLeaderButton({
               placeholder="Что уже сделано, что мешает, к какому сроку нужен ответ"
             />
           </div>
+          <div>
+            <label className="label">Файлы к вопросу</label>
+            <FileCell
+              ownerType="decision"
+              ownerId={attachmentsKey}
+              kind="Прочее"
+              advertiserId={f.advertiserId || undefined}
+              dealId={f.dealId || undefined}
+              label="Приложить файл (макет, счёт, переписка)"
+              compact
+            />
+          </div>
           <FormError message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
@@ -190,6 +239,15 @@ export function DecisionRequestCard({ item, canDecide }: { item: DecisionItem; c
       </div>
 
       {item.details && <p className="mt-2 whitespace-pre-wrap text-sm text-ink-300">{item.details}</p>}
+
+      {item.attachmentsKey && (
+        <div className="mt-3">
+          <div className="mb-1 flex items-center gap-1.5 text-xs text-ink-500">
+            <Paperclip size={12} /> Файлы к вопросу
+          </div>
+          <FileCell ownerType="decision" ownerId={item.attachmentsKey} label="Добавить файл" compact />
+        </div>
+      )}
 
       {canDecide && (
         <div className="mt-3">

@@ -123,7 +123,7 @@ async function main() {
   });
   // Александр Иванушкин — директор Colizeum Agency (сводки по отделу + бюджет).
   await prisma.user.create({
-    data: { email: "a.ivanushkin@colizeum.ru", name: "Александр", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "a5RKwu2H5w") },
+    data: { email: "a.ivanushkin@colizeum.ru", name: "Александр Иванушкин", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "a5RKwu2H5w") },
   });
 
   // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────

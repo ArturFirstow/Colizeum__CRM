@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 export default async function MessengerPage() {
   const session = await requireSession();
 
+  // Зашли в мессенджер — значит увидели. Маячок непрочитанного гаснет.
+  await prisma.user.update({ where: { id: session.userId }, data: { chatSeenAt: new Date() } });
+
   // Гарантируем наличие общего канала «Общий» (не-DM).
   let general = await prisma.channel.findMany({ where: { isDm: false }, orderBy: [{ isGeneral: "desc" }, { createdAt: "asc" }] });
   if (general.length === 0) {

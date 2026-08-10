@@ -33,6 +33,15 @@ model User {
   // (адрес конкретного листа). Раньше таблица была одна на всех в настройках
   // сервера — теперь каждый указывает свою (src/lib/sheet-url.ts).
   sheetUrl     String?
+  // Куда слать уведомления (вопрос руководителю, поручение, блокер).
+  // Пусто — сотрудник уведомления не получает. Настройка — docs/TELEGRAM.md.
+  telegramChatId String?
+  // До какого момента сотрудник видел мессенджер: по нему считается маячок
+  // непрочитанного. Одно поле на человека — проще, чем отметки по каналам.
+  chatSeenAt   DateTime?
+  // Фото сотрудника. Храним ссылку на файл в общем хранилище (/api/files/<id>),
+  // чтобы не заводить отдельный механизм картинок.
+  avatarUrl    String?
   createdAt    DateTime @default(now())
 
   ownedDeals       Deal[]            @relation("DealOwner")
@@ -48,12 +57,15 @@ model User {
   decisionRequests DecisionRequest[] @relation("DecisionRequester")
   absences         Absence[]         @relation("AbsencePerson")
   coveringFor      Absence[]         @relation("AbsenceCover")
+  handoversGiven   Handover[]        @relation("HandoverFrom")
+  handoversTaken   Handover[]        @relation("HandoverTo")
 }
 
-// ── Отсутствие сотрудника (календарь отпусков на странице «Команда») ─────────
+// ── Отсутствие сотрудника (календарь отпусков в разделе «Передача дел») ──────
 // Годовая сетка «кто когда не на месте»: отпуск, больничный, командировка,
-// отгул. Поле coverUserId — суть передачи дел: кто подхватывает клиентов,
-// пока человека нет.
+// отгул. Поле coverUserId — кто подхватывает клиентов, пока человека нет;
+// рядом на странице лежит сама передача дел (Handover), которая эти клиенты
+// физически перекладывает в кабинет коллеги.
 model Absence {
   id          String   @id @default(cuid())
   userId      String
@@ -183,7 +195,10 @@ model Deal {
   contractNumber       String?
   contractDate         DateTime?
   legalResponsible     String? // юрист
+  // Блокер = флажок + комментарий. Сделка считается заблокированной ТОЛЬКО при
+  // поднятом флажке: текст может остаться как история, но висеть в сводках не будет.
   blocker              String?
+  blockerActive        Boolean   @default(false)
   situational          String? // «Ситуативные блокеры и срочные задачи» (v2, п.1.3) — НЕ в базу знаний
   nextStep             String?
   nextStepDate         DateTime?
@@ -514,6 +529,17 @@ model JournalEntry {
   // Встреча: с кем говорили и по какому клиенту — чтобы транскрипт не потерялся.
   meetingWith      String?
   advertiserId     String?
+  // ── Показатели встречи для таблицы учёта ──────────────────────────────────
+  meetingDate      DateTime? // дата встречи
+  startTime        String?   // «HH:MM» начала
+  endTime          String?   // «HH:MM» окончания
+  durationHours    Float?    // продолжительность в часах, шаг 0,5
+  participants     String?   // участники встречи, через запятую
+  protocolUrl      String?   // ссылка на протокол/расшифровку
+  meetingUrl       String?   // ссылка на саму встречу (запись, Zoom/Meet)
+  // Выгрузка строки в Google-таблицу отчётности.
+  exportedAt       DateTime?
+  exportError      String?
   rawText          String
   parsedSummary    String?
   routedTo         String? // Трекер | База | Архив
@@ -803,6 +829,9 @@ model DecisionRequest {
   kind        String  @default("Согласование") // Согласование | Доступ | Деньги | Другое
   status      String  @default("Открыт") // Открыт | Решён | Отклонён
   answer      String? // решение руководителя
+  // Ключ группы вложений (FileAsset.ownerType="decision", ownerId=этот ключ).
+  // Заводится в браузере до отправки, поэтому файлы можно приложить сразу в форме.
+  attachmentsKey String?
 
   requesterId String
   requester   User    @relation("DecisionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
@@ -862,4 +891,44 @@ model FileAsset {
   @@index([ownerType, ownerId])
   @@index([advertiserId])
   @@index([dealId])
+}
+
+
+// ── Передача дел на время отпуска ────────────────────────────────────────────
+// Клиенты временно переходят к замещающему вместе с саммари по каждому: где
+// сейчас, что подписано, что оплачено, что горит. По возвращении — один клик,
+// и всё встаёт обратно к прежнему владельцу.
+model Handover {
+  id         String    @id @default(cuid())
+  fromUserId String
+  from       User      @relation("HandoverFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  to         User      @relation("HandoverTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  reason     String?   // отпуск, больничный, командировка
+  startsAt   DateTime  @default(now())
+  endsAt     DateTime? // когда планируем вернуть
+  note       String?   // что важно знать замещающему
+  summary    String?   // общее саммари по всем клиентам (текст)
+  status     String    @default("Активна") // Активна | Завершена
+
+  createdAt  DateTime  @default(now())
+  returnedAt DateTime?
+
+  items HandoverItem[]
+
+  @@index([toUserId])
+  @@index([status])
+}
+
+model HandoverItem {
+  id           String  @id @default(cuid())
+  handoverId   String
+  handover     Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+  advertiserId String
+  // Кому клиент принадлежал ДО передачи — по этому полю возвращаем обратно.
+  previousOwnerId String?
+  summary      String? // саммари по конкретному клиенту
+
+  @@index([handoverId])
 }

@@ -28,6 +28,7 @@ export default async function LeadershipPage() {
         stage: true,
         amount: true,
         blocker: true,
+        blockerActive: true,
         periodText: true,
         updatedAt: true,
         advertiser: { select: { ownerId: true, nameRu: true, owner: { select: { name: true } } } },
@@ -64,7 +65,7 @@ export default async function LeadershipPage() {
       due: myPay.filter((p) => p.status !== "Оплачено").reduce((s, p) => s + p.amount, 0),
       tasks: myTasks.length,
       overdue: myTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now).length,
-      blockers: myDeals.filter((d) => d.blocker).length,
+      blockers: myDeals.filter((d) => d.blockerActive).length,
       stuck: myDeals.filter((d) => new Date(d.updatedAt) < STUCK).length,
       lastActive: lastStatus?.date ?? null,
     };
@@ -95,11 +96,12 @@ export default async function LeadershipPage() {
     advertiserName: d.advertiser.nameRu,
     managerName: d.advertiser.owner?.name ?? null,
     blocker: d.blocker,
+    blockerActive: d.blockerActive,
   }));
 
   // Списки под виджетами «требует внимания».
   const blockerItems = deals
-    .filter((d) => d.blocker)
+    .filter((d) => d.blockerActive)
     .map((d) => ({ id: d.id, href: `/deals/${d.id}`, title: d.advertiser.nameRu, sub: d.blocker ?? "" }));
   const overdueItems = tasks
     .filter((t) => t.dueDate && new Date(t.dueDate) < now)

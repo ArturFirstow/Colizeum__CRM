@@ -32,6 +32,16 @@ function inSet<T extends readonly string[]>(values: T, message?: string) {
 
 const optionalString = z.string().trim().optional().or(z.literal("").transform(() => undefined));
 
+// То же самое, но пустая строка ОЧИЩАЕТ поле (пишем null), а не «оставить как было».
+// Нужно для свободных текстов, которые пользователь должен уметь стереть:
+// иначе снятый блокер превращался в пустую строку и сделка продолжала висеть.
+const clearableString = z
+  .string()
+  .trim()
+  .transform((v) => (v === "" ? null : v))
+  .nullable()
+  .optional();
+
 export const advertiserCreateSchema = z.object({
   nameRu: z.string().trim().min(1, "Укажите название"),
   nameEn: optionalString,
@@ -101,12 +111,13 @@ export const dealCreateSchema = z.object({
   paymentTerms: optionalString,
   contractNumber: optionalString,
   legalResponsible: optionalString,
-  blocker: optionalString,
-  situational: optionalString,
-  nextStep: optionalString,
+  blocker: clearableString,
+  blockerActive: z.boolean().optional(),
+  situational: clearableString,
+  nextStep: clearableString,
   nextStepDate: dealDate,
-  decisionPending: optionalString,
-  notes: optionalString,
+  decisionPending: clearableString,
+  notes: clearableString,
 });
 
 export const dealUpdateSchema = dealCreateSchema.partial().extend({
@@ -144,6 +155,13 @@ export const documentCreateSchema = z.object({
   title: z.string().trim().min(1, "Укажите название документа"),
 });
 
+// Правка карточки документа (рекламодателя не меняем — это переезд, а не правка).
+export const documentUpdateSchema = z.object({
+  type: inSet(DOCUMENT_TYPES, "Выберите тип документа").optional(),
+  title: z.string().trim().min(1, "Укажите название документа").optional(),
+  dealId: clearableString,
+});
+
 export const knowledgeCreateSchema = z.object({
   // Категория — свободная строка: помимо стандартных, можно создавать новые
   // категории прямо из формы «+ Статья» (ТЗ р.2, п.6).
@@ -154,6 +172,14 @@ export const knowledgeCreateSchema = z.object({
 });
 export const knowledgeUpdateSchema = knowledgeCreateSchema.partial();
 
+// Показатели встречи — то, что затем уходит строкой в таблицу учёта.
+const timeOfDay = z
+  .string()
+  .trim()
+  .regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "Время в формате ЧЧ:ММ")
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
 export const journalCreateSchema = z.object({
   source: inSet(JOURNAL_SOURCES).default("EOD"),
   rawText: z.string().trim().min(1, "Пустая запись"),
@@ -161,6 +187,13 @@ export const journalCreateSchema = z.object({
   parsedSummary: optionalString,
   meetingWith: optionalString,
   advertiserId: optionalString,
+  meetingDate: z.string().optional().or(z.literal("").transform(() => undefined)),
+  startTime: timeOfDay,
+  endTime: timeOfDay,
+  durationHours: z.number().nonnegative().optional(),
+  participants: optionalString,
+  protocolUrl: optionalString,
+  meetingUrl: optionalString,
 });
 
 export const mediaPlanCreateSchema = z.object({
@@ -227,6 +260,8 @@ export const userCreateSchema = z.object({
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
   role: z.enum(["Owner", "Manager", "Director"]).optional(),
+  telegramChatId: clearableString,
+  avatarUrl: clearableString,
   sheetUrl: z
     .string()
     .trim()
@@ -440,6 +475,7 @@ export const decisionCreateSchema = z.object({
   title: z.string().trim().min(1, "Опишите, что нужно решить"),
   details: optionalString,
   kind: z.enum(DECISION_KINDS).optional(),
+  attachmentsKey: optionalString,
   advertiserId: optionalString,
   dealId: optionalString,
 });
@@ -449,7 +485,7 @@ export const decisionPatchSchema = z.object({
   answer: optionalString,
 });
 
-// ── Отсутствия сотрудников (календарь отпусков на странице «Команда») ────────
+// ── Отсутствия сотрудников (календарь отпусков в разделе «Передача дел») ─────
 export const absenceCreateSchema = z
   .object({
     userId: z.string().trim().min(1, "Выберите сотрудника"),
@@ -470,4 +506,18 @@ export const absenceUpdateSchema = z.object({
   endDate: z.string().optional(),
   coverUserId: optionalString,
   note: optionalString,
+});
+
+// ── Передача дел (отпуск, больничный) ────────────────────────────────────────
+export const handoverCreateSchema = z.object({
+  toUserId: z.string().min(1, "Выберите, кому передаём"),
+  advertiserIds: z.array(z.string().min(1)).min(1, "Выберите хотя бы одного клиента"),
+  reason: optionalString,
+  endsAt: z.string().optional().or(z.literal("").transform(() => undefined)),
+  note: optionalString,
+  summary: optionalString,
+});
+
+export const handoverPreviewSchema = z.object({
+  advertiserIds: z.array(z.string().min(1)).min(1, "Выберите хотя бы одного клиента"),
 });

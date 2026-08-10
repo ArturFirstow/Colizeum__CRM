@@ -2,18 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { ownScope, advertiserScope } from "@/lib/scope";
 import { renderMarkdown } from "@/lib/markdown";
-import { aiComplete, aiConfigured, AI_NO_KEY_MESSAGE, aiErrorMessage } from "@/lib/ai";
+import { aiComplete, aiConfigured, aiErrorMessage, AI_NO_KEY_MESSAGE } from "@/lib/ai";
 
-// Недельное ИИ-саммари (кнопка «Недельное ИИ-саммари» в «Дневнике»): собираем
-// прогресс по клиентам за 7 дней (статусы дня, журнал, состояние сделок) и
-// просим модель написать саммари по каждому партнёру.
-//
-// Раньше этот роут дёргал Anthropic напрямую и требовал ANTHROPIC_API_KEY —
-// из-за чего после перехода на DeepSeek кнопка отвечала «не задан ключ», хотя
-// ключ был. Теперь всё идёт через общий шов ai.ts, как и остальные ИИ-функции.
+// Недельное ИИ-саммари (ТЗ р.2, п.4): агент собирает контекст прогресса
+// по клиентам за 7 дней (статусы дня, журнал, состояние сделок) и выдаёт
+// лаконичное саммари по каждому партнёру, с кем велась работа.
 export async function POST() {
   return withSession(async (session) => {
-    if (!aiConfigured()) return fail("no_api_key", AI_NO_KEY_MESSAGE, 400);
+    // Раздел долго оставался на прямом ключе Anthropic и ломался при смене
+    // провайдера. Теперь идёт через общий шов ai.ts, как остальные ИИ-функции.
+    if (!aiConfigured()) return fail("ai_not_configured", AI_NO_KEY_MESSAGE, 400);
 
     const weekAgo = new Date(Date.now() - 7 * 86400000);
 
@@ -31,19 +29,14 @@ export async function POST() {
         where: { ...advertiserScope(session), advertiser: { ...ownScope(session), archived: false } },
         select: {
           title: true, stage: true, urgency: true, amount: true,
-          blocker: true, situational: true, nextStep: true, nextStepDate: true,
+          blocker: true, blockerActive: true, situational: true, nextStep: true, nextStepDate: true,
           advertiser: { select: { nameRu: true } },
         },
       }),
     ]);
 
     if (statuses.length === 0 && journal.length === 0) {
-      return fail(
-        "no_data",
-        "За последние 7 дней нет ни статусов дня, ни записей дневника — саммари не из чего собрать. " +
-          "Отметьте статус дня по клиенту на вкладке «Сегодня» или добавьте запись в «Дневник», и саммари соберётся.",
-        400,
-      );
+      return fail("no_data", "За последние 7 дней нет ни статусов дня, ни записей журнала — саммари не из чего собрать.", 400);
     }
 
     const context = [
@@ -53,13 +46,13 @@ export async function POST() {
           `- ${s.date.toISOString().slice(0, 10)} · ${s.advertiser.nameRu}${s.deal ? ` (${s.deal.title}, стадия: ${s.deal.stage})` : ""}: ${s.text}`,
       ),
       "",
-      "## Записи дневника за неделю",
+      "## Записи журнала за неделю",
       ...journal.map((j) => `- ${j.date.toISOString().slice(0, 10)} [${j.source}]: ${j.rawText}`),
       "",
       "## Текущее состояние сделок",
       ...deals.map(
         (d) =>
-          `- ${d.advertiser.nameRu} — «${d.title}»: стадия ${d.stage}, срочность ${d.urgency ?? "—"}${d.amount ? `, сумма ${d.amount} ₽` : ""}${d.blocker ? `; блокер: ${d.blocker}` : ""}${d.situational ? `; ситуативное: ${d.situational}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}${d.nextStepDate ? ` (до ${d.nextStepDate.toISOString().slice(0, 10)})` : ""}` : ""}`,
+          `- ${d.advertiser.nameRu} — «${d.title}»: стадия ${d.stage}, срочность ${d.urgency ?? "—"}${d.amount ? `, сумма ${d.amount} ₽` : ""}${d.blockerActive ? `; блокер: ${d.blocker ?? ""}` : ""}${d.situational ? `; ситуативное: ${d.situational}` : ""}${d.nextStep ? `; следующий шаг: ${d.nextStep}${d.nextStepDate ? ` (до ${d.nextStepDate.toISOString().slice(0, 10)})` : ""}` : ""}`,
       ),
     ].join("\n");
 
@@ -77,7 +70,7 @@ export async function POST() {
       });
       return ok({ markdown, html: renderMarkdown(markdown) });
     } catch (e) {
-      return fail("ai_failed", aiErrorMessage(e), 502);
+      return fail("ai_error", aiErrorMessage(e), 502);
     }
   });
 }

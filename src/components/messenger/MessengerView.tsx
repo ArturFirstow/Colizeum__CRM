@@ -127,7 +127,8 @@ export function MessengerView({
   useEffect(() => {
     setLoading(true);
     reload();
-    const t = setInterval(reload, 10000);
+    // Каждые 4 секунды: SSE может не дойти через прокси, поллинг — надёжная страховка.
+    const t = setInterval(reload, 4000);
     return () => clearInterval(t);
   }, [reload]);
 

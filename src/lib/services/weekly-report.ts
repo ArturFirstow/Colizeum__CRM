@@ -41,7 +41,7 @@ export async function buildWeeklyReport(
   // Сводка.
   const allDeals = advertisers.flatMap((a) => a.deals);
   const decisions = allDeals.filter((d) => d.decisionPending);
-  const blockers = allDeals.filter((d) => d.blocker);
+  const blockers = allDeals.filter((d) => d.blockerActive);
   lines.push(`## Сводка`);
   lines.push(`- Активных проектов: ${advertisers.filter((a) => a.deals.length > 0).length}`);
   lines.push(`- Сделок всего: ${allDeals.length}`);
@@ -68,7 +68,7 @@ export async function buildWeeklyReport(
     for (const d of a.deals) {
       const extra = [
         d.nextStep ? `след. шаг: ${d.nextStep}` : null,
-        d.blocker ? `блокер: ${d.blocker}` : null,
+        d.blockerActive ? `блокер: ${d.blocker ?? "—"}` : null,
       ]
         .filter(Boolean)
         .join("; ");

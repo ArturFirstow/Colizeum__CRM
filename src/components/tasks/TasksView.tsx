@@ -209,7 +209,15 @@ function TaskCard({
         e.dataTransfer.setData("text/plain", task.id);
         onDragStart();
       }}
-      className={`card card-hover cursor-grab p-3.5 active:cursor-grabbing ${task.assignedBy ? "ring-1 ring-brand/40" : ""}`}
+      // Клик по карточке открывает то же окно правки, что и карандаш. Клики по
+      // ссылкам и кнопкам внутри карточки не перехватываем — они свои.
+      onClick={(e) => {
+        const el = e.target as HTMLElement;
+        if (el.closest("a,button,select,input,textarea")) return;
+        setEditing(true);
+      }}
+      title="Открыть правки"
+      className={`card card-hover cursor-pointer p-3.5 ${task.assignedBy ? "ring-1 ring-brand/40" : ""}`}
     >
       {/* Поручение от руководителя — видно с первого взгляда */}
       {task.assignedBy && (

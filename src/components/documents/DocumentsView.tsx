@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
+import { EditDocumentButton } from "@/components/documents/EditDocumentButton";
 import { apiFetch, ApiError } from "@/lib/client";
 import { FileCell } from "@/components/ui/FileCell";
 import { DOCUMENT_TYPES, DOCUMENT_SECTIONS, sectionForDocType } from "@/lib/enums";
@@ -24,10 +25,12 @@ type Doc = {
   id: string;
   type: string;
   title: string;
+  dealId?: string | null;
   currentVersionId: string | null;
   versions: Version[];
 };
-type Advertiser = { id: string; nameRu: string; type: string; documents: Doc[] };
+type DealOpt = { id: string; title: string };
+type Advertiser = { id: string; nameRu: string; type: string; documents: Doc[]; deals?: DealOpt[] };
 
 export function DocumentsView({
   advertisers,
@@ -100,18 +103,35 @@ export function DocumentsView({
             {filteredAdvertisers.map((a) => {
               const docCount = a.documents.length;
               return (
-                <button
+                <div
                   key={a.id}
-                  onClick={() => setSelectedId(a.id)}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition ${
-                    a.id === selectedId ? "bg-ink-800 text-brand" : "text-ink-200 hover:bg-ink-800/60"
+                  className={`group flex items-center gap-1 rounded-xl pr-1.5 transition ${
+                    a.id === selectedId ? "bg-ink-800" : "hover:bg-ink-800/60"
                   }`}
                 >
-                  <span className="min-w-0 truncate text-sm font-medium">{a.nameRu}</span>
-                  <span className="ml-2 shrink-0 rounded-md bg-ink-900 px-1.5 py-0.5 text-xs text-ink-400">
-                    {docCount}
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setSelectedId(a.id)}
+                    className={`flex min-w-0 flex-1 items-center justify-between px-3 py-2.5 text-left ${
+                      a.id === selectedId ? "text-brand" : "text-ink-200"
+                    }`}
+                  >
+                    <span className="min-w-0 truncate text-sm font-medium">{a.nameRu}</span>
+                    <span className="ml-2 shrink-0 rounded-md bg-ink-900 px-1.5 py-0.5 text-xs text-ink-400">
+                      {docCount}
+                    </span>
+                  </button>
+                  {/* Удаление клиента прямо из списка. Текст подтверждения честно
+                      называет, сколько документов уйдёт вместе с ним. */}
+                  <DeleteButton
+                    endpoint={`/api/advertisers/${a.id}`}
+                    what={
+                      docCount > 0
+                        ? `клиента «${a.nameRu}» вместе с ${docCount} документами и всеми их версиями`
+                        : `клиента «${a.nameRu}» со всеми его сделками и документами`
+                    }
+                    className="shrink-0 rounded-lg p-1.5 text-ink-600 opacity-0 transition hover:bg-red-500/15 hover:text-red-300 group-hover:opacity-100"
+                  />
+                </div>
               );
             })}
           </div>
@@ -167,7 +187,12 @@ export function DocumentsView({
                     ) : (
                       <div className="space-y-2">
                         {sec.docs.map((doc) => (
-                          <DocumentCard key={doc.id} doc={doc} onUpload={() => setUploadDoc(doc)} />
+                          <DocumentCard
+                            key={doc.id}
+                            doc={doc}
+                            deals={selected?.deals ?? []}
+                            onUpload={() => setUploadDoc(doc)}
+                          />
                         ))}
                       </div>
                     )}
@@ -193,7 +218,15 @@ export function DocumentsView({
   );
 }
 
-function DocumentCard({ doc, onUpload }: { doc: Doc; onUpload: () => void }) {
+function DocumentCard({
+  doc,
+  deals = [],
+  onUpload,
+}: {
+  doc: Doc;
+  deals?: DealOpt[];
+  onUpload: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const current = doc.versions[0];
 
@@ -222,6 +255,7 @@ function DocumentCard({ doc, onUpload }: { doc: Doc; onUpload: () => void }) {
           <button className="btn btn-primary btn-sm" onClick={onUpload}>
             ↑ Версия
           </button>
+          <EditDocumentButton doc={doc} deals={deals} />
           <DeleteButton endpoint={`/api/documents/${doc.id}`} what={`документ «${doc.title}»`} />
         </div>
       </div>

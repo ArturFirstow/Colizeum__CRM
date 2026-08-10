@@ -45,11 +45,17 @@ export default async function DashboardPage() {
     status: r.status,
     answer: r.answer,
     createdAt: r.createdAt.toISOString(),
+    attachmentsKey: r.attachmentsKey,
     requester: r.requester,
     advertiser: r.advertiser,
     deal: r.deal,
   }));
   const openRequests = decisionItems.filter((r) => r.status === "Открыт");
+  // Фото руководителя на кнопке вопроса — чтобы было понятно, к кому идёт запрос.
+  const leader_ = await prisma.user.findFirst({
+    where: { role: "Director" },
+    select: { name: true, avatarUrl: true },
+  });
 
   const [decisions, blockers, openTasks, stuckDeals, recentJournal, counts, advertisers, dealOpts, todayStatuses] = await Promise.all([
     prisma.deal.findMany({
@@ -58,7 +64,7 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.deal.findMany({
-      where: { blocker: { not: null }, ...notArchived },
+      where: { blockerActive: true, ...notArchived },
       include: { advertiser: true },
       orderBy: { urgency: "desc" },
     }),
@@ -145,8 +151,32 @@ export default async function DashboardPage() {
           <h2 className="flex items-center gap-2 text-lg font-bold text-ink-50">
             <span className="text-brand">◆</span> Решения, которые ждут вас
           </h2>
-          {!leader && <AskLeaderButton advertisers={advertisers} deals={dealOpts} />}
         </div>
+
+        {/* Слева — кнопка вопроса, справа — статусы уже отправленных: раньше
+            правая половина этой области пустовала. */}
+        {!leader && (
+          <div className="mb-3 grid gap-3 md:grid-cols-2">
+            <AskLeaderButton
+              advertisers={advertisers}
+              deals={dealOpts}
+              leaderAvatarUrl={leader_?.avatarUrl}
+              leaderName={leader_?.name}
+            />
+            {decisionItems.length > 0 ? (
+              <div className="card p-4">
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+                  Мои вопросы
+                </div>
+                <MyDecisionRequests items={decisionItems.slice(0, 3)} />
+              </div>
+            ) : (
+              <div className="card flex items-center p-4 text-xs text-ink-500">
+                Отправленные вопросы и ответы на них появятся здесь.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Вопросы от сотрудников — у руководителя сверху, с кнопкой решения */}
         {leader && openRequests.length > 0 && (
@@ -157,12 +187,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Сотруднику — статус его вопросов */}
-        {!leader && decisionItems.length > 0 && (
-          <div className="mb-3">
-            <MyDecisionRequests items={decisionItems} />
-          </div>
-        )}
+
 
         {decisions.length === 0 && (leader ? openRequests.length === 0 : true) ? (
           <EmptyState
