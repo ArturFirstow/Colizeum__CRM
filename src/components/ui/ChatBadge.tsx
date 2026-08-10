@@ -29,7 +29,7 @@ export function ChatBadge() {
     }
 
     load();
-    const timer = setInterval(load, 20_000);
+    const timer = setInterval(load, 10_000);
     return () => {
       alive = false;
       clearInterval(timer);

@@ -22,7 +22,7 @@ type Item = {
   at: string;
 };
 
-const POLL_MS = 30_000;
+const POLL_MS = 12_000;
 const STORAGE_KEY = "colizeum_notifications_since";
 
 const ICON = {
