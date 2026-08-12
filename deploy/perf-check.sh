@@ -85,9 +85,12 @@ else
       ok "HTTP/2 включён — страница грузится в один заход"
     else
       bad "HTTP/2 выключен: браузер тянет ~10 файлов страницы по очереди"
-      echo "     Лечится: в /etc/nginx/sites-available/colizeum в блоке с"
-      echo "     'listen 443 ssl' добавить строку  http2 on;"
+      echo "     Лечится: в /etc/nginx/sites-available/colizeum строку"
+      echo "       listen 443 ssl;        заменить на"
+      echo "       listen 443 ssl http2;"
       echo "     потом:  nginx -t && systemctl reload nginx"
+      echo "     (отдельная директива 'http2 on;' работает только с nginx 1.25+,"
+      echo "      в Ubuntu 24.04 идёт 1.24 — там сервер с ней не запустится)"
     fi
     if curl -sI -H 'Accept-Encoding: gzip' "https://$DOMAIN/login" 2>/dev/null | grep -qi "content-encoding"; then
       ok "сжатие работает"
