@@ -52,23 +52,36 @@ fi
 
 echo
 echo "═══ 2. Скорость самого сервиса (10 запросов подряд) ═══"
-TOTAL=0
-FAIL=0
+# Скрипт часто запускают сразу после update.sh, когда сервис ещё
+# поднимается. Ждём до 20 секунд, прежде чем объявлять его мёртвым.
+UP=0
 for _ in $(seq 1 10); do
-  T=$(curl -s -o /dev/null -w "%{time_total}" "http://127.0.0.1:3000/login" 2>/dev/null) || { FAIL=1; break; }
-  TOTAL=$(awk "BEGIN{print $TOTAL + $T}")
+  if curl -s -o /dev/null --max-time 3 "http://127.0.0.1:3000/login" 2>/dev/null; then UP=1; break; fi
+  sleep 2
 done
-if [ "$FAIL" = "1" ]; then
+
+if [ "$UP" = "0" ]; then
   bad "сервис не отвечает на 127.0.0.1:3000 — смотрите pm2 logs colizeum"
 else
-  AVG=$(awk "BEGIN{printf \"%.0f\", $TOTAL * 100}")
-  echo "  среднее: ${AVG} мс"
-  if [ "$AVG" -lt 150 ]; then
-    ok "сам сервис отвечает быстро — если тормозит в браузере, дело в сети или nginx (пункт 3)"
-  elif [ "$AVG" -lt 500 ]; then
-    warn "заметная задержка — сервер загружен, смотрите пункт 4"
+  TOTAL=0
+  OKN=0
+  for _ in $(seq 1 10); do
+    T=$(curl -s -o /dev/null --max-time 5 -w "%{time_total}" "http://127.0.0.1:3000/login" 2>/dev/null) || continue
+    TOTAL=$(awk "BEGIN{print $TOTAL + $T}")
+    OKN=$((OKN + 1))
+  done
+  if [ "$OKN" -eq 0 ]; then
+    bad "запросы не проходят — смотрите pm2 logs colizeum"
   else
-    bad "сервис отвечает медленно — смотрите пункт 4, скорее всего не хватает памяти"
+    AVG=$(awk "BEGIN{printf \"%.0f\", ($TOTAL / $OKN) * 1000}")
+    echo "  среднее по $OKN запросам: ${AVG} мс"
+    if [ "$AVG" -lt 150 ]; then
+      ok "сам сервис отвечает быстро — если тормозит в браузере, дело в сети или nginx (пункт 3)"
+    elif [ "$AVG" -lt 500 ]; then
+      warn "заметная задержка — сервер загружен, смотрите пункт 4"
+    else
+      bad "сервис отвечает медленно — смотрите пункт 4, скорее всего не хватает памяти"
+    fi
   fi
 fi
 
@@ -77,7 +90,9 @@ echo "═══ 3. Как отдаётся сайт наружу ═══"
 if [ -z "$DOMAIN" ]; then
   warn "домен не указан — запустите: bash deploy/perf-check.sh ваш-домен.ru"
 else
-  HDR=$(curl -sI "https://$DOMAIN/login" 2>/dev/null)
+  # Обычным запросом, а не HEAD: на HEAD тела нет, и сервер не ставит
+  # заголовок о сжатии — раньше скрипт из-за этого врал «идёт несжатым».
+  HDR=$(curl -s -o /dev/null -D - -H 'Accept-Encoding: gzip, br' "https://$DOMAIN/login" 2>/dev/null)
   if [ -z "$HDR" ]; then
     bad "сайт не открывается по https://$DOMAIN"
   else
@@ -92,8 +107,8 @@ else
       echo "     (отдельная директива 'http2 on;' работает только с nginx 1.25+,"
       echo "      в Ubuntu 24.04 идёт 1.24 — там сервер с ней не запустится)"
     fi
-    if curl -sI -H 'Accept-Encoding: gzip' "https://$DOMAIN/login" 2>/dev/null | grep -qi "content-encoding"; then
-      ok "сжатие работает"
+    if echo "$HDR" | grep -qi "^content-encoding"; then
+      ok "сжатие работает ($(echo "$HDR" | grep -i '^content-encoding' | tr -d '\r' | awk '{print $2}'))"
     else
       warn "ответ идёт несжатым — проверьте блок gzip в конфиге nginx"
     fi
