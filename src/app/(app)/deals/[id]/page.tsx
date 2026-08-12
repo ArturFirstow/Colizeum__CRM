@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, Field, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
 import { FileCell } from "@/components/ui/FileCell";
+import { NetHint } from "@/components/ui/Money";
 import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
@@ -280,6 +281,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-ink-100">{formatMoney(inv.amount)}</div>
+                        <NetHint amount={inv.amount} date={inv.issuedAt} />
                         {inv.ourBankAccount && (
                           <div className="text-xs text-ink-500">р/с …{inv.ourBankAccount.slice(-5)}</div>
                         )}

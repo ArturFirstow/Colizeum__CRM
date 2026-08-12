@@ -7,8 +7,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { Modal } from "@/components/ui/Modal";
 import { StageBadge, UrgencyBadge } from "@/components/ui/primitives";
+import { Money } from "@/components/ui/Money";
 import { apiFetch, ApiError } from "@/lib/client";
-import { formatMoney } from "@/lib/format";
 import { DEAL_STAGES } from "@/lib/enums";
 import { stageStyle } from "@/lib/ui-tokens";
 
@@ -208,7 +208,7 @@ export function DealsView({
                 </div>
                 <div className="flex items-center gap-3">
                   {d.amount != null && (
-                    <span className="text-sm text-ink-300">{formatMoney(d.amount)}</span>
+                    <Money amount={d.amount} vatIncluded={d.vatIncluded} align="right" />
                   )}
                   <UrgencyBadge urgency={d.urgency} />
                   <StageBadge stage={d.stage} />
@@ -303,7 +303,7 @@ function KanbanCard({ deal, onDragStart }: { deal: Deal; onDragStart: () => void
       )}
 
       <div className="mt-3 flex items-center justify-between border-t border-ink-800 pt-2.5 text-xs text-ink-400">
-        <span className="text-sm">{deal.amount != null ? formatMoney(deal.amount) : "—"}</span>
+        <Money amount={deal.amount} vatIncluded={deal.vatIncluded} />
         {deal.nextStep && <span className="truncate pl-2 text-ink-500">→ {deal.nextStep}</span>}
       </div>
     </Link>

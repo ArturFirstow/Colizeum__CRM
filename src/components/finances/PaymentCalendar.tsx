@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLANNED_PAYMENT_STATUSES } from "@/lib/enums";
 import { formatMoney, netOfVat } from "@/lib/format";
+import { NetHint } from "@/components/ui/Money";
 
 type PP = {
   id: string;
@@ -214,6 +215,7 @@ export function PaymentCalendar({
                     })}
                     <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-sm font-semibold text-ink-100">
                       {formatMoney(rowTotal)}
+                      <NetHint amount={rowTotal} />
                     </td>
                   </tr>
                 );
@@ -227,7 +229,10 @@ export function PaymentCalendar({
                     {t > 0 ? compact(t) : ""}
                   </td>
                 ))}
-                <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">{formatMoney(grandTotal)}</td>
+                <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">
+                  {formatMoney(grandTotal)}
+                  <NetHint amount={grandTotal} />
+                </td>
               </tr>
             </tbody>
           </table>

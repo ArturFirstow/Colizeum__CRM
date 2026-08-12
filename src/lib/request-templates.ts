@@ -1,4 +1,4 @@
-import { AD_FORMATS, type AdFormat } from "@/lib/enums";
+import { AD_FORMATS, vatRateForDate, type AdFormat } from "@/lib/enums";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Шаблоны запросов: юристу на договор и на размещение макетов в клубе.
@@ -40,23 +40,57 @@ export type RequestDeal = {
   };
 };
 
+// ── Справочники для выпадающих списков в формах ───────────────────────────────
+
+/** География размещения. Список согласован с пользователем, не выдумывать. */
+export const GEO_OPTIONS = ["Все клубы РФ", "Клубы Москвы и Московской области", "Другое"] as const;
+
+/** Кто готовит макеты. */
+export const CREATIVE_OWNERS = ["COLIZEUM", "Клиент"] as const;
+
+/** Кто получает рекламную маркировку (ЕРИД). */
+export const ERID_OWNERS = ["COLIZEUM", "Клиент"] as const;
+
+/** Где подписываем документы. */
+export const SIGNING_OPTIONS = ["ЭДО", "На бумаге"] as const;
+
+/** Схема оплаты. */
+export const PAYMENT_SCHEMES = ["100% предоплата", "50% / 50%", "Другое"] as const;
+
 /** Что человек отметил в форме запроса юристу. */
 export type LegalRequestInput = {
   formats: string[];
-  /** Что размещаем: период и объём словами. */
-  period: string;
-  /** Сумма договора, если отличается от той, что в сделке. */
-  amountText: string;
-  /** Особые условия: рассрочка, бартер, эксклюзив и прочее. */
+  /** Период размещения — даты из календаря, «2026-09-01». */
+  startDate: string;
+  endDate: string;
+  /** Чистая сумма договора без НДС, как её ввели руками. */
+  amountNet: string;
+  /** Ставка НДС в процентах — по дате договора (2025 → 20, 2026 → 22). */
+  vatRate: number;
+  geo: string;
+  /** Если гео «Другое» — что именно. */
+  geoOther: string;
+  creativesBy: string;
+  eridBy: string;
+  signing: string;
+  paymentScheme: string;
+  /** Если схема оплаты «Другое» — как именно. */
+  paymentOther: string;
+  /** Делать ли отдельное приложение под интернет-форматы. */
+  secondAppendix: boolean;
   specialTerms: string;
-  /** Срок, к которому нужен документ. */
-  dueDate: string;
   comment: string;
 };
 
 /** Что человек отметил в форме запроса на размещение. */
 export type PlacementRequestInput = {
   formats: string[];
+  /**
+   * Ссылки клиента по форматам: в кликабельные баннеры вшивается UTM-ссылка,
+   * в статичные — ссылка, которую зашивают в QR-код. Ключ — название формата.
+   */
+  links: Record<string, string>;
+  /** Даты из календаря, «2026-09-01». */
   startDate: string;
   endDate: string;
   /** Где лежат макеты (ссылка на папку или «во вложении»). */
@@ -66,10 +100,15 @@ export type PlacementRequestInput = {
   comment: string;
 };
 
+// ── Мелкие помощники ─────────────────────────────────────────────────────────
+
+function rub(value: number): string {
+  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(value))} ₽`;
+}
+
 function money(amount?: number | null, vatIncluded = true): string | null {
   if (amount == null) return null;
-  const num = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(amount);
-  return `${num} ₽ ${vatIncluded ? "с НДС" : "без НДС"}`;
+  return `${rub(amount)} ${vatIncluded ? "с НДС" : "без НДС"}`;
 }
 
 function date(value?: Date | string | null): string | null {
@@ -77,6 +116,14 @@ function date(value?: Date | string | null): string | null {
   const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleDateString("ru-RU");
+}
+
+/** «2026-09-01» из календаря → «01.09.2026». */
+function fromInput(iso: string): string | null {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return null;
+  return `${d}.${m}.${y}`;
 }
 
 function findFormat(label: string): AdFormat | undefined {
@@ -93,6 +140,52 @@ function formatLine(label: string): string {
 /** Есть ли среди отмеченного хоть один интернет-формат. */
 export function needsOrdMarking(formats: string[]): boolean {
   return formats.some((label) => findFormat(label)?.needsOrd);
+}
+
+/** Интернет-форматы из отмеченного — они уходят во второе приложение. */
+export function internetFormats(formats: string[]): string[] {
+  return formats.filter((label) => findFormat(label)?.needsOrd);
+}
+
+/** Форматы в клубах — первое приложение. */
+export function clubFormats(formats: string[]): string[] {
+  return formats.filter((label) => !findFormat(label)?.needsOrd);
+}
+
+/**
+ * Сумма с НДС по чистой сумме. Одно место на весь сервис, где живёт эта
+ * арифметика в запросах: 100 000 без НДС при ставке 22 % → 122 000 с НДС.
+ */
+export function withVat(net: number, rate: number): number {
+  return net * (1 + rate / 100);
+}
+
+/** Ставка НДС для сделки: по дате договора, а если её нет — по сегодняшней. */
+export function vatRateForDeal(deal: RequestDeal): number {
+  const d = deal.contractDate ? new Date(deal.contractDate) : new Date();
+  return vatRateForDate(Number.isNaN(d.getTime()) ? new Date() : d);
+}
+
+/**
+ * Чистая сумма для подстановки в форму: в сделке сумма может лежать и с НДС,
+ * и без — смотрим на флажок и приводим к «без НДС».
+ */
+export function netAmountOfDeal(deal: RequestDeal, rate: number): number | null {
+  const total = deal.contractTotal ?? deal.amount;
+  if (total == null) return null;
+  return deal.vatIncluded ? total / (1 + rate / 100) : total;
+}
+
+/** Строка про деньги в едином виде по всему сервису: с НДС, чистая — подписью. */
+function moneyLines(input: LegalRequestInput): string[] {
+  const net = Number(input.amountNet.replace(/\s/g, "").replace(",", "."));
+  if (!input.amountNet.trim() || !Number.isFinite(net) || net <= 0) return [];
+  const gross = withVat(net, input.vatRate);
+  return [
+    `Сумма договора: ${rub(gross)} с НДС ${input.vatRate}%`,
+    `В том числе НДС ${input.vatRate}%: ${rub(gross - net)}`,
+    `Сумма без НДС: ${rub(net)}`,
+  ];
 }
 
 // ── Запрос юристу на формирование договора ───────────────────────────────────
@@ -130,23 +223,76 @@ export function buildLegalRequest(deal: RequestDeal, input: LegalRequestInput): 
     );
   }
 
+  // География — юристу нужна для предмета договора.
+  const geo = input.geo === "Другое" ? input.geoOther.trim() : input.geo;
+  if (geo) lines.push(`География размещения: ${geo}`);
+
+  // ── Форматы. Интернет-форматы отделяются во второе приложение, потому что
+  // по ним идёт маркировка и отчётность в ОРД, а у клубных форматов её нет.
+  const club = clubFormats(input.formats);
+  const internet = internetFormats(input.formats);
+  const splitAppendices = input.secondAppendix && internet.length > 0;
+
   lines.push("");
-  lines.push("Что размещаем:");
   if (input.formats.length === 0) {
+    lines.push("Что размещаем:");
     lines.push("— (форматы не выбраны)");
+  } else if (splitAppendices) {
+    lines.push("Приложение № 1 — размещение в клубах:");
+    if (club.length === 0) {
+      lines.push("— (клубных форматов в этой сделке нет)");
+    } else {
+      for (const label of club) lines.push(formatLine(label));
+    }
+    lines.push("");
+    lines.push("Приложение № 2 — интернет-размещение (с маркировкой ЕРИД):");
+    for (const label of internet) lines.push(formatLine(label));
+    lines.push("");
+    lines.push(
+      "Просьба оформить двумя приложениями: по интернет-форматам ведётся маркировка и " +
+        "отчётность в ОРД, по клубным форматам — нет, и разносить их в одном приложении неудобно.",
+    );
   } else {
+    lines.push("Что размещаем:");
     for (const label of input.formats) lines.push(formatLine(label));
   }
 
+  // ── Сроки и деньги.
   lines.push("");
-  const amount = input.amountText.trim() || money(deal.contractTotal ?? deal.amount, deal.vatIncluded);
-  if (amount) lines.push(`Сумма: ${amount}`);
-  const period = input.period.trim() || deal.periodText;
-  if (period) lines.push(`Период размещения: ${period}`);
-  if (deal.paymentTerms) lines.push(`Условия оплаты: ${deal.paymentTerms}`);
+  const start = fromInput(input.startDate);
+  const end = fromInput(input.endDate);
+  if (start && end) {
+    lines.push(`Период размещения: с ${start} по ${end}`);
+  } else if (start) {
+    lines.push(`Начало размещения: ${start}`);
+  } else if (deal.periodText) {
+    lines.push(`Период размещения: ${deal.periodText}`);
+  }
+
+  const moneys = moneyLines(input);
+  if (moneys.length) {
+    lines.push(...moneys);
+  } else {
+    const fallback = money(deal.contractTotal ?? deal.amount, deal.vatIncluded);
+    if (fallback) lines.push(`Сумма договора: ${fallback}`);
+  }
+
+  const payment =
+    input.paymentScheme === "Другое" ? input.paymentOther.trim() : input.paymentScheme;
+  if (payment) lines.push(`Порядок оплаты: ${payment}`);
+  else if (deal.paymentTerms) lines.push(`Порядок оплаты: ${deal.paymentTerms}`);
+
+  // ── Кто что делает: три вопроса, из-за которых договор обычно возвращают.
+  lines.push("");
+  if (input.creativesBy) lines.push(`Макеты готовит: ${input.creativesBy}`);
+  if (internet.length > 0 && input.eridBy) {
+    lines.push(`Рекламную маркировку (ЕРИД) получает: ${input.eridBy}`);
+  }
+  if (input.signing) lines.push(`Подписание документов: ${input.signing}`);
+
   if (input.specialTerms.trim()) lines.push(`Особые условия: ${input.specialTerms.trim()}`);
 
-  if (needsOrdMarking(input.formats)) {
+  if (internet.length > 0) {
     lines.push("");
     lines.push(
       "В договоре нужны условия по маркировке: среди форматов есть интернет-размещения, " +
@@ -160,11 +306,6 @@ export function buildLegalRequest(deal: RequestDeal, input: LegalRequestInput): 
   }
 
   lines.push("");
-  if (input.dueDate.trim()) {
-    lines.push(`Просьба подготовить документ к ${input.dueDate.trim()}.`);
-  } else {
-    lines.push("Просьба подготовить документ.");
-  }
   lines.push("После вашей правки отправляем на согласование главному бухгалтеру.");
 
   return lines.join("\n");
@@ -189,18 +330,26 @@ export function buildPlacementRequest(deal: RequestDeal, input: PlacementRequest
     );
   }
 
+  // Форматы со ссылками: в кликабельные вшивается UTM клиента, в статичные —
+  // ссылка под QR-код. Без ссылки формат уедет в клуб «немым», поэтому пишем
+  // её прямо под форматом, а не одной строкой на весь запрос.
   lines.push("");
   lines.push("Форматы к размещению:");
   if (input.formats.length === 0) {
     lines.push("— (форматы не выбраны)");
   } else {
-    for (const label of input.formats) lines.push(formatLine(label));
+    for (const label of input.formats) {
+      lines.push(formatLine(label));
+      const link = (input.links[label] ?? "").trim();
+      if (link) lines.push(`   ссылка: ${link}`);
+    }
   }
 
   lines.push("");
-  const start = input.startDate.trim() || date(deal.launchDate);
-  if (start && input.endDate.trim()) {
-    lines.push(`Период размещения: с ${start} по ${input.endDate.trim()}`);
+  const start = fromInput(input.startDate) ?? date(deal.launchDate);
+  const end = fromInput(input.endDate);
+  if (start && end) {
+    lines.push(`Период размещения: с ${start} по ${end}`);
   } else if (start) {
     lines.push(`Дата запуска: ${start}`);
   } else if (deal.periodText) {
