@@ -39,6 +39,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       promoBatches: { orderBy: { createdAt: "desc" } },
       tasks: { orderBy: { createdAt: "desc" } },
       documents: { include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } } },
+      plannedPayments: { orderBy: { periodMonth: "asc" } },
     },
   });
   if (!deal) notFound();
@@ -47,6 +48,19 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
   if (!canSeeOwned(session, deal.advertiser.ownerId)) notFound();
 
   const construction = CONTRACT_CONSTRUCTIONS.find((c) => c.code === deal.contractConstruction);
+
+  // Сверка денег: сумма договора против того, что разложено по месяцам,
+  // выставлено счетами и реально оплачено. Раньше эти три числа жили в разных
+  // разделах, и расхождение замечали в последний момент.
+  const contract = deal.contractTotal ?? deal.amount ?? 0;
+  const scheduled = deal.plannedPayments.reduce((s, p) => s + p.amount, 0);
+  const invoiced = deal.invoices.reduce((s, i) => s + (i.amount ?? 0), 0);
+  const paid = deal.invoices.reduce(
+    (s, i) => s + i.payments.reduce((x, p) => x + (p.amount ?? 0), 0),
+    0,
+  );
+  // Порог в 1 ₽ — копейки от деления на месяцы не считаем расхождением.
+  const scheduleGap = contract > 0 ? scheduled - contract : 0;
   const ep = `/api/deals/${deal.id}`;
 
   return (
@@ -373,6 +387,35 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   </span>
                 </Field>
               )}
+              {/* Сверка сумм: одно место, где видно, сходятся ли договор,
+                  календарь платежей и счета. */}
+              {contract > 0 && (
+                <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+                    Сверка сумм (всё с НДС 22 %)
+                  </div>
+                  <dl className="space-y-1.5 text-sm">
+                    <MoneyRow label="По договору" value={contract} />
+                    <MoneyRow label="Разложено по месяцам" value={scheduled} />
+                    <MoneyRow label="Выставлено счетами" value={invoiced} />
+                    <MoneyRow label="Оплачено" value={paid} tone="text-emerald-300" />
+                  </dl>
+                  {Math.abs(scheduleGap) > 1 && (
+                    <p
+                      className={`mt-2 rounded-lg px-2.5 py-1.5 text-xs ${
+                        scheduleGap > 0
+                          ? "bg-amber-500/10 text-amber-200"
+                          : "bg-ink-800/60 text-ink-300"
+                      }`}
+                    >
+                      {scheduleGap > 0
+                        ? `В календаре платежей на ${formatMoney(scheduleGap)} больше, чем по договору — похоже, платёж задвоен.`
+                        : `Ещё не разложено по месяцам: ${formatMoney(-scheduleGap)}.`}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Дата запуска">{deal.launchDate ? formatDate(deal.launchDate) : null}</Field>
                 <Field label="Срок">{deal.periodText}</Field>
@@ -485,6 +528,19 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Строка сверки: всегда сумма с НДС, под ней — чистая. */
+function MoneyRow({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="text-ink-400">{label}</dt>
+      <dd className="text-right">
+        <span className={`font-semibold ${tone ?? "text-ink-100"}`}>{formatMoney(value)}</span>
+        <span className="block text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(value))}</span>
+      </dd>
     </div>
   );
 }

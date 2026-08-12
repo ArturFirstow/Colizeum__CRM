@@ -252,12 +252,33 @@ function DocumentCard({
               ↓ Скачать
             </a>
           )}
-          <button className="btn btn-primary btn-sm" onClick={onUpload}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={onUpload}
+            title="Новая редакция ЭТОГО документа — прежняя останется в истории"
+          >
             ↑ Версия
           </button>
           <EditDocumentButton doc={doc} deals={deals} />
           <DeleteButton endpoint={`/api/documents/${doc.id}`} what={`документ «${doc.title}»`} />
         </div>
+      </div>
+
+      {/* Несколько файлов в одной карточке: два приложения к одному договору
+          или ресайзы одного макета — это не версии друг друга, они лежат рядом.
+          Версии остаются для правок одного и того же документа. */}
+      <div className="border-t border-ink-800 px-4 py-3">
+        <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-500">
+          Файлы в этой карточке
+        </div>
+        <FileCell
+          ownerType="document"
+          ownerId={doc.id}
+          kind={doc.type}
+          dealId={doc.dealId ?? undefined}
+          label="Добавить файлы (можно несколько сразу)"
+          compact
+        />
       </div>
 
       {doc.versions.length > 0 && (

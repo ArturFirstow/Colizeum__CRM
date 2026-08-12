@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarClock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DEAL_STAGES } from "@/lib/enums";
@@ -12,6 +13,31 @@ export function StageChanger({ dealId, current }: { dealId: string; current: str
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState<{ stage: string; warnings: string[] } | null>(null);
+  const [clarifyDate, setClarifyDate] = useState("");
+
+  // «Уточню» — заводим задачу с дедлайном вместо молчаливого согласия.
+  async function clarify(warnings: string[]) {
+    setSaving(true);
+    try {
+      await apiFetch("/api/tasks", {
+        method: "POST",
+        body: JSON.stringify({
+          title: `Разобраться: ${warnings[0] ?? "предупреждение по сделке"}`,
+          kind: "Менеджер",
+          side: "Мы",
+          priority: "Высокий",
+          dealId,
+          dueDate: new Date(clarifyDate).toISOString(),
+          notes: warnings.join("\n"),
+        }),
+      });
+      setPending(null);
+      setClarifyDate("");
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function change(stage: string, confirm = false) {
     if (stage === current && !confirm) return;
@@ -93,14 +119,40 @@ export function StageChanger({ dealId, current }: { dealId: string; current: str
               ))}
             </div>
             <p className="text-sm text-ink-400">
-              Это предупреждения, а не запрет. Подтвердите, если промежуточные шаги действительно пройдены.
+              Это предупреждения, а не запрет. Либо подтвердите, что шаги пройдены, либо
+              поставьте себе задачу разобраться — тогда предупреждение не потеряется.
             </p>
-            <div className="flex justify-end gap-2">
+
+            {/* Второй путь: не «принимаю», а «уточню к дате». Иначе человек жмёт
+                «всё равно» и вопрос забывается. */}
+            <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
+              <label className="label">Уточню — поставить задачу на</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  className="input h-9 w-44"
+                  type="date"
+                  value={clarifyDate}
+                  onChange={(e) => setClarifyDate(e.target.value)}
+                />
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={saving || !clarifyDate}
+                  onClick={() => clarify(pending.warnings)}
+                >
+                  <CalendarClock size={14} /> Уточню к этой дате
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-ink-500">
+                Задача «Разобраться: …» появится на доске со сроком. Стадия не изменится.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2">
               <button className="btn btn-ghost" onClick={() => setPending(null)}>
                 Отмена
               </button>
               <button className="btn btn-primary" disabled={saving} onClick={() => change(pending.stage, true)}>
-                {saving ? "…" : "Всё равно перевести"}
+                {saving ? "…" : "Знаю, принимаю"}
               </button>
             </div>
           </div>
