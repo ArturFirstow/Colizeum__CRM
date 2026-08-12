@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { NetAmountInput } from "@/components/ui/NetAmountInput";
 import { apiFetch } from "@/lib/client";
 import { URGENCIES } from "@/lib/enums";
 
@@ -73,6 +74,8 @@ export function EditDealButton({ deal }: { deal: Deal }) {
           finalBrand: f.finalBrand,
           amount: f.amount ? Number(f.amount) : undefined,
           contractTotal: f.contractTotal ? Number(f.contractTotal) : undefined,
+          // Правило сервиса: суммы вносятся чистыми, НДС считает сервис.
+          vatIncluded: false,
           paymentTerms: f.paymentTerms,
           periodText: f.periodText,
           launchDate: f.launchDate,
@@ -114,21 +117,18 @@ export function EditDealButton({ deal }: { deal: Deal }) {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label">Сумма (₽)</label>
-              <input className="input" type="number" value={f.amount} onChange={(e) => set("amount", e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className="label">Сумма по договору за весь период (₽)</label>
-            <input
-              className="input"
-              type="number"
-              value={f.contractTotal}
-              onChange={(e) => set("contractTotal", e.target.value)}
-              placeholder="общая сумма сотрудничества"
+            <NetAmountInput
+              label="Сумма из медиаплана"
+              value={f.amount}
+              onChange={(v) => set("amount", v)}
             />
           </div>
+          <NetAmountInput
+            label="Сумма по договору за весь период"
+            value={f.contractTotal}
+            onChange={(v) => set("contractTotal", v)}
+            placeholder="общая сумма сотрудничества"
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Тип сделки</label>

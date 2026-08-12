@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { formatMoney, formatDate } from "@/lib/format";
-import { NetHint } from "@/components/ui/Money";
+import { NetHint, toGross } from "@/components/ui/Money";
 
 export type FunnelDeal = {
   id: string;
@@ -63,7 +63,7 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
               </div>
               <div className="w-10 shrink-0 text-right text-sm tabular-nums text-ink-200">{r.items.length}</div>
               <div className="w-32 shrink-0 text-right text-xs tabular-nums text-ink-400">
-                {formatMoney(r.sum)}
+                {formatMoney(toGross(r.sum))}
                 <NetHint amount={r.sum} />
               </div>
             </button>
@@ -89,7 +89,7 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
                       <span className="shrink-0 text-xs text-ink-300">{d.managerName ?? "без менеджера"}</span>
                       <span className="shrink-0 text-xs text-ink-400">{d.periodText ?? formatDate(d.updatedAt)}</span>
                       <span className="w-28 shrink-0 text-right font-mono text-sm text-ink-100">
-                        {formatMoney(d.amount)}
+                        {formatMoney(toGross(d.amount ?? 0))}
                         <NetHint amount={d.amount} />
                       </span>
                     </Link>

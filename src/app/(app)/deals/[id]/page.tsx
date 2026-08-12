@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, Field, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
 import { FileCell } from "@/components/ui/FileCell";
-import { NetHint } from "@/components/ui/Money";
+import { Money, NetHint, toGross } from "@/components/ui/Money";
 import { StageChanger } from "@/components/deals/StageChanger";
 import { EditDealButton } from "@/components/deals/EditDealButton";
 import { QuickAdd } from "@/components/deals/QuickAdd";
@@ -14,7 +14,7 @@ import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { RequestButtons } from "@/components/deals/RequestButtons";
-import { formatMoney, formatDate, netOfVat } from "@/lib/format";
+import { formatMoney, formatDate } from "@/lib/format";
 import {
   CLOSING_KINDS,
   CONTRACT_CONSTRUCTIONS,
@@ -61,7 +61,13 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     0,
   );
   // Порог в 1 ₽ — копейки от деления на месяцы не считаем расхождением.
-  const scheduleGap = contract > 0 ? scheduled - contract : 0;
+  // Сверка идёт в суммах С НДС. Причина в том, откуда берутся числа: сделку
+  // и календарь платежей мы вносим сами и храним чистыми, а счета и платёжки
+  // переписываются с настоящих документов, где сумма уже с НДС. Сравнивать
+  // их можно только приведя к одному виду.
+  const contractGross = toGross(contract, deal.contractDate, deal.vatIncluded);
+  const scheduledGross = toGross(scheduled, deal.contractDate);
+  const scheduleGap = contract > 0 ? scheduledGross - contractGross : 0;
   const ep = `/api/deals/${deal.id}`;
 
   return (
@@ -281,7 +287,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-ink-100">{formatMoney(inv.amount)}</div>
-                        <NetHint amount={inv.amount} date={inv.issuedAt} />
+                        <NetHint amount={inv.amount} vatIncluded date={inv.issuedAt} />
                         {inv.ourBankAccount && (
                           <div className="text-xs text-ink-500">р/с …{inv.ourBankAccount.slice(-5)}</div>
                         )}
@@ -363,30 +369,20 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               <Field label="Конструкция договора">
                 {construction ? `${construction.code} — ${construction.label}` : "—"}
               </Field>
-              <Field label="Сумма">
-                {deal.amount != null ? (
-                  <span>
-                    {formatMoney(deal.amount)}{" "}
-                    <span className="text-ink-400">{deal.vatIncluded ? "с НДС 22%" : "без НДС"}</span>
-                    {/* Чистая стоимость считается автоматически: сумма с НДС / 1,22 */}
-                    {deal.vatIncluded && (
-                      <span className="block text-xs text-ink-400">
-                        без НДС ≈ {formatMoney(netOfVat(deal.amount))}
-                      </span>
-                    )}
-                  </span>
-                ) : (
-                  "—"
-                )}
+              <Field label="Сумма из медиаплана">
+                <Money
+                  amount={deal.amount}
+                  vatIncluded={deal.vatIncluded}
+                  date={deal.contractDate}
+                />
               </Field>
               {deal.contractTotal != null && (
                 <Field label="Сумма по договору (весь период)">
-                  <span>
-                    {formatMoney(deal.contractTotal)} <span className="text-ink-400">с НДС 22%</span>
-                    <span className="block text-xs text-ink-400">
-                      без НДС ≈ {formatMoney(netOfVat(deal.contractTotal))}
-                    </span>
-                  </span>
+                  <Money
+                    amount={deal.contractTotal}
+                    vatIncluded={deal.vatIncluded}
+                    date={deal.contractDate}
+                  />
                 </Field>
               )}
               {/* Сверка сумм: одно место, где видно, сходятся ли договор,
@@ -397,8 +393,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     Сверка сумм (всё с НДС 22 %)
                   </div>
                   <dl className="space-y-1.5 text-sm">
-                    <MoneyRow label="По договору" value={contract} />
-                    <MoneyRow label="Разложено по месяцам" value={scheduled} />
+                    <MoneyRow label="По договору" value={contractGross} />
+                    <MoneyRow label="Разложено по месяцам" value={scheduledGross} />
                     <MoneyRow label="Выставлено счетами" value={invoiced} />
                     <MoneyRow label="Оплачено" value={paid} tone="text-emerald-300" />
                   </dl>
@@ -540,8 +536,8 @@ function MoneyRow({ label, value, tone }: { label: string; value: number; tone?:
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-ink-400">{label}</dt>
       <dd className="text-right">
-        <span className={`font-semibold ${tone ?? "text-ink-100"}`}>{formatMoney(value)}</span>
-        <span className="block text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(value))}</span>
+        <span className={`font-semibold ${tone ?? "text-ink-100"}`}>{formatMoney(Math.round(value))}</span>
+        <NetHint amount={value} vatIncluded />
       </dd>
     </div>
   );

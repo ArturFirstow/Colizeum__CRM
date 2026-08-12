@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { NetAmountInput } from "@/components/ui/NetAmountInput";
 import { apiFetch } from "@/lib/client";
 import { CONTRACT_CONSTRUCTIONS, DEAL_STAGES, URGENCIES } from "@/lib/enums";
 
@@ -32,7 +33,6 @@ export function NewDealButton({
     finalBrand: "",
     contractConstruction: "",
     amount: "",
-    vatIncluded: true,
     periodText: "",
     launchDate: "",
     nextStep: "",
@@ -60,7 +60,8 @@ export function NewDealButton({
           finalBrand: form.finalBrand || undefined,
           contractConstruction: form.contractConstruction || undefined,
           amount: form.amount ? Number(form.amount) : undefined,
-          vatIncluded: form.vatIncluded,
+          // Правило сервиса: суммы вносятся чистыми, НДС считает сервис.
+          vatIncluded: false,
           periodText: form.periodText || undefined,
           launchDate: form.launchDate || undefined,
           nextStep: form.nextStep || undefined,
@@ -164,16 +165,12 @@ export function NewDealButton({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label">Сумма (₽)</label>
-              <input
-                className="input"
-                type="number"
-                value={form.amount}
-                onChange={(e) => set("amount", e.target.value)}
-                placeholder="из МП"
-              />
-            </div>
+            <NetAmountInput
+              label="Сумма из медиаплана"
+              value={form.amount}
+              onChange={(v) => set("amount", v)}
+              placeholder="из МП"
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -203,15 +200,6 @@ export function NewDealButton({
               placeholder="временное: правки макета, ждём ответ и т.п."
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-ink-200">
-            <input
-              type="checkbox"
-              checked={form.vatIncluded}
-              onChange={(e) => set("vatIncluded", e.target.checked)}
-              className="h-4 w-4 accent-brand"
-            />
-            Сумма с НДС
-          </label>
           <FormError message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>

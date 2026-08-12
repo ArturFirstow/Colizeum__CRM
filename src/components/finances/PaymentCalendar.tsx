@@ -6,8 +6,9 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLANNED_PAYMENT_STATUSES } from "@/lib/enums";
-import { formatMoney, netOfVat } from "@/lib/format";
-import { NetHint } from "@/components/ui/Money";
+import { formatMoney } from "@/lib/format";
+import { NetHint, toGross } from "@/components/ui/Money";
+import { NetAmountInput } from "@/components/ui/NetAmountInput";
 
 type PP = {
   id: string;
@@ -208,13 +209,13 @@ export function PaymentCalendar({
                               dragOverCell === key ? "outline outline-2 outline-brand/60" : ""
                             }`}
                           >
-                            {compact(total)}
+                            {compact(toGross(total))}
                           </button>
                         </td>
                       );
                     })}
                     <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-sm font-semibold text-ink-100">
-                      {formatMoney(rowTotal)}
+                      {formatMoney(toGross(rowTotal))}
                       <NetHint amount={rowTotal} />
                     </td>
                   </tr>
@@ -226,11 +227,11 @@ export function PaymentCalendar({
                 </td>
                 {colTotals.map((t, i) => (
                   <td key={i} className="px-1 py-2 text-center text-xs text-ink-300">
-                    {t > 0 ? compact(t) : ""}
+                    {t > 0 ? compact(toGross(t)) : ""}
                   </td>
                 ))}
                 <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">
-                  {formatMoney(grandTotal)}
+                  {formatMoney(toGross(grandTotal))}
                   <NetHint amount={grandTotal} />
                 </td>
               </tr>
@@ -373,10 +374,12 @@ function AddPaymentModal({
             <label className="label">{spread ? "Первый месяц *" : "Месяц *"}</label>
             <input className="input" type="month" value={f.periodMonth} onChange={(e) => set("periodMonth", e.target.value)} required />
           </div>
-          <div>
-            <label className="label">{spread ? "Общая сумма ₽ *" : "Сумма ₽ *"}</label>
-            <input className="input" type="number" value={f.amount} onChange={(e) => set("amount", e.target.value)} required />
-          </div>
+          <NetAmountInput
+            label={spread ? "Общая сумма" : "Сумма"}
+            value={f.amount}
+            onChange={(v) => set("amount", v)}
+            required
+          />
         </div>
         <label className="flex items-center gap-2 text-sm text-ink-200">
           <input
@@ -492,7 +495,9 @@ function CellModal({
                         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                       }}
                     />
-                    <div className="mt-1 text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(p.amount))}</div>
+                    {/* В базе лежит чистая сумма — показываем, во что она
+                        превращается для счёта и бухгалтерии. */}
+                    <div className="mt-1 text-xs text-ink-500">с НДС ≈ {formatMoney(toGross(p.amount))}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <select
