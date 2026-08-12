@@ -26,6 +26,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(data.status !== undefined ? { status: data.status } : {}),
         ...(data.answer !== undefined ? { answer: data.answer ?? null } : {}),
         ...(data.status && data.status !== "Открыт" ? { resolvedAt: new Date() } : {}),
+        ...(data.archived !== undefined ? { archivedAt: data.archived ? new Date() : null } : {}),
       },
     });
     // Автор узнаёт об ответе сразу, а не при следующем входе.

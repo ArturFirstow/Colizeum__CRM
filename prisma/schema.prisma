@@ -843,6 +843,9 @@ model DecisionRequest {
 
   createdAt  DateTime  @default(now())
   resolvedAt DateTime?
+  // Отвеченные вопросы копятся на «Сегодня» и занимают экран — автор убирает
+  // их в архив, когда прочитал ответ. Из базы при этом ничего не удаляется.
+  archivedAt DateTime?
 
   @@index([status])
   @@index([requesterId])

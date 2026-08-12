@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
 import { PageHeader, TypeBadge, StageBadge, UrgencyBadge, Field, EmptyState } from "@/components/ui/primitives";
+import { FileCell } from "@/components/ui/FileCell";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
 import { AgencyClients } from "@/components/advertisers/AgencyClients";
@@ -163,6 +164,17 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                 <Field label="КПП">{advertiser.kpp}</Field>
               </div>
               <Field label="ОГРН">{advertiser.ogrn}</Field>
+              {/* Карточка контрагента файлом: реквизиты часто присылают одним PDF */}
+              <div className="pt-1">
+                <FileCell
+                  ownerType="advertiser"
+                  ownerId={advertiser.id}
+                  kind="Документ"
+                  advertiserId={advertiser.id}
+                  label="Прикрепить карточку контрагента"
+                  compact
+                />
+              </div>
               <Field label="Юр. адрес">{advertiser.address}</Field>
               {(advertiser.bankName || advertiser.bankAccount) && (
                 <>

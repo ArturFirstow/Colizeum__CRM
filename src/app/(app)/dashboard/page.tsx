@@ -28,7 +28,10 @@ export default async function DashboardPage() {
   // Запросы на решение: руководителю — все открытые от сотрудников,
   // сотруднику — его собственные (чтобы видел статус и ответ).
   const decisionRequests = await prisma.decisionRequest.findMany({
-    where: leader ? { status: "Открыт" } : { requesterId: session.userId },
+    // Архивные вопросы не показываем: автор убрал их сам, прочитав ответ.
+    where: leader
+      ? { status: "Открыт", archivedAt: null }
+      : { requesterId: session.userId, archivedAt: null },
     include: {
       requester: { select: { id: true, name: true } },
       advertiser: { select: { id: true, nameRu: true } },
@@ -46,6 +49,7 @@ export default async function DashboardPage() {
     answer: r.answer,
     createdAt: r.createdAt.toISOString(),
     attachmentsKey: r.attachmentsKey,
+    resolvedAt: r.resolvedAt?.toISOString() ?? null,
     requester: r.requester,
     advertiser: r.advertiser,
     deal: r.deal,
@@ -222,6 +226,12 @@ export default async function DashboardPage() {
         )}
       </section>
 
+      {/* Статус дня наверху: при десятке задач он уезжал в самый низ страницы,
+          хотя заполнять его нужно каждый день. */}
+      <div className="mb-8">
+        <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
+      </div>
+
       {/* Поручения руководителя — видно сразу, не теряются среди задач */}
       {assignedToMe.length > 0 && (
         <section className="mb-8">
@@ -363,11 +373,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       )}
-
-      {/* Статус дня по проектам + недельный отчёт */}
-      <div className="mb-8">
-        <DailyStatusPanel advertisers={advertisers} deals={dealOpts} today={todayStatuses} />
-      </div>
 
       {/* Зависшие сделки */}
       {stuckDeals.length > 0 && (

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, Check, X, Paperclip } from "lucide-react";
+import { HelpCircle, Check, X, Paperclip, Archive } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { FileCell } from "@/components/ui/FileCell";
@@ -17,6 +17,7 @@ export type DecisionItem = {
   answer: string | null;
   createdAt: string;
   attachmentsKey: string | null;
+  resolvedAt?: string | null;
   requester: { id: string; name: string };
   advertiser: { id: string; nameRu: string } | null;
   deal: { id: string; title: string } | null;
@@ -290,11 +291,25 @@ export function DecisionRequestCard({ item, canDecide }: { item: DecisionItem; c
 
 // Мои отправленные вопросы — сотрудник видит статус и ответ.
 export function MyDecisionRequests({ items }: { items: DecisionItem[] }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  // Отвеченные вопросы копятся и занимают экран — убираем их в архив.
+  async function archive(id: string) {
+    setBusy(id);
+    try {
+      await apiFetch(`/api/decisions/${id}`, { method: "PATCH", body: JSON.stringify({ archived: true }) });
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   if (items.length === 0) return null;
   return (
     <div className="space-y-2">
       {items.map((r) => (
-        <div key={r.id} className="surface px-4 py-3">
+        <div key={r.id} className={`surface px-4 py-3 ${busy === r.id ? "opacity-50" : ""}`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-ink-100">{r.title}</span>
             <span
@@ -304,6 +319,16 @@ export function MyDecisionRequests({ items }: { items: DecisionItem[] }) {
             >
               {r.status === "Открыт" ? "ждёт ответа" : r.status.toLowerCase()}
             </span>
+            {r.status !== "Открыт" && (
+              <button
+                className="ml-auto inline-flex items-center gap-1 text-xs text-ink-500 transition hover:text-ink-200"
+                onClick={() => archive(r.id)}
+                disabled={busy === r.id}
+                title="Убрать из списка — вопрос останется в базе"
+              >
+                <Archive size={12} /> В архив
+              </button>
+            )}
           </div>
           {r.answer && <div className="mt-1 text-xs text-ink-400">Ответ: {r.answer}</div>}
         </div>

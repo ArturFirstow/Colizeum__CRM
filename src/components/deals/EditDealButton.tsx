@@ -134,7 +134,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
               <label className="label">Тип сделки</label>
               <select className="input" value={f.dealType} onChange={(e) => set("dealType", e.target.value)}>
                 <option value="">— не указан —</option>
-                <option value="Прямой">Прямой</option>
+                <option value="Прямой клиент">Прямой клиент</option>
                 <option value="Агентство">Агентство</option>
               </select>
             </div>

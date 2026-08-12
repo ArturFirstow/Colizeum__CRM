@@ -481,6 +481,7 @@ export const decisionCreateSchema = z.object({
 });
 
 export const decisionPatchSchema = z.object({
+  archived: z.boolean().optional(),
   status: z.enum(DECISION_STATUSES).optional(),
   answer: optionalString,
 });

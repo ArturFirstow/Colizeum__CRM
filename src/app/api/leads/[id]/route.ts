@@ -20,6 +20,30 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       },
       include: { assignedTo: { select: { id: true, name: true } } },
     });
+
+    // Взяли заявку в работу — сразу заводим задачу «связаться»: иначе она
+    // оседает в списке, а звонок откладывается «на потом».
+    if (data.assignedToId) {
+      const who = lead.company || lead.name || lead.contact || "клиентом с сайта";
+      const already = await prisma.task.findFirst({
+        where: { ownerId: data.assignedToId, title: { startsWith: `Связаться с ${who}` } },
+        select: { id: true },
+      });
+      if (!already) {
+        await prisma.task.create({
+          data: {
+            title: `Связаться с ${who}`,
+            kind: "Менеджер",
+            side: "Мы",
+            status: "Открыта",
+            ownerId: data.assignedToId,
+            assigneeId: data.assignedToId,
+            notes: [lead.contact, lead.comment].filter(Boolean).join("\n") || undefined,
+          },
+        });
+      }
+    }
+
     return ok(lead);
   });
 }
