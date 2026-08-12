@@ -133,8 +133,9 @@ export const taskCreateSchema = z.object({
   assigneeId: optionalString,
   status: inSet(TASK_STATUSES).optional(),
   side: z.enum(["Мы", "Клиент"]).optional(),
+  priority: z.enum(["Срочно", "Высокий", "Обычный", "Низкий"]).optional(),
   dueDate: z.string().datetime().optional().or(z.literal("").transform(() => undefined)),
-  notes: optionalString,
+  notes: clearableString,
 });
 export const taskUpdateSchema = taskCreateSchema.partial();
 

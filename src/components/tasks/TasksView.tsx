@@ -6,8 +6,19 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
+import { FileCell } from "@/components/ui/FileCell";
 import { apiFetch } from "@/lib/client";
 import { TASK_KINDS, TASK_STATUSES } from "@/lib/enums";
+
+export const TASK_PRIORITIES = ["Срочно", "Высокий", "Обычный", "Низкий"] as const;
+
+// Полоса слева на карточке: срочное видно, не читая текст.
+const PRIORITY_BAR: Record<string, string> = {
+  Срочно: "bg-red-500",
+  Высокий: "bg-amber-400",
+  Обычный: "bg-transparent",
+  Низкий: "bg-ink-700",
+};
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { formatDate } from "@/lib/format";
 
@@ -19,6 +30,7 @@ type Task = {
   side: string;
   dueDate: string | Date | null;
   notes: string | null;
+  priority?: string | null;
   deal: { id: string; title: string } | null;
   advertiser: { id: string; nameRu: string } | null;
   assignee: { id: string; name: string } | null;
@@ -216,9 +228,16 @@ function TaskCard({
         if (el.closest("a,button,select,input,textarea")) return;
         setEditing(true);
       }}
-      title="Открыть правки"
-      className={`card card-hover cursor-pointer p-3.5 ${task.assignedBy ? "ring-1 ring-brand/40" : ""}`}
+      title="Открыть задачу"
+      className={`card card-hover relative cursor-pointer overflow-hidden p-3.5 pl-4 ${
+        task.assignedBy ? "ring-1 ring-brand/40" : ""
+      }`}
     >
+      {/* Приоритет — полосой слева, чтобы срочное читалось без текста */}
+      <span
+        className={`absolute inset-y-0 left-0 w-1 ${PRIORITY_BAR[task.priority ?? "Обычный"] ?? "bg-transparent"}`}
+        aria-hidden
+      />
       {/* Поручение от руководителя — видно с первого взгляда */}
       {task.assignedBy && (
         <div className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-brand/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-200 ring-1 ring-inset ring-brand/30">
@@ -250,14 +269,20 @@ function TaskCard({
           )}
         </div>
       </div>
-      {/* Комментарии/правки от клиента или для клиента */}
-      {task.notes && (
-        <p className="mt-2 whitespace-pre-wrap rounded-lg bg-ink-900/60 px-2.5 py-1.5 text-xs text-ink-300">
-          {task.notes}
-        </p>
-      )}
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs text-ink-500">
+          {(task.priority === "Срочно" || task.priority === "Высокий") && (
+            <span
+              className={`rounded px-1.5 py-0.5 font-semibold ${
+                task.priority === "Срочно" ? "bg-red-500/15 text-red-300" : "bg-amber-500/15 text-amber-200"
+              }`}
+            >
+              {task.priority}
+            </span>
+          )}
+          {/* Текст примечания скрыт: он открывается по клику, иначе доска
+              превращается в стену текста и нужную задачу не найти. */}
+          {task.notes && <span title="Есть примечание">💬</span>}
           {task.assignee && (
             <span className="rounded bg-ink-800 px-1.5 py-0.5">{task.assignee.name.split(" ")[0]}</span>
           )}
@@ -310,6 +335,7 @@ function EditTaskModal({
     dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "",
     notes: task.notes ?? "",
     side: task.side,
+    priority: task.priority ?? "Обычный",
   });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
@@ -329,6 +355,7 @@ function EditTaskModal({
           assigneeId: f.assigneeId || undefined,
           dueDate: f.dueDate ? new Date(f.dueDate).toISOString() : undefined,
           notes: f.notes,
+          priority: f.priority,
           side: f.side,
         }),
       });
@@ -363,6 +390,16 @@ function EditTaskModal({
             <input className="input" type="date" value={f.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
           </div>
           <div>
+            <label className="label">Приоритет</label>
+            <select className="input" value={f.priority} onChange={(e) => set("priority", e.target.value)}>
+              {TASK_PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="label">Вид</label>
             <select className="input" value={f.kind} onChange={(e) => set("kind", e.target.value)}>
               {TASK_KINDS.map((k) => (
@@ -394,6 +431,11 @@ function EditTaskModal({
         <p className="text-xs text-ink-500">
           Задача с дедлайном автоматически попадает в «Сегодня» → «Ближайшие задачи» вместе с комментарием.
         </p>
+        {/* Файлы к задаче: макеты, счёт, скрин от клиента — здесь же, а не в переписке */}
+        <div>
+          <label className="label">Файлы</label>
+          <FileCell ownerType="task" ownerId={task.id} kind="Прочее" label="Прикрепить файл" compact />
+        </div>
         <FormError message={error} />
         <div className="flex justify-end gap-2">
           <button type="button" className="btn btn-ghost" onClick={onClose}>
@@ -437,7 +479,17 @@ function NewTaskModal({
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [f, setF] = useState({ title: "", kind: "Менеджер", side: "Мы", dealId: "", advertiserId: "", assigneeId: "", dueDate: "", notes: "" });
+  const [f, setF] = useState({
+    title: "",
+    kind: "Менеджер",
+    side: "Мы",
+    dealId: "",
+    advertiserId: "",
+    assigneeId: "",
+    dueDate: "",
+    notes: "",
+    priority: "Обычный",
+  });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((s) => ({ ...s, [k]: v }));
@@ -448,6 +500,11 @@ function NewTaskModal({
     setError(null);
     setSaving(true);
     try {
+      // В заголовке сначала бренд, потом суть: в списке задачи разных клиентов
+      // иначе сливаются и приходится открывать каждую.
+      const brand = advertisers.find((a) => a.id === f.advertiserId)?.nameRu;
+      const title = brand && !f.title.startsWith(brand) ? `${brand} — ${f.title}` : f.title;
+
       await apiFetch("/api/tasks", {
         method: "POST",
         body: JSON.stringify({
@@ -455,14 +512,25 @@ function NewTaskModal({
           kind: f.kind,
           side: f.side,
           dealId: f.dealId || undefined,
-          advertiserId: f.advertiserId || undefined,
+          advertiserId: f.advertiserId && f.advertiserId !== "other" ? f.advertiserId : undefined,
+          priority: f.priority,
           assigneeId: f.assigneeId || undefined,
           dueDate: f.dueDate ? new Date(f.dueDate).toISOString() : undefined,
           notes: f.notes || undefined,
         }),
       });
       onClose();
-      setF({ title: "", kind: "Менеджер", side: "Мы", dealId: "", advertiserId: "", assigneeId: "", dueDate: "", notes: "" });
+      setF({
+        title: "",
+        kind: "Менеджер",
+        side: "Мы",
+        dealId: "",
+        advertiserId: "",
+        assigneeId: "",
+        dueDate: "",
+        notes: "",
+        priority: "Обычный",
+      });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -474,9 +542,38 @@ function NewTaskModal({
   return (
     <Modal open={open} onClose={onClose} title="Новая задача">
       <form onSubmit={submit} className="space-y-4">
+        {/* Клиент выбирается первым: его название уходит в начало заголовка */}
+        <div>
+          <label className="label">По какому клиенту</label>
+          <select
+            className="input"
+            value={f.advertiserId}
+            onChange={(e) => set("advertiserId", e.target.value)}
+          >
+            <option value="">— выбрать клиента —</option>
+            {advertisers.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nameRu}
+              </option>
+            ))}
+            <option value="other">Другое — задача не про клиента</option>
+          </select>
+        </div>
         <div>
           <label className="label">Задача *</label>
-          <input className="input" value={f.title} onChange={(e) => set("title", e.target.value)} required autoFocus />
+          <input
+            className="input"
+            value={f.title}
+            onChange={(e) => set("title", e.target.value)}
+            placeholder="Что нужно сделать"
+            required
+            autoFocus
+          />
+          {f.advertiserId && f.advertiserId !== "other" && (
+            <p className="mt-1 text-xs text-ink-500">
+              В заголовок добавится «{advertisers.find((a) => a.id === f.advertiserId)?.nameRu} — »
+            </p>
+          )}
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
@@ -523,6 +620,16 @@ function NewTaskModal({
           <div>
             <label className="label">Дедлайн</label>
             <input className="input" type="date" value={f.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Приоритет</label>
+            <select className="input" value={f.priority} onChange={(e) => set("priority", e.target.value)}>
+              {TASK_PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div>

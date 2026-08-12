@@ -9,9 +9,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async () => {
     const { id } = await ctx.params;
     const data = taskUpdateSchema.parse(await req.json());
+    // Перетащили в другую колонку — карточка встаёт первой, иначе теряется
+    // в середине списка и человек её больше не находит.
+    const movedAt = data.status !== undefined ? { movedAt: new Date() } : {};
     const task = await prisma.task.update({
       where: { id },
-      data: { ...data, dueDate: data.dueDate ? new Date(data.dueDate) : undefined },
+      data: { ...data, ...movedAt, dueDate: data.dueDate ? new Date(data.dueDate) : undefined },
     });
     return ok(task);
   });

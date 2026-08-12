@@ -413,7 +413,9 @@ export function JournalView({
                     {e.parsedSummary}
                   </p>
                 )}
-                <p className="whitespace-pre-wrap text-sm text-ink-300">{e.rawText}</p>
+                {/* Расшифровка встречи — это стена текста. В ленте показываем
+                    только начало, полностью открывается по клику. */}
+                <RawText text={e.rawText} />
                 <div className="mt-3">
                   <FileCell
                     ownerType="journal"
@@ -516,6 +518,28 @@ function MeetingRow({ entry }: { entry: Entry }) {
           <Send size={12} /> {busy ? "…" : state?.ok ? "Отправить ещё раз" : "Отправить в таблицу"}
         </button>
       </div>
+    </div>
+  );
+}
+
+
+// Текст записи: свёрнут до трёх строк, разворачивается по клику.
+function RawText({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 220;
+
+  if (!long) return <p className="whitespace-pre-wrap text-sm text-ink-300">{text}</p>;
+
+  return (
+    <div>
+      <p className={`whitespace-pre-wrap text-sm text-ink-300 ${open ? "" : "line-clamp-3"}`}>{text}</p>
+      <button
+        type="button"
+        className="mt-1 text-xs text-brand hover:underline"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "свернуть" : "показать полностью"}
+      </button>
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default async function TasksPage() {
         assignee: { select: { id: true, name: true } },
         assignedBy: { select: { id: true, name: true } },
       },
-      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ movedAt: "desc" }, { dueDate: "asc" }],
     }),
     prisma.deal.findMany({ where: advertiserScope(session), select: { id: true, title: true }, orderBy: { updatedAt: "desc" } }),
     prisma.advertiser.findMany({ where: ownScope(session), select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),

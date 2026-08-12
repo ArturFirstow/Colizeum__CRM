@@ -10,15 +10,18 @@ import { ROLE_LABELS, type Role } from "@/lib/enums";
 import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
 import { ChangePassword } from "@/components/ChangePassword";
+import { UserMenu } from "@/components/UserMenu";
 
 export function Sidebar({
   user,
 }: {
-  user: { id: string; name: string; email: string; role: string; track: string };
+  user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null };
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // Счётчик-сигнал: увеличиваем — открывается окно смены пароля из меню.
+  const [passwordSignal, setPasswordSignal] = useState(0);
 
   async function logout() {
     await apiFetch("/api/auth/logout", { method: "POST" });
@@ -71,24 +74,18 @@ export function Sidebar({
 
   const userBox = (
     <div className="border-t border-ink-800 p-3">
-      <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-ink-950">
-          {initials(user.name)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-ink-100">{user.name}</div>
-          <div className="truncate text-xs text-ink-500">{ROLE_LABELS[user.role as Role] ?? user.role}</div>
-        </div>
-        <ChangePassword userId={user.id} />
-        <button
-          onClick={logout}
-          title="Выйти"
-          className="btn-icon"
-          aria-label="Выйти"
-        >
-          ⎋
-        </button>
-      </div>
+      {/* Всё про себя — под аватаркой: фото, пароль, выход */}
+      <UserMenu
+        user={{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          roleLabel: ROLE_LABELS[user.role as Role] ?? user.role,
+          avatarUrl: user.avatarUrl,
+        }}
+        onChangePassword={() => setPasswordSignal((n) => n + 1)}
+      />
+      <ChangePassword userId={user.id} hideTrigger openSignal={passwordSignal} />
     </div>
   );
 

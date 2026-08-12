@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { KeyRound } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 import { Modal, FormError } from "@/components/ui/Modal";
 
 // Смена собственного пароля. Нужна, чтобы выданный при заведении пароль не жил
 // вечно: сотрудник заходит первый раз и сразу ставит свой.
-export function ChangePassword({ userId }: { userId: string }) {
+export function ChangePassword({
+  userId,
+  hideTrigger,
+  openSignal,
+}: {
+  userId: string;
+  /** Кнопку рисует кто-то другой (например, меню профиля). */
+  hideTrigger?: boolean;
+  /** Меняется — открываем окно. Позволяет вызывать окно снаружи. */
+  openSignal?: number;
+}) {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -48,19 +58,30 @@ export function ChangePassword({ userId }: { userId: string }) {
     }
   }
 
+  // Внешний вызов: меню профиля увеличивает openSignal — открываем окно.
+  useEffect(() => {
+    if (openSignal && openSignal > 0) {
+      reset();
+      setOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSignal]);
+
   return (
     <>
-      <button
-        onClick={() => {
-          reset();
-          setOpen(true);
-        }}
-        title="Сменить пароль"
-        aria-label="Сменить пароль"
-        className="btn-icon"
-      >
-        <KeyRound size={15} />
-      </button>
+      {!hideTrigger && (
+        <button
+          onClick={() => {
+            reset();
+            setOpen(true);
+          }}
+          title="Сменить пароль"
+          aria-label="Сменить пароль"
+          className="btn-icon"
+        >
+          <KeyRound size={15} />
+        </button>
+      )}
 
       <Modal
         open={open}
