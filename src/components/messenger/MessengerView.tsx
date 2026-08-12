@@ -115,9 +115,18 @@ export function MessengerView({
   activeIdRef.current = activeId;
   reloadRef.current = reload;
 
+  // Живое соединение работает — значит страховочный опрос можно замедлить.
+  const sseAlive = useRef(false);
+
   // Мгновенный realtime: сервер шлёт channelId нового сообщения.
   useEffect(() => {
     const es = new EventSource("/api/chat/stream");
+    es.addEventListener("open", () => {
+      sseAlive.current = true;
+    });
+    es.addEventListener("error", () => {
+      sseAlive.current = false;
+    });
     es.addEventListener("message", (e) => {
       if ((e as MessageEvent).data === activeIdRef.current) reloadRef.current();
     });
@@ -127,8 +136,18 @@ export function MessengerView({
   useEffect(() => {
     setLoading(true);
     reload();
-    // Каждые 4 секунды: SSE может не дойти через прокси, поллинг — надёжная страховка.
-    const t = setInterval(reload, 4000);
+    // Опрос — страховка на случай, если живое соединение не дошло через прокси.
+    // Раньше он стучал каждые 4 секунды всегда, даже когда соединение работает:
+    // сервер получал 15 лишних запросов в минуту с каждой открытой вкладки.
+    // Теперь: пока связи нет — каждые 4 секунды, как только она есть — раз в
+    // 20 секунд, а во вкладке в фоне не стучим совсем.
+    let tick = 0;
+    const t = setInterval(() => {
+      tick += 1;
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (sseAlive.current && tick % 5 !== 0) return;
+      reload();
+    }, 4000);
     return () => clearInterval(t);
   }, [reload]);
 

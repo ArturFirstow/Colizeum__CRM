@@ -41,8 +41,15 @@ fi
 
 if [ -n "$DB_FILE" ] && [ -f "$DB_FILE" ]; then
   # .backup — корректная копия SQLite даже при работающем сервисе.
-  sqlite3 "$DB_FILE" ".backup '$BACKUP_DIR/db_$STAMP.db'" 2>/dev/null \
-    || cp "$DB_FILE" "$BACKUP_DIR/db_$STAMP.db"
+  # База работает в режиме WAL: свежие записи лежат в файле -wal и попадают
+  # в основной файл не сразу. Поэтому запасной путь копирует и его — иначе
+  # в копию не войдёт последний час работы.
+  sqlite3 "$DB_FILE" ".backup '$BACKUP_DIR/db_$STAMP.db'" 2>/dev/null || {
+    cp "$DB_FILE" "$BACKUP_DIR/db_$STAMP.db"
+    [ -f "$DB_FILE-wal" ] && cp "$DB_FILE-wal" "$BACKUP_DIR/db_$STAMP.db-wal"
+    [ -f "$DB_FILE-shm" ] && cp "$DB_FILE-shm" "$BACKUP_DIR/db_$STAMP.db-shm"
+    echo "ВНИМАНИЕ: sqlite3 не установлен, копия сделана файлами. Поставьте: apt install -y sqlite3"
+  }
   echo "База сохранена: $BACKUP_DIR/db_$STAMP.db"
 fi
 

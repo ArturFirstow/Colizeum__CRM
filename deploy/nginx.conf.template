@@ -1,6 +1,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Colizeum Agency — конфиг nginx.
 # Заменить DOMAIN на реальный домен и положить в /etc/nginx/sites-available/colizeum
+#
+# После выпуска сертификата certbot допишет сюда блок «listen 443 ssl». Проверьте,
+# что рядом с ним стоит «http2 on;» — без него браузер тянет десяток файлов
+# страницы по очереди, и переходы по меню заметно подтормаживают.
 # ─────────────────────────────────────────────────────────────────────────────
 
 server {
@@ -8,8 +12,34 @@ server {
     listen [::]:80;
     server_name DOMAIN www.DOMAIN;
 
+    # Несколько запросов в одном соединении — страница собирается за один
+    # заход, а не за десять.
+    http2 on;
+
     # Загрузка файлов (креативы, акты, документы) — до 60 МБ.
     client_max_body_size 60m;
+
+    # Сжатие. Next.js жмёт и сам, но статику (шрифты, svg, карты кода) он
+    # отдаёт как есть — а по мобильному интернету это заметно.
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json
+               application/x-javascript text/xml application/xml image/svg+xml
+               font/woff font/woff2;
+
+    # Файлы сборки называются по содержимому (…-a1b2c3.js): если содержимое
+    # изменилось — изменится и имя. Значит их можно смело держать в браузере
+    # и не перекачивать при каждом заходе.
+    location /_next/static/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        expires 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
 
     # Живая лента мессенджера (SSE) — буферизацию выключаем, иначе сообщения
     # приходят пачками с задержкой.
