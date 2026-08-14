@@ -6,6 +6,7 @@ import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { PaymentCalendar } from "@/components/finances/PaymentCalendar";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
+import { toGross } from "@/components/ui/Money";
 import { ORG } from "@/lib/org";
 import { CLOSING_KINDS } from "@/lib/enums";
 
@@ -81,11 +82,13 @@ export default async function FinancesPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card !border-brand/30 p-5">
           <div className="text-xs uppercase tracking-wide text-ink-400">Общий бюджет по клиентам</div>
-          <div className="mt-2 font-display text-2xl font-bold text-brand">{formatMoney(totalBudget)}</div>
-          <div className="mt-0.5 text-xs text-ink-500">без НДС ≈ {formatMoney(netOfVat(totalBudget))}</div>
+          <div className="mt-2 font-display text-2xl font-bold text-brand">{formatMoney(toGross(totalBudget))}</div>
+          <div className="mt-0.5 text-xs text-ink-500">без НДС ≈ {formatMoney(totalBudget)}</div>
           <div className="mt-2 border-t border-ink-800 pt-2 text-xs text-ink-400">
-            в том числе разложено по месяцам {formatMoney(totalScheduled)}
-            {notScheduled > 0 && <> · ещё не разложено {formatMoney(notScheduled)}</>}
+            {/* Та же сумма, что и «Итого» в календаре ниже: обе с НДС, иначе
+                на одной странице стояли бы два числа с разницей в НДС. */}
+            в том числе разложено по месяцам {formatMoney(toGross(totalScheduled))}
+            {notScheduled > 0 && <> · ещё не разложено {formatMoney(toGross(notScheduled))}</>}
           </div>
         </div>
         <SummaryCard label="Выставлено" value={totalInvoiced} color="text-ink-50" />
@@ -108,8 +111,9 @@ export default async function FinancesPage() {
               <div key={r.id} className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg bg-ink-900/50 px-3 py-2 text-sm">
                 <span className="font-medium text-ink-100">{r.name}</span>
                 <span className="text-xs text-ink-400">
-                  по договорам {formatMoney(r.contract)} · разложено {formatMoney(r.scheduled)} ·{" "}
-                  <span className="font-semibold text-amber-300">лишнее {formatMoney(r.over)}</span>
+                  по договорам {formatMoney(toGross(r.contract))} · разложено{" "}
+                  {formatMoney(toGross(r.scheduled))} ·{" "}
+                  <span className="font-semibold text-amber-300">лишнее {formatMoney(toGross(r.over))}</span>
                 </span>
               </div>
             ))}

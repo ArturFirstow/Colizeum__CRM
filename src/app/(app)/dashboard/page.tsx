@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { toGross } from "@/components/ui/Money";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
@@ -8,7 +9,6 @@ import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { requireSession } from "@/lib/auth";
 import { ownScope, isLeadership } from "@/lib/scope";
-import { netOfVat } from "@/lib/format";
 import { CountUp } from "@/components/ui/CountUp";
 import { StageRing } from "@/components/ui/StageRing";
 
@@ -135,11 +135,16 @@ export default async function DashboardPage() {
             <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
               Портфель под управлением
             </div>
+            {/* Как и везде: крупно сумма с НДС, чистая — подписью. В базе
+                суммы лежат чистыми, поэтому крупную цифру домножаем. */}
             <div className="mt-3 font-display text-4xl font-semibold text-brand lg:text-5xl">
-              <CountUp value={portfolio} suffix=" ₽" duration={1100} />
+              <CountUp value={toGross(portfolio)} suffix=" ₽" duration={1100} />
             </div>
             <div className="mt-2 text-sm text-ink-400">
-              без НДС ≈ {formatMoney(netOfVat(portfolio))} · {activeDeals.length} активных сделок
+              без НДС ≈ {formatMoney(portfolio)} · {activeDeals.length} активных сделок
+            </div>
+            <div className="mt-1 text-xs text-ink-500">
+              суммы из медиапланов, кроме закрытых сделок
             </div>
           </div>
         </Link>
@@ -390,7 +395,7 @@ export default async function DashboardPage() {
                 <div className="mt-1 truncate text-xs text-ink-400">{d.title}</div>
                 <div className="mt-3 flex items-center justify-between">
                   <StageBadge stage={d.stage} />
-                  {d.amount != null && <span className="text-xs text-ink-400">{formatMoney(d.amount)}</span>}
+                  {d.amount != null && <span className="text-xs text-ink-400">{formatMoney(toGross(d.amount))}</span>}
                 </div>
               </Link>
             ))}
