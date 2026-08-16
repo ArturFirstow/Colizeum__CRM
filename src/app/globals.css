@@ -23,6 +23,9 @@
     background-image: radial-gradient(circle at 1px 1px, rgba(255, 221, 0, 0.05) 1px, transparent 0);
     background-size: 22px 22px;
     min-height: 100vh;
+    /* Длинная почта или ссылка без пробелов раздвигала страницу вширь, и на
+       телефоне появлялась горизонтальная прокрутка всего экрана. */
+    overflow-wrap: break-word;
   }
   * {
     scrollbar-width: thin;
@@ -146,6 +149,13 @@
     @apply w-full rounded-xl border border-ink-700 bg-ink-900/80 px-3.5 py-2.5 text-sm text-ink-100
       placeholder:text-ink-400 transition
       focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/25;
+  }
+  /* Safari на айфоне сам увеличивает страницу, когда фокус попадает в поле
+     мельче 16 px, и обратно уже не отъезжает. На телефоне поля крупнее. */
+  @media (max-width: 767px) {
+    .input {
+      font-size: 16px;
+    }
   }
   select.input {
     @apply appearance-none bg-ink-900;

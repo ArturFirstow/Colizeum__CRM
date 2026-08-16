@@ -267,7 +267,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Задачи */}
-        <section className="lg:col-span-2">
+        <section className="min-w-0 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-ink-50">Ближайшие задачи</h2>
             <Link href="/tasks" className="text-sm text-brand hover:underline">
@@ -314,7 +314,7 @@ export default async function DashboardPage() {
         </section>
 
         {/* Блокеры + журнал */}
-        <section className="space-y-6">
+        <section className="min-w-0 space-y-6">
           <div>
             <h2 className="mb-3 text-lg font-bold text-ink-50">Активные блокеры</h2>
             {blockers.length === 0 ? (

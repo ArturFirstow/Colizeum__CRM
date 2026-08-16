@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { NAV_GROUPS } from "@/lib/nav";
 import { ChatBadge } from "@/components/ui/ChatBadge";
@@ -22,6 +22,13 @@ export function Sidebar({
   const [open, setOpen] = useState(false);
   // Счётчик-сигнал: увеличиваем — открывается окно смены пароля из меню.
   const [passwordSignal, setPasswordSignal] = useState(0);
+
+  // Кнопка «Ещё» в нижней панели просит открыть эту же шторку.
+  useEffect(() => {
+    const open = () => setOpen(true);
+    window.addEventListener("colizeum:open-menu", open);
+    return () => window.removeEventListener("colizeum:open-menu", open);
+  }, []);
 
   async function logout() {
     await apiFetch("/api/auth/logout", { method: "POST" });
@@ -43,6 +50,11 @@ export function Sidebar({
       items: g.items.filter((it) => !it.track || isDirector || it.track === user.track),
     }))
     .filter((g) => g.items.length > 0);
+
+  const current = groups
+    .flatMap((g) => g.items)
+    .filter((it) => isActive(it.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
 
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
@@ -92,9 +104,15 @@ export function Sidebar({
   return (
     <>
       {/* мобильная шапка */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-ink-800 bg-ink-950/90 px-4 py-3 backdrop-blur md:hidden">
-        <Logo />
-        <button className="btn-icon" onClick={() => setOpen(true)} aria-label="Меню">
+      <div className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-800 bg-ink-950/90 px-4 py-3 backdrop-blur md:hidden">
+        <Link href="/dashboard" className="shrink-0">
+          <Logo />
+        </Link>
+        {/* Где я сейчас: на узком экране это единственная подсказка. */}
+        <span className="min-w-0 flex-1 truncate text-right text-sm font-semibold text-ink-300">
+          {current?.label ?? ""}
+        </span>
+        <button className="btn-icon shrink-0" onClick={() => setOpen(true)} aria-label="Все разделы">
           ☰
         </button>
       </div>
@@ -114,7 +132,7 @@ export function Sidebar({
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-ink-800 bg-ink-900 animate-fade-in">
+          <aside className="absolute left-0 top-0 flex h-full w-[85%] max-w-xs flex-col border-r border-ink-800 bg-ink-900 animate-fade-in">
             <div className="flex items-center justify-between border-b border-ink-800 px-5 py-5">
               <Logo />
               <button className="btn-icon" onClick={() => setOpen(false)}>

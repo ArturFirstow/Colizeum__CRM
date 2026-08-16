@@ -221,7 +221,7 @@ export function JournalView({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         {/* Новая запись */}
-        <form onSubmit={submit} className="card h-fit p-5">
+        <form onSubmit={submit} className="card h-fit min-w-0 p-5">
           <h2 className="mb-1 text-lg font-bold text-ink-50">Новая запись</h2>
           <p className="mb-4 text-xs text-ink-500">
             Вставьте текст расшифровки встречи или прикрепите файл — запись останется в вашем кабинете.
@@ -392,7 +392,7 @@ export function JournalView({
         </form>
 
         {/* Лента */}
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {entries.length === 0 ? (
             <div className="card p-10 text-center text-ink-400">Записей пока нет</div>
           ) : (

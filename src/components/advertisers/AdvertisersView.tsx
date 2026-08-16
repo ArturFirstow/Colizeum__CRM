@@ -102,7 +102,7 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((a) => (
-            <div key={a.id} className="card card-hover flex h-full flex-col p-5">
+            <div key={a.id} className="card card-hover flex h-full min-w-0 flex-col p-5">
               <Link href={`/advertisers/${a.id}`} className="min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -117,7 +117,7 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
                   <TypeBadge type={a.type} />
                 </div>
                 {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику. */}
-                <div className="mt-4 flex items-center gap-4 border-t border-ink-800 pt-3 text-xs text-ink-400">
+                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-800 pt-3 text-xs text-ink-400">
                   <span>⑂ {a._count.deals} сделок</span>
                   <span>❐ {a._count.documents} док.</span>
                   <span>☎ {a._count.contacts}</span>
