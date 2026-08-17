@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { toGross } from "@/components/ui/Money";
+import { sumMoney, toGross } from "@/components/ui/Money";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
     prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
     prisma.deal.findMany({
       where: notArchived,
-      select: { id: true, title: true, advertiserId: true, stage: true, amount: true, advertiser: { select: { nameRu: true } } },
+      select: { id: true, title: true, advertiserId: true, stage: true, amount: true, vatIncluded: true, contractDate: true, advertiser: { select: { nameRu: true } } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.dailyStatus.findMany({
@@ -115,7 +115,11 @@ export default async function DashboardPage() {
   // Портфель = сумма по активным сделкам БЕЗ закрытых (ТЗ р.2, п.1);
   // каждая сделка входит один раз, архивные клиенты уже исключены выборкой.
   const activeDeals = dealOpts.filter((d) => d.stage !== "Закрытие");
-  const portfolio = activeDeals.reduce((s, d) => s + (d.amount ?? 0), 0);
+  // Считаем по каждой сделке отдельно: у части записей сумма в базе лежит
+  // с НДС, и общий множитель на всю кучу давал завышенный портфель.
+  const portfolio = sumMoney(
+    activeDeals.map((d) => ({ amount: d.amount, vatIncluded: d.vatIncluded, date: d.contractDate })),
+  );
 
   // Поручения: задачи, которые поставил кто-то другой (руководитель).
   const assignedToMe = openTasks.filter((t) => t.assignedById && t.assignedById !== session.userId);
@@ -138,10 +142,10 @@ export default async function DashboardPage() {
             {/* Как и везде: крупно сумма с НДС, чистая — подписью. В базе
                 суммы лежат чистыми, поэтому крупную цифру домножаем. */}
             <div className="mt-3 font-display text-4xl font-semibold text-brand lg:text-5xl">
-              <CountUp value={toGross(portfolio)} suffix=" ₽" duration={1100} />
+              <CountUp value={portfolio.gross} suffix=" ₽" duration={1100} />
             </div>
             <div className="mt-2 text-sm text-ink-400">
-              без НДС ≈ {formatMoney(portfolio)} · {activeDeals.length} активных сделок
+              без НДС ≈ {formatMoney(portfolio.net)} · {activeDeals.length} активных сделок
             </div>
             <div className="mt-1 text-xs text-ink-500">
               суммы из медиапланов, кроме закрытых сделок
@@ -395,7 +399,11 @@ export default async function DashboardPage() {
                 <div className="mt-1 truncate text-xs text-ink-400">{d.title}</div>
                 <div className="mt-3 flex items-center justify-between">
                   <StageBadge stage={d.stage} />
-                  {d.amount != null && <span className="text-xs text-ink-400">{formatMoney(toGross(d.amount))}</span>}
+                  {d.amount != null && (
+                    <span className="text-xs text-ink-400">
+                      {formatMoney(toGross(d.amount, d.contractDate, d.vatIncluded))}
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

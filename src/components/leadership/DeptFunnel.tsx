@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { formatMoney, formatDate } from "@/lib/format";
-import { NetHint, toGross } from "@/components/ui/Money";
+import { NetHint, sumMoney, toGross } from "@/components/ui/Money";
 
 export type FunnelDeal = {
   id: string;
   title: string;
   stage: string;
   amount: number | null;
+  /** Как сумма лежит в базе: у старых записей — уже с НДС. */
+  vatIncluded: boolean;
+  contractDate: string | null;
   periodText: string | null;
   updatedAt: string;
   advertiserName: string;
@@ -35,7 +38,9 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
 
   const rows = GROUPS.map((g) => {
     const items = deals.filter((d) => g.stages.includes(d.stage));
-    return { ...g, items, sum: items.reduce((s, d) => s + (d.amount ?? 0), 0) };
+    // По каждой сделке со своей пометкой — иначе старые записи домножаются
+    // на НДС второй раз, и сумма стадии расходится с карточкой сделки.
+    return { ...g, items, sum: sumMoney(items.map((d) => ({ amount: d.amount, vatIncluded: d.vatIncluded, date: d.contractDate }))) };
   });
   const max = Math.max(1, ...rows.map((r) => r.items.length));
 
@@ -63,8 +68,10 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
               </div>
               <div className="w-10 shrink-0 text-right text-sm tabular-nums text-ink-200">{r.items.length}</div>
               <div className="w-32 shrink-0 text-right text-xs tabular-nums text-ink-400">
-                {formatMoney(toGross(r.sum))}
-                <NetHint amount={r.sum} />
+                {formatMoney(r.sum.gross)}
+                <div className="text-[11px] font-normal text-ink-500">
+                  без НДС ≈ {formatMoney(r.sum.net)}
+                </div>
               </div>
             </button>
 
@@ -89,8 +96,8 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
                       <span className="shrink-0 text-xs text-ink-300">{d.managerName ?? "без менеджера"}</span>
                       <span className="shrink-0 text-xs text-ink-400">{d.periodText ?? formatDate(d.updatedAt)}</span>
                       <span className="w-28 shrink-0 text-right font-mono text-sm text-ink-100">
-                        {formatMoney(toGross(d.amount ?? 0))}
-                        <NetHint amount={d.amount} />
+                        {formatMoney(toGross(d.amount ?? 0, d.contractDate, d.vatIncluded))}
+                        <NetHint amount={d.amount} vatIncluded={d.vatIncluded} date={d.contractDate} />
                       </span>
                     </Link>
                   ))

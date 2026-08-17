@@ -42,6 +42,35 @@ export function toGross(amount: number, date?: Date | string | null, vatIncluded
   return Math.round(grossOf(amount, vatIncluded, rate));
 }
 
+/** Пара к `toGross`: чистая сумма той же записи. */
+export function toNet(amount: number, date?: Date | string | null, vatIncluded = false): number {
+  const d = date ? new Date(date) : new Date();
+  const rate = vatRateForDate(Number.isNaN(d.getTime()) ? new Date() : d);
+  return Math.round(netOf(amount, vatIncluded, rate));
+}
+
+/**
+ * Сумма по списку записей — с НДС и чистая.
+ *
+ * ⚠️ Считать надо ПО КАЖДОЙ записи и только потом складывать. Сложить сначала,
+ * а потом домножить — нельзя: у части сделок в базе сумма лежит с НДС (записи
+ * до правила «вводим чистую»), и общий множитель раздувал их ещё на 22 %.
+ * Из-за этого одна и та же сделка показывалась в «Сделках» как 16 644 174 ₽,
+ * а на главной и в «Оплатах» — как 20 305 892 ₽.
+ */
+export function sumMoney(
+  rows: { amount?: number | null; vatIncluded?: boolean; date?: Date | string | null }[],
+): { gross: number; net: number } {
+  let gross = 0;
+  let net = 0;
+  for (const r of rows) {
+    if (r.amount == null) continue;
+    gross += toGross(r.amount, r.date, r.vatIncluded ?? false);
+    net += toNet(r.amount, r.date, r.vatIncluded ?? false);
+  }
+  return { gross, net };
+}
+
 export function Money({
   amount,
   vatIncluded = false,
