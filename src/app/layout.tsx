@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { RuValidation } from "@/components/ui/RuValidation";
+import { CookieNotice } from "@/components/ui/CookieNotice";
 
 export const metadata: Metadata = {
   title: "Colizeum Agency",
@@ -28,6 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <RuValidation />
         {children}
+        {/* Плашка про cookie — на всех страницах, включая вход. */}
+        <CookieNotice />
       </body>
     </html>
   );
