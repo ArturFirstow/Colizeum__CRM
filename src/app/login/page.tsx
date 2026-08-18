@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { XoMark } from "@/components/Logo";
+import { LEGAL_DOCS } from "@/lib/legal";
 import { apiFetch } from "@/lib/client";
 
 export default function LoginPage() {
@@ -101,6 +103,27 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-xs text-ink-500">
           Регистрация закрыта. Доступ только у заведённых аккаунтов.
         </p>
+
+        {/* Подвал с правовыми документами — как на сайте агентства. Страницы
+            открываются без входа: их нужно иметь возможность прочитать до
+            того, как принимаешь условия. */}
+        <footer className="mt-8 border-t border-ink-800 pt-5 text-center">
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-4">
+            {LEGAL_DOCS.map((d) => (
+              <Link
+                key={d.slug}
+                href={`/legal/${d.slug}`}
+                className="text-xs text-ink-500 underline-offset-4 transition hover:text-brand hover:underline"
+              >
+                {d.title}
+              </Link>
+            ))}
+          </div>
+          <p className="mt-4 text-[11px] leading-relaxed text-ink-600">
+            Выполняя вход, вы принимаете условия пользовательского соглашения и подтверждаете, что
+            ознакомлены с политикой обработки персональных данных.
+          </p>
+        </footer>
       </div>
     </div>
   );

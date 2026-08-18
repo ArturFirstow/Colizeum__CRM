@@ -11,6 +11,7 @@ import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
 import { ChangePassword } from "@/components/ChangePassword";
 import { UserMenu } from "@/components/UserMenu";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 export function Sidebar({
   user,
@@ -98,6 +99,16 @@ export function Sidebar({
         onChangePassword={() => setPasswordSignal((n) => n + 1)}
       />
       <ChangePassword userId={user.id} hideTrigger openSignal={passwordSignal} />
+
+      {/* Правовые документы — те же, что в подвале страницы входа. Нужны и
+          после входа: сотрудник должен иметь возможность перечитать их. */}
+      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 px-2 text-[10px] leading-tight text-ink-600">
+        {LEGAL_DOCS.map((d) => (
+          <Link key={d.slug} href={`/legal/${d.slug}`} className="transition hover:text-brand">
+            {d.short}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 
