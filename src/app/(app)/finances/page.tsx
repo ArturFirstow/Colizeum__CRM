@@ -7,6 +7,7 @@ import { PaymentCalendar } from "@/components/finances/PaymentCalendar";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
 import { sumMoney, toGross } from "@/components/ui/Money";
+import { BUDGET_HINT, BUDGET_LABEL, budgetRows, isActiveForBudget } from "@/lib/budget";
 import { ORG } from "@/lib/org";
 import { CLOSING_KINDS } from "@/lib/enums";
 
@@ -46,14 +47,8 @@ export default async function FinancesPage() {
   // Считаем по каждой сделке со своей пометкой про НДС — у записей, заведённых
   // до правила «вводим чистую», сумма лежит уже с НДС, и общий множитель
   // раздувал их второй раз.
-  const activeDeals = deals.filter((d) => d.stage !== "Закрытие");
-  const budget = sumMoney(
-    activeDeals.map((d) => ({
-      amount: d.contractTotal ?? d.amount,
-      vatIncluded: d.vatIncluded,
-      date: d.contractDate,
-    })),
-  );
+  const activeDeals = deals.filter(isActiveForBudget);
+  const budget = sumMoney(budgetRows(deals));
   // Плановые платежи — это РАЗБИВКА бюджета по месяцам, а не деньги сверх него.
   // Показываем их отдельной строкой внутри карточки бюджета, чтобы числа
   // не читались как два разных бюджета и нигде не складывались между собой.
@@ -66,25 +61,21 @@ export default async function FinancesPage() {
   // помесячные части, и ещё одну строку на всю сумму договора. Тогда календарь
   // честно складывает всё подряд, и «Итого» выглядит завышенным. Сравниваем по
   // каждому клиенту разложенное с суммой его договоров и показываем расхождение.
-  const overscheduled = advertisers
+  const byClient = advertisers
     .map((a) => {
       const contract = sumMoney(
-        activeDeals
-          .filter((d) => d.advertiser.id === a.id)
-          .map((d) => ({
-            amount: d.contractTotal ?? d.amount,
-            vatIncluded: d.vatIncluded,
-            date: d.contractDate,
-          })),
+        budgetRows(deals.filter((d) => d.advertiser.id === a.id)),
       ).gross;
       const scheduled = toGross(
         plannedPayments.filter((p) => p.advertiserId === a.id).reduce((s, p) => s + p.amount, 0),
       );
-      return { id: a.id, name: a.nameRu, contract, scheduled, over: scheduled - contract };
+      return { id: a.id, name: a.nameRu, contract, scheduled, gap: scheduled - contract };
     })
-    // Порог в 1 ₽ — чтобы копеечные округления при делении на месяцы не всплывали.
-    .filter((r) => r.contract > 0 && r.over > 1)
-    .sort((a, b) => b.over - a.over);
+    .filter((r) => r.contract > 0 || r.scheduled > 0)
+    .sort((a, b) => b.contract - a.contract);
+
+  // Порог в 1 ₽ — копеечные округления при делении на месяцы не считаем ошибкой.
+  const overscheduled = byClient.filter((r) => r.contract > 0 && r.gap > 1);
 
   return (
     <div>
@@ -97,20 +88,69 @@ export default async function FinancesPage() {
       {/* Сводный бюджет + суммы парой: с НДС 22 % и чистая без НДС */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card !border-brand/30 p-5">
-          <div className="text-xs uppercase tracking-wide text-ink-400">Общий бюджет по клиентам</div>
+          <div className="text-xs uppercase tracking-wide text-ink-400">{BUDGET_LABEL}</div>
           <div className="mt-2 font-display text-2xl font-bold text-brand">{formatMoney(budget.gross)}</div>
           <div className="mt-0.5 text-xs text-ink-500">без НДС ≈ {formatMoney(budget.net)}</div>
-          <div className="mt-2 border-t border-ink-800 pt-2 text-xs text-ink-400">
-            {/* Та же сумма, что и «Итого» в календаре ниже: обе с НДС, иначе
-                на одной странице стояли бы два числа с разницей в НДС. */}
-            в том числе разложено по месяцам {formatMoney(scheduledGross)}
-            {notScheduledGross > 0 && <> · ещё не разложено {formatMoney(notScheduledGross)}</>}
-          </div>
+          <div className="mt-2 border-t border-ink-800 pt-2 text-xs text-ink-500">{BUDGET_HINT}</div>
         </div>
         <SummaryCard label="Выставлено" value={totalInvoiced} color="text-ink-50" />
         <SummaryCard label="Оплачено" value={totalPaid} color="text-emerald-300" />
         <SummaryCard label="Остаток" value={totalInvoiced - totalPaid} color="text-amber-300" />
       </div>
+
+      {/* Расшифровка: из чего складывается бюджет и почему календарь ниже
+          показывает другую цифру. Одна таблица снимает почти все вопросы
+          «а почему тут одно число, а там другое». */}
+      {byClient.length > 0 && (
+        <div className="card mb-6 overflow-x-auto p-0">
+          <div className="px-5 pt-5">
+            <h2 className="text-lg font-bold text-ink-50">Из чего складывается бюджет</h2>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Все суммы с НДС. «Разложено» — то же, что «Итого» в календаре ниже.
+            </p>
+          </div>
+          <table className="mt-3 w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-ink-800 text-xs uppercase tracking-wide text-ink-500">
+                <th className="px-5 py-2.5 text-left font-medium">Клиент</th>
+                <th className="px-3 py-2.5 text-right font-medium">Бюджет</th>
+                <th className="px-3 py-2.5 text-right font-medium">Разложено по месяцам</th>
+                <th className="px-5 py-2.5 text-right font-medium">Осталось разложить</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-800/70">
+              {byClient.map((r) => (
+                <tr key={r.id}>
+                  <td className="px-5 py-2.5 font-medium text-ink-100">{r.name}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-ink-200">
+                    {formatMoney(r.contract)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-ink-300">
+                    {formatMoney(r.scheduled)}
+                  </td>
+                  <td className="px-5 py-2.5 text-right tabular-nums">
+                    {r.gap > 1 ? (
+                      <span className="text-amber-300">лишнее {formatMoney(r.gap)}</span>
+                    ) : -r.gap > 1 ? (
+                      <span className="text-ink-400">{formatMoney(-r.gap)}</span>
+                    ) : (
+                      <span className="text-emerald-300">сходится</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t border-ink-700 font-semibold">
+                <td className="px-5 py-3 text-ink-100">Итого</td>
+                <td className="px-3 py-3 text-right tabular-nums text-brand">{formatMoney(budget.gross)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-ink-200">{formatMoney(scheduledGross)}</td>
+                <td className="px-5 py-3 text-right tabular-nums text-ink-400">
+                  {notScheduledGross > 1 ? formatMoney(notScheduledGross) : "сходится"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Разложено больше, чем сумма договоров — почти всегда задвоенный платёж */}
       {overscheduled.length > 0 && (
@@ -127,8 +167,8 @@ export default async function FinancesPage() {
               <div key={r.id} className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg bg-ink-900/50 px-3 py-2 text-sm">
                 <span className="font-medium text-ink-100">{r.name}</span>
                 <span className="text-xs text-ink-400">
-                  по договорам {formatMoney(r.contract)} · разложено {formatMoney(r.scheduled)} ·{" "}
-                  <span className="font-semibold text-amber-300">лишнее {formatMoney(r.over)}</span>
+                  бюджет {formatMoney(r.contract)} · разложено {formatMoney(r.scheduled)} ·{" "}
+                  <span className="font-semibold text-amber-300">лишнее {formatMoney(r.gap)}</span>
                 </span>
               </div>
             ))}
@@ -138,7 +178,11 @@ export default async function FinancesPage() {
 
       {/* Помесячный календарь платежей */}
       <div className="mb-6">
-        <PaymentCalendar advertisers={advertisers} payments={plannedPayments} />
+        <PaymentCalendar
+          advertisers={advertisers}
+          payments={plannedPayments}
+          budgets={Object.fromEntries(byClient.map((r) => [r.id, r.contract]))}
+        />
       </div>
 
       {/* Корзины клиентов: счета, платёжные поручения, УПД */}

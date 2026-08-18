@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { sumMoney, toGross } from "@/components/ui/Money";
+import { BUDGET_HINT, BUDGET_LABEL, budgetRows, isActiveForBudget } from "@/lib/budget";
 import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
     prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
     prisma.deal.findMany({
       where: notArchived,
-      select: { id: true, title: true, advertiserId: true, stage: true, amount: true, vatIncluded: true, contractDate: true, advertiser: { select: { nameRu: true } } },
+      select: { id: true, title: true, advertiserId: true, stage: true, amount: true, contractTotal: true, vatIncluded: true, contractDate: true, advertiser: { select: { nameRu: true } } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.dailyStatus.findMany({
@@ -114,12 +115,11 @@ export default async function DashboardPage() {
 
   // Портфель = сумма по активным сделкам БЕЗ закрытых (ТЗ р.2, п.1);
   // каждая сделка входит один раз, архивные клиенты уже исключены выборкой.
-  const activeDeals = dealOpts.filter((d) => d.stage !== "Закрытие");
-  // Считаем по каждой сделке отдельно: у части записей сумма в базе лежит
-  // с НДС, и общий множитель на всю кучу давал завышенный портфель.
-  const portfolio = sumMoney(
-    activeDeals.map((d) => ({ amount: d.amount, vatIncluded: d.vatIncluded, date: d.contractDate })),
-  );
+  // Бюджет считается ровно так же, как в разделе «Оплаты» — одно определение
+  // на весь сервис лежит в src/lib/budget.ts. Раньше здесь складывались суммы
+  // из медиапланов, а там — по договорам, и заголовки расходились.
+  const activeDeals = dealOpts.filter(isActiveForBudget);
+  const portfolio = sumMoney(budgetRows(dealOpts));
 
   // Поручения: задачи, которые поставил кто-то другой (руководитель).
   const assignedToMe = openTasks.filter((t) => t.assignedById && t.assignedById !== session.userId);
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
         <Link href="/finances" className="col-span-2 row-span-2">
           <div className="card card-hover flex h-full flex-col justify-center !border-brand/30 p-6">
             <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
-              Портфель под управлением
+              {BUDGET_LABEL}
             </div>
             {/* Как и везде: крупно сумма с НДС, чистая — подписью. В базе
                 суммы лежат чистыми, поэтому крупную цифру домножаем. */}
@@ -148,8 +148,9 @@ export default async function DashboardPage() {
               без НДС ≈ {formatMoney(portfolio.net)} · {activeDeals.length} активных сделок
             </div>
             <div className="mt-1 text-xs text-ink-500">
-              суммы из медиапланов, кроме закрытых сделок
+              {BUDGET_HINT}
             </div>
+            <div className="mt-2 text-xs text-brand/80">Та же цифра — в разделе «Оплаты» →</div>
           </div>
         </Link>
         <StatCard label="Активные сделки" value={<CountUp value={dealCount} />} href="/deals" />

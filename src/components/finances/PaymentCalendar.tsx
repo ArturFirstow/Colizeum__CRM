@@ -7,7 +7,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLANNED_PAYMENT_STATUSES } from "@/lib/enums";
 import { formatMoney } from "@/lib/format";
-import { NetHint, toGross } from "@/components/ui/Money";
+import { toGross } from "@/components/ui/Money";
 import { NetAmountInput } from "@/components/ui/NetAmountInput";
 
 type PP = {
@@ -42,9 +42,12 @@ const STATUS_CELL: Record<string, string> = {
 export function PaymentCalendar({
   advertisers,
   payments,
+  budgets = {},
 }: {
   advertisers: Adv[];
   payments: PP[];
+  /** Бюджет клиента с НДС — то, что вписано в карточках его сделок. */
+  budgets?: Record<string, number>;
 }) {
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
@@ -96,11 +99,13 @@ export function PaymentCalendar({
     return out;
   }, [payments]);
 
-  // Строки — рекламодатели, у которых есть платежи.
+  // Строки — рекламодатели, у которых есть платежи ИЛИ есть бюджет по сделкам.
+  // Клиент с бюджетом, но без разложенных платежей, раньше просто не
+  // показывался — и было непонятно, куда делись его деньги.
   const rows = useMemo(() => {
     const ids = new Set(payments.map((p) => p.advertiserId));
-    return advertisers.filter((a) => ids.has(a.id));
-  }, [advertisers, payments]);
+    return advertisers.filter((a) => ids.has(a.id) || (budgets[a.id] ?? 0) > 0);
+  }, [advertisers, payments, budgets]);
 
   function cellPayments(advertiserId: string, month: string) {
     return payments.filter((p) => p.advertiserId === advertiserId && p.periodMonth === month);
@@ -115,7 +120,8 @@ export function PaymentCalendar({
         <div>
           <h2 className="text-lg font-bold text-ink-50">Календарь платежей</h2>
           <p className="mt-0.5 text-xs text-ink-500">
-            Кто, сколько и когда платит — по месяцам. Это разбивка бюджета по срокам, а не деньги сверх него.
+            Кто, сколько и когда платит — по месяцам. Это разбивка бюджета по срокам, а не деньги сверх
+            него: справа видно, сколько разложено из бюджета по карточкам сделок.
           </p>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setAddOpen(true)}>
@@ -147,7 +153,10 @@ export function PaymentCalendar({
                     {monthLabel(m)}
                   </th>
                 ))}
-                <th className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">Итого</th>
+                <th className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">
+                  Разложено<br />
+                  <span className="normal-case text-[10px] text-ink-600">из бюджета</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -216,7 +225,11 @@ export function PaymentCalendar({
                     })}
                     <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-sm font-semibold text-ink-100">
                       {formatMoney(toGross(rowTotal))}
-                      <NetHint amount={rowTotal} />
+                      {/* Рядом — бюджет из карточек сделок этого клиента:
+                          видно, всё ли разложено, не уходя со страницы. */}
+                      <div className="text-[11px] font-normal text-ink-500">
+                        из {formatMoney(budgets[a.id] ?? 0)}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -232,7 +245,9 @@ export function PaymentCalendar({
                 ))}
                 <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">
                   {formatMoney(toGross(grandTotal))}
-                  <NetHint amount={grandTotal} />
+                  <div className="text-[11px] font-normal text-ink-500">
+                    из {formatMoney(Object.values(budgets).reduce((s, v) => s + v, 0))}
+                  </div>
                 </td>
               </tr>
             </tbody>
