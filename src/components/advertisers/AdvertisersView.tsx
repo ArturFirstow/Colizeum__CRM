@@ -8,6 +8,7 @@ import { TypeBadge } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
+import { ExportButton } from "@/components/advertisers/ExportButton";
 import { ADVERTISER_TYPES } from "@/lib/enums";
 
 type Advertiser = {
@@ -68,9 +69,12 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(true)}>
-          + Рекламодатель
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton />
+          <button className="btn btn-primary" onClick={() => setOpen(true)}>
+            + Рекламодатель
+          </button>
+        </div>
       </div>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">

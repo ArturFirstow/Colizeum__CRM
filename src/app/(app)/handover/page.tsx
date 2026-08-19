@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/primitives";
 import { HandoverView } from "@/components/handover/HandoverView";
 import { VacationCalendar } from "@/components/handover/VacationCalendar";
+import { ExportButton } from "@/components/advertisers/ExportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ export default async function HandoverPage() {
         title="Передача дел"
         subtitle="Уходите в отпуск — клиенты и знание о них уходят к коллеге, а не теряются"
         icon="⇄"
+        actions={<ExportButton />}
       />
       {/* Сначала «кого и когда не будет», потом «кому уходят клиенты»:
           отпуск планируют раньше, чем передают дела. */}

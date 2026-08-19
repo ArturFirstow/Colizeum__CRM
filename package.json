@@ -25,6 +25,7 @@
     "@anthropic-ai/sdk": "^0.68.0",
     "@prisma/client": "6.19.3",
     "bcryptjs": "3.0.3",
+    "exceljs": "^4.4.0",
     "jose": "6.2.3",
     "lucide-react": "^1.25.0",
     "marked": "^15.0.12",
