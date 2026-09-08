@@ -1,0 +1,4 @@
+node_modules
+out/*
+!out/poisondrop-you-are-the-key.mp4
+.remotion
