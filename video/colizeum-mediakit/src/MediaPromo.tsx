@@ -7,7 +7,8 @@ import { Brand } from "./scenes/Brand";
 import { BrandWall } from "./scenes/BrandWall";
 import { Case } from "./scenes/Case";
 import { Cta } from "./scenes/Cta";
-import { Formats } from "./scenes/Formats";
+import { FormatBig } from "./scenes/FormatBig";
+import { FormatsRest } from "./scenes/FormatsRest";
 import { Hook } from "./scenes/Hook";
 import { PushIn } from "./scenes/PushIn";
 import { Scale } from "./scenes/Scale";
@@ -20,17 +21,17 @@ const SECTIONS: [number, number, string, string][] = [
   [120, 240, "Сеть", "02"],
   [240, 480, "Масштаб", "03"],
   [480, 720, "Аудитория", "04"],
-  [720, 1080, "Форматы", "05"],
-  [1080, 1320, "Турниры", "06"],
-  [1320, 1440, "Клиенты", "07"],
-  [1440, 1800, "Кейсы", "08"],
-  [1800, 2040, "Контакты", "09"],
+  [720, 1560, "Форматы", "05"],
+  [1560, 1800, "Турниры", "06"],
+  [1800, 1980, "Клиенты", "07"],
+  [1980, 2580, "Кейсы", "08"],
+  [2580, 2820, "Контакты", "09"],
 ];
 
 // Кадры, на которых музыка бьёт акцентом — там же жёлтая вспышка.
-const IMPACTS = [240, 840, 1320, 1800];
+const IMPACTS = [240, 840, 1800, 2580];
 // Склейки, которые закрываем шторкой.
-const CUTS = [120, 240, 480, 720, 1080, 1320, 1440, 1800];
+const CUTS = [120, 240, 480, 720, 1020, 1200, 1380, 1560, 1800, 1980, 2130, 2280, 2430, 2580];
 
 const flash = (frame: number) =>
   Math.max(
@@ -65,17 +66,56 @@ export const MediaPromo: React.FC = () => {
       <Sequence name="Заход в экран" from={720} durationInFrames={120}>
         <PushIn />
       </Sequence>
-      <Sequence name="Форматы" from={840} durationInFrames={240}>
-        <Formats />
+      <Sequence name="Формат 01 — ПК и ТВ" from={840} durationInFrames={180}>
+        <FormatBig
+          num="01"
+          name="Баннеры на свободных ПК и ТВ"
+          headline="20 000 ПК и 1 800 ТВ"
+          image="fmt-screens.jpg"
+          bullets={[
+            "Показ примерно раз в минуту на заставке каждого свободного экрана",
+            "Синхронно во всей сети — один креатив уходит на 570 клубов",
+            "За один визит гость видит рекламу несколько раз",
+          ]}
+        />
       </Sequence>
-      <Sequence name="Турниры" from={1080} durationInFrames={240}>
+      <Sequence name="Формат 02 — личный кабинет" from={1020} durationInFrames={180}>
+        <FormatBig
+          num="02"
+          name="Баннер в личном кабинете"
+          headline="2 слота · 2 показа в минуту"
+          image="fmt-cabinet.jpg"
+          bullets={[
+            "Здесь гость пополняет баланс, покупает часы и запускает игру",
+            "Около 5 минут в кабинете за одну игровую сессию",
+            "Внимание сосредоточено на экране — момент принятия решений",
+          ]}
+        />
+      </Sequence>
+      <Sequence name="Формат 03 — рабочий стол" from={1200} durationInFrames={180}>
+        <FormatBig
+          num="03"
+          name="Баннер на рабочем столе игрока"
+          headline="CTR 2–6 %"
+          image="fmt-widget.jpg"
+          bullets={[
+            "Кликабельный баннер или видео прямо на рабочем столе",
+            "Показ раз в минуту, около 5 минут на столе за сессию",
+            "Можно брендировать весь рабочий стол целиком",
+          ]}
+        />
+      </Sequence>
+      <Sequence name="Ещё каналы" from={1380} durationInFrames={180}>
+        <FormatsRest />
+      </Sequence>
+      <Sequence name="Турниры" from={1560} durationInFrames={240}>
         <Tournaments />
       </Sequence>
-      <Sequence name="Клиенты" from={1320} durationInFrames={120}>
+      <Sequence name="Клиенты" from={1800} durationInFrames={180}>
         <BrandWall />
       </Sequence>
 
-      <Sequence name="Кейс «Горячая штучка»" from={1440} durationInFrames={90}>
+      <Sequence name="Кейс «Горячая штучка»" from={1980} durationInFrames={150}>
         <Case
           brand="«Горячая штучка»"
           photo="case-hot.jpg"
@@ -92,7 +132,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс Уралсиб" from={1530} durationInFrames={90}>
+      <Sequence name="Кейс Уралсиб" from={2130} durationInFrames={150}>
         <Case
           brand="Уралсиб"
           photo="case-uralsib.jpg"
@@ -109,7 +149,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс Thunderobot" from={1620} durationInFrames={90}>
+      <Sequence name="Кейс Thunderobot" from={2280} durationInFrames={150}>
         <Case
           brand="Thunderobot"
           photo="case-thunderobot.jpg"
@@ -126,7 +166,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс ASUS ROG" from={1710} durationInFrames={90}>
+      <Sequence name="Кейс ASUS ROG" from={2430} durationInFrames={150}>
         <Case
           brand="ASUS ROG"
           photo="case-asus.jpg"
@@ -144,7 +184,7 @@ export const MediaPromo: React.FC = () => {
         />
       </Sequence>
 
-      <Sequence name="Контакты" from={1800} durationInFrames={240}>
+      <Sequence name="Контакты" from={2580} durationInFrames={240}>
         <Cta />
       </Sequence>
 
@@ -165,7 +205,7 @@ export const MediaPromo: React.FC = () => {
           bottom: 0,
           height: 5,
           backgroundColor: YELLOW,
-          width: interpolate(frame, [0, 2040], [0, 1920], {
+          width: interpolate(frame, [0, 2820], [0, 1920], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           }),
@@ -177,7 +217,7 @@ export const MediaPromo: React.FC = () => {
         style={{
           backgroundColor: "#000000",
           pointerEvents: "none",
-          opacity: interpolate(frame, [0, 14, 1990, 2040], [1, 0, 0, 1], {
+          opacity: interpolate(frame, [0, 14, 2770, 2820], [1, 0, 0, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           }),
