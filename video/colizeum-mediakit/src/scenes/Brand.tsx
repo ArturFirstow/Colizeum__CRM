@@ -2,6 +2,7 @@ import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { Headline, Note } from "../components/Bits";
 import { MUTED, PAD, RAIL, YELLOW } from "../theme";
 import { display, text } from "../fonts";
+import { PhotoBg } from "../components/Photo";
 
 /** 4–8 с. Кто мы: сеть №1 и признание рынка. */
 export const Brand: React.FC = () => {
@@ -9,6 +10,7 @@ export const Brand: React.FC = () => {
 
   return (
     <AbsoluteFill name="Бренд" style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
+      <PhotoBg file="club-blue.jpg" dim={0.8} zoom={1.14} />
       <div style={{ position: "absolute", top: 150, left: PAD, right: RAIL + PAD }}>
         <Headline start={2} size={216}>
           Colizeum

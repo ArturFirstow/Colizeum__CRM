@@ -5,7 +5,7 @@ const SR = 44100;
 const BPM = 120;
 const BEAT = 60 / BPM;          // 0.5 c
 const BAR = BEAT * 4;           // 2 c
-const BARS = 30;
+const BARS = 34;
 const TAIL = 1.6;
 const DUR = BARS * BAR + TAIL;
 const N = Math.ceil(DUR * SR);
@@ -163,8 +163,8 @@ function impact(t0, gain = 0.7) {
 // 0-1 вступление · 2-3 разгон · 4-11 основная часть · 12-13 передышка
 // 14-15 разгон · 16-27 пик · 28-29 финал
 const plan = (bar) => ({
-  full: (bar >= 4 && bar <= 11) || (bar >= 16 && bar <= 29),
-  peak: bar >= 16,
+  full: (bar >= 4 && bar <= 11) || (bar >= 14 && bar <= 32),
+  peak: bar >= 22,
   beatIn: (bar >= 2 && bar <= 11) || bar >= 14,
   breakdown: bar === 12 || bar === 13,
 });
@@ -212,10 +212,13 @@ for (let bar = 0; bar < BARS; bar++) {
     }
   }
 
-  if (bar === 3 || bar === 13 || bar === 15 || bar === 27) {
-    riser(t + BAR - 1.4, 1.4, bar === 3 || bar === 15 ? 0.34 : 0.24);
+  if (bar === 3 || bar === 13 || bar === 21 || bar === 29) {
+    riser(t + BAR - 1.4, 1.4, bar === 13 ? 0.36 : 0.28);
   }
-  if (bar === 4 || bar === 16 || bar === 28) impact(t, bar === 28 ? 0.6 : 0.75);
+  if (bar === 4 || bar === 14 || bar === 22 || bar === 30) {
+    impact(t, bar === 30 ? 0.6 : 0.75);
+  }
+
 }
 
 // финальный удар и хвост
@@ -253,4 +256,4 @@ for (let i = 0; i < N; i++) {
 }
 
 fs.writeFileSync("public/music.wav", buf);
-console.log("music60.wav", (buf.length / 1e6).toFixed(2), "MB,", DUR.toFixed(2), "s");
+console.log("music68.wav", (buf.length / 1e6).toFixed(2), "MB,", DUR.toFixed(2), "s");

@@ -2,6 +2,7 @@ import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { Headline, Kicker, StatCell } from "../components/Bits";
 import { MUTED, PAD, RAIL, WHITE, YELLOW } from "../theme";
 import { display, text } from "../fonts";
+import { PhotoBg } from "../components/Photo";
 
 const LEVELS: [string, string, string][] = [
   ["Турнирный календарь", "1 500 000", "охват в месяц: клубы, соцсети, Яндекс Карты, РСЯ"],
@@ -15,6 +16,7 @@ export const Tournaments: React.FC = () => {
 
   return (
     <AbsoluteFill name="Турниры" style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
+      <PhotoBg file="club-stage.jpg" dim={0.85} zoom={1.14} />
       <div style={{ position: "absolute", top: 104, left: PAD }}>
         <Kicker start={2}>Самый крупный оператор любительских турниров в СНГ</Kicker>
         <div style={{ marginTop: 18 }}>

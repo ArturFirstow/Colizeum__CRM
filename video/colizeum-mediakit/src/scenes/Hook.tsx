@@ -2,6 +2,7 @@ import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { CountUp, Headline } from "../components/Bits";
 import { PAD, RAIL, WHITE, YELLOW } from "../theme";
 import { text } from "../fonts";
+import { PhotoBg } from "../components/Photo";
 
 /** 0–4 с. Один вопрос — где сегодня можно поймать геймера офлайн. */
 export const Hook: React.FC = () => {
@@ -9,6 +10,7 @@ export const Hook: React.FC = () => {
 
   return (
     <AbsoluteFill name="Крючок" style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
+      <PhotoBg file="club-people.jpg" dim={0.76} zoom={1.18} />
       <div style={{ position: "absolute", top: 96, left: PAD }}>
         <div
           style={{

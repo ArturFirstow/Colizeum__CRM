@@ -1,5 +1,6 @@
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { Headline, Kicker } from "../components/Bits";
+import { PhotoBg } from "../components/Photo";
 import { MUTED, PAD, RAIL, WHITE, YELLOW } from "../theme";
 import { display, text } from "../fonts";
 
@@ -7,13 +8,15 @@ import { display, text } from "../fonts";
 export const Case: React.FC<{
   brand: string;
   what: string;
+  photo: string;
   steps: string[];
   results: [string, string][];
-}> = ({ brand, what, steps, results }) => {
+}> = ({ brand, what, photo, steps, results }) => {
   const frame = useCurrentFrame();
 
   return (
     <AbsoluteFill name="Кейс" style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
+      <PhotoBg file={photo} dim={0.84} zoom={1.16} />
       <div style={{ position: "absolute", top: 108, left: PAD }}>
         <Kicker start={0}>Кейс</Kicker>
         <div style={{ marginTop: 16 }}>
