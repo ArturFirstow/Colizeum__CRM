@@ -17,21 +17,21 @@ import { YELLOW } from "./theme";
 
 // Монтаж на сетке музыки: 120 BPM → удар 15 кадров, такт 60 кадров, всего 34 такта.
 const SECTIONS: [number, number, string, string][] = [
-  [0, 120, "Медиакит", "01"],
-  [120, 240, "Сеть", "02"],
-  [240, 480, "Масштаб", "03"],
-  [480, 720, "Аудитория", "04"],
-  [720, 1560, "Форматы", "05"],
-  [1560, 1800, "Турниры", "06"],
-  [1800, 1980, "Клиенты", "07"],
-  [1980, 2580, "Кейсы", "08"],
-  [2580, 2820, "Контакты", "09"],
+  [0, 180, "Медиакит", "01"],
+  [180, 360, "Сеть", "02"],
+  [360, 660, "Масштаб", "03"],
+  [660, 1020, "Аудитория", "04"],
+  [1020, 1860, "Форматы", "05"],
+  [1860, 2100, "Турниры", "06"],
+  [2100, 2280, "Клиенты", "07"],
+  [2280, 2880, "Кейсы", "08"],
+  [2880, 3120, "Контакты", "09"],
 ];
 
 // Кадры, на которых музыка бьёт акцентом — там же жёлтая вспышка.
-const IMPACTS = [240, 840, 1800, 2580];
+const IMPACTS = [360, 1140, 2100, 2880];
 // Склейки, которые закрываем шторкой.
-const CUTS = [120, 240, 480, 720, 1020, 1200, 1380, 1560, 1800, 1980, 2130, 2280, 2430, 2580];
+const CUTS = [180, 360, 660, 1020, 1140, 1320, 1500, 1680, 1860, 2100, 2280, 2430, 2580, 2730, 2880];
 
 const flash = (frame: number) =>
   Math.max(
@@ -51,22 +51,22 @@ export const MediaPromo: React.FC = () => {
     <AbsoluteFill name="Ролик" style={{ backgroundColor: "#000000" }}>
       <Audio src={staticFile("music.mp3")} />
 
-      <Sequence name="Крючок" from={0} durationInFrames={120}>
+      <Sequence name="Крючок" from={0} durationInFrames={180}>
         <Hook />
       </Sequence>
-      <Sequence name="Сеть" from={120} durationInFrames={120}>
+      <Sequence name="Сеть" from={180} durationInFrames={180}>
         <Brand />
       </Sequence>
-      <Sequence name="Масштаб" from={240} durationInFrames={240}>
+      <Sequence name="Масштаб" from={360} durationInFrames={300}>
         <Scale />
       </Sequence>
-      <Sequence name="Аудитория" from={480} durationInFrames={240}>
+      <Sequence name="Аудитория" from={660} durationInFrames={360}>
         <Audience />
       </Sequence>
-      <Sequence name="Заход в экран" from={720} durationInFrames={120}>
+      <Sequence name="Каждый свободный экран" from={1020} durationInFrames={120}>
         <PushIn />
       </Sequence>
-      <Sequence name="Формат 01 — ПК и ТВ" from={840} durationInFrames={180}>
+      <Sequence name="Формат 01 — ПК и ТВ" from={1140} durationInFrames={180}>
         <FormatBig
           num="01"
           name="Баннеры на свободных ПК и ТВ"
@@ -79,7 +79,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Формат 02 — личный кабинет" from={1020} durationInFrames={180}>
+      <Sequence name="Формат 02 — личный кабинет" from={1320} durationInFrames={180}>
         <FormatBig
           num="02"
           name="Баннер в личном кабинете"
@@ -92,7 +92,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Формат 03 — рабочий стол" from={1200} durationInFrames={180}>
+      <Sequence name="Формат 03 — рабочий стол" from={1500} durationInFrames={180}>
         <FormatBig
           num="03"
           name="Баннер на рабочем столе игрока"
@@ -105,17 +105,17 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Ещё каналы" from={1380} durationInFrames={180}>
+      <Sequence name="Дополнительные форматы" from={1680} durationInFrames={180}>
         <FormatsRest />
       </Sequence>
-      <Sequence name="Турниры" from={1560} durationInFrames={240}>
+      <Sequence name="Турниры" from={1860} durationInFrames={240}>
         <Tournaments />
       </Sequence>
-      <Sequence name="Клиенты" from={1800} durationInFrames={180}>
+      <Sequence name="Клиенты" from={2100} durationInFrames={180}>
         <BrandWall />
       </Sequence>
 
-      <Sequence name="Кейс «Горячая штучка»" from={1980} durationInFrames={150}>
+      <Sequence name="Кейс «Горячая штучка»" from={2280} durationInFrames={150}>
         <Case
           brand="«Горячая штучка»"
           photo="case-hot.jpg"
@@ -132,7 +132,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс Уралсиб" from={2130} durationInFrames={150}>
+      <Sequence name="Кейс Уралсиб" from={2430} durationInFrames={150}>
         <Case
           brand="Уралсиб"
           photo="case-uralsib.jpg"
@@ -149,7 +149,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс Thunderobot" from={2280} durationInFrames={150}>
+      <Sequence name="Кейс Thunderobot" from={2580} durationInFrames={150}>
         <Case
           brand="Thunderobot"
           photo="case-thunderobot.jpg"
@@ -166,7 +166,7 @@ export const MediaPromo: React.FC = () => {
           ]}
         />
       </Sequence>
-      <Sequence name="Кейс ASUS ROG" from={2430} durationInFrames={150}>
+      <Sequence name="Кейс ASUS ROG" from={2730} durationInFrames={150}>
         <Case
           brand="ASUS ROG"
           photo="case-asus.jpg"
@@ -184,7 +184,7 @@ export const MediaPromo: React.FC = () => {
         />
       </Sequence>
 
-      <Sequence name="Контакты" from={2580} durationInFrames={240}>
+      <Sequence name="Контакты" from={2880} durationInFrames={240}>
         <Cta />
       </Sequence>
 
@@ -205,7 +205,7 @@ export const MediaPromo: React.FC = () => {
           bottom: 0,
           height: 5,
           backgroundColor: YELLOW,
-          width: interpolate(frame, [0, 2820], [0, 1920], {
+          width: interpolate(frame, [0, 3120], [0, 1920], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           }),
@@ -217,7 +217,7 @@ export const MediaPromo: React.FC = () => {
         style={{
           backgroundColor: "#000000",
           pointerEvents: "none",
-          opacity: interpolate(frame, [0, 14, 2770, 2820], [1, 0, 0, 1], {
+          opacity: interpolate(frame, [0, 14, 3070, 3120], [1, 0, 0, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           }),

@@ -6,10 +6,10 @@ import { display, text } from "../fonts";
 /** 16–24 с. Кто эта аудитория и почему реклама у нас окупается. */
 export const Audience: React.FC = () => (
   <AbsoluteFill name="Аудитория">
-    <Sequence name="Кто эти люди" from={0} durationInFrames={120}>
+    <Sequence name="Кто эти люди" from={0} durationInFrames={180}>
       <AbsoluteFill style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
         <div style={{ position: "absolute", top: 118, left: PAD }}>
-          <Headline start={2} size={118} out={104}>
+          <Headline start={2} size={118} out={164}>
             Аудитория
           </Headline>
         </div>
@@ -52,7 +52,7 @@ export const Audience: React.FC = () => (
       </AbsoluteFill>
     </Sequence>
 
-    <Sequence name="Реклама работает" from={120} durationInFrames={120}>
+    <Sequence name="Реклама работает" from={180} durationInFrames={180}>
       <AbsoluteFill style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
         <div style={{ position: "absolute", top: 112, left: PAD }}>
           <Kicker start={2}>Главное для рекламодателя</Kicker>

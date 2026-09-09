@@ -9,15 +9,15 @@ const REST: [string, string, string, string][] = [
   ["fmt-social.jpg", "Соцсети сети клубов", "200 000+ подписчиков", "ВК и Telegram, вовлечённость до 4 %, маркировку берём на себя"],
 ];
 
-/** Остальные три канала — одним экраном, но крупно. */
+/** Дополнительные форматы — одним экраном, но крупно. */
 export const FormatsRest: React.FC = () => {
   const frame = useCurrentFrame();
 
   return (
     <AbsoluteFill name="Ещё каналы" style={{ paddingLeft: PAD, paddingRight: RAIL + PAD }}>
       <div style={{ position: "absolute", top: 96, left: PAD }}>
-        <Headline start={0} size={100}>
-          Ещё три канала
+        <Headline start={0} size={88}>
+          Дополнительные форматы
         </Headline>
       </div>
 
