@@ -252,7 +252,7 @@ export const invoiceCreateSchema = z.object({
 export const userCreateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя"),
   email: z.string().trim().toLowerCase().email("Некорректный e-mail"),
-  password: z.string().min(6, "Пароль минимум 6 символов"),
+  password: z.string().min(12, "Пароль минимум 12 символов"),
   role: z.enum(["Manager", "Director"]).optional(),
 });
 
@@ -278,7 +278,7 @@ export const userUpdateSchema = z.object({
 // Администратор сбрасывает чужой — текущий не нужен (он его и не знает).
 export const passwordChangeSchema = z.object({
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "Пароль должен быть не короче 8 символов"),
+  newPassword: z.string().min(12, "Пароль должен быть не короче 12 символов"),
 });
 
 // ── Бюджет отдела (кабинет руководителя) ─────────────────────────────────────

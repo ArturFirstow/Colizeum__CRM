@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { UnauthorizedError, requireSession } from "@/lib/auth";
+import { PublicError } from "@/lib/errors";
 
 // Единый формат ответа/ошибки для API (блупринт 9).
 // { error: { code, message } }
@@ -39,7 +40,20 @@ export function handleError(err: unknown): NextResponse {
       issues: err.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
     });
   }
-  console.error("[API error]", err);
-  const message = err instanceof Error ? err.message : "Внутренняя ошибка";
-  return fail("internal", message, 500);
+  // Ошибка, написанная специально для человека, — показываем как есть.
+  if (err instanceof PublicError) {
+    return fail(err.code, err.message, err.status);
+  }
+
+  // Всё остальное наружу не выпускаем: в тексте внутренней ошибки бывают пути
+  // к файлам, куски SQL и имена колонок. Подробности — в журнале сервера
+  // (`pm2 logs colizeum`), человеку — одна понятная фраза и метка, по которой
+  // эту запись в журнале можно найти.
+  const ref = Math.random().toString(36).slice(2, 8).toUpperCase();
+  console.error(`[API error ${ref}]`, err);
+  return fail(
+    "internal",
+    `Что-то пошло не так. Если повторяется — сообщите администратору код ошибки ${ref}.`,
+    500,
+  );
 }

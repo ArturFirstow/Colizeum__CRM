@@ -42,8 +42,8 @@ async function main() {
     console.error('Укажите пароль вторым аргументом, в кавычках: ... "НовыйПароль123"');
     process.exit(1);
   }
-  if (passwordArg.length < 6) {
-    console.error("Пароль слишком короткий — минимум 6 символов.");
+  if (passwordArg.length < 12) {
+    console.error("Пароль слишком короткий — минимум 12 символов.");
     process.exit(1);
   }
 

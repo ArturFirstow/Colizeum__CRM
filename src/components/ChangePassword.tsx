@@ -119,9 +119,9 @@ export function ChangePassword({
                 value={next}
                 onChange={(e) => setNext(e.target.value)}
                 required
-                minLength={8}
+                minLength={12}
                 autoComplete="new-password"
-                placeholder="минимум 8 символов"
+                placeholder="минимум 12 символов"
               />
             </label>
             <label className="block">
@@ -132,7 +132,7 @@ export function ChangePassword({
                 value={repeat}
                 onChange={(e) => setRepeat(e.target.value)}
                 required
-                minLength={8}
+                minLength={12}
                 autoComplete="new-password"
               />
             </label>

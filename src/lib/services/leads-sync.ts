@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { parseLeadsCsv, parseSentAt } from "@/lib/leads-parse";
+import { PublicError } from "@/lib/errors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Заявки с сайта colizeum-agency.ru.
@@ -33,29 +34,31 @@ export async function syncLeads(): Promise<LeadsSyncResult> {
   try {
     const res = await fetch(leadsSheetUrl(), { cache: "no-store", redirect: "follow" });
     if (!res.ok) {
-      throw new Error(
+      throw new PublicError(
         `Google-таблица недоступна (код ${res.status}). Откройте доступ по ссылке: «Настройки доступа» → «Все, у кого есть ссылка» → «Читатель».`,
       );
     }
     csv = await res.text();
   } catch (e) {
-    if (e instanceof Error && e.message.includes("Google-таблица")) throw e;
-    throw new Error(
-      "Не удалось связаться с Google-таблицей — проверьте интернет на этом компьютере. " +
-        (e instanceof Error ? e.message : ""),
+    if (e instanceof PublicError) throw e;
+    // Подробности сетевой ошибки пишем в журнал сервера, а не в браузер:
+    // в них попадают адреса и настройки прокси.
+    console.error("[leads-sync] сеть:", e);
+    throw new PublicError(
+      "Не удалось связаться с Google-таблицей — проверьте интернет на этом компьютере.",
     );
   }
 
   // Закрытая таблица отдаёт html-страницу входа вместо CSV.
   if (csv.trimStart().startsWith("<")) {
-    throw new Error(
+    throw new PublicError(
       "Google отдаёт страницу входа вместо таблицы: доступ закрыт. Откройте таблицу → «Настройки доступа» → «Все, у кого есть ссылка» → «Читатель».",
     );
   }
 
   const raw = parseLeadsCsv(csv);
   if (raw.length === 0) {
-    throw new Error(
+    throw new PublicError(
       "В таблице не нашлось строк с заявками. Проверьте, что колонки называются name / name_company / contact / Textarea / sent / requestid.",
     );
   }

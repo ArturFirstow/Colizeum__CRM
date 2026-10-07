@@ -161,7 +161,7 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
             </div>
             <div>
               <label className="label">Пароль *</label>
-              <input className="input" value={f.password} onChange={(e) => set("password", e.target.value)} required minLength={6} placeholder="минимум 6 символов" />
+              <input className="input" value={f.password} onChange={(e) => set("password", e.target.value)} required minLength={12} placeholder="минимум 12 символов" />
             </div>
           </div>
           <div>

@@ -49,8 +49,8 @@ function strongPassword(length = 16): string {
 
 async function main() {
   const shared = process.argv[2];
-  if (shared !== undefined && shared.length < 6) {
-    console.error("Общий пароль слишком короткий — минимум 6 символов.");
+  if (shared !== undefined && shared.length < 12) {
+    console.error("Общий пароль слишком короткий — минимум 12 символов.");
     process.exit(1);
   }
 
