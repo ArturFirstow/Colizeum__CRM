@@ -53,7 +53,7 @@ export function Sidebar({
           (!it.track || isDirector || it.track === user.track) &&
           // roles сильнее track: журнал действий и запросы по ПДн не зависят
           // от направления работы, только от роли.
-          (!it.roles || it.roles.includes(user.role as "Owner" | "Director" | "Manager")),
+          (!it.roles || it.roles.includes(user.role as "Owner" | "Director" | "Manager" | "Security")),
       ),
     }))
     .filter((g) => g.items.length > 0);

@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/primitives";
 import { describeAction, describeEntity, pruneAudit, AUDIT_KEEP_DAYS } from "@/lib/audit";
+import { canSeeCompliance } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function AuditPage({
 }) {
   const session = await requireSession();
   // Журнал — не для рядового сотрудника.
-  if (session.role !== "Owner" && session.role !== "Director") notFound();
+  if (!canSeeCompliance(session)) notFound();
 
   const { page, action } = await searchParams;
   const pageNo = Math.max(1, Number(page) || 1);

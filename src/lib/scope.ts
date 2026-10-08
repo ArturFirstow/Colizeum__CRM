@@ -20,6 +20,22 @@ export function isAdmin(session: SessionPayload): boolean {
   return session.role === "Owner";
 }
 
+/** Безопасность / техническая эксплуатация: журнал, запросы по ПДн, доступы.
+ *  Коммерческих данных отдела не видит. */
+export function isSecurity(session: SessionPayload): boolean {
+  return session.role === "Security";
+}
+
+/** Может ли роль работать с данными клиентов (карточки, сделки, деньги). */
+export function canSeeClientData(session: SessionPayload): boolean {
+  return !isSecurity(session);
+}
+
+/** Кому открыт журнал действий и запросы по персональным данным. */
+export function canSeeCompliance(session: SessionPayload): boolean {
+  return session.role === "Owner" || session.role === "Director" || isSecurity(session);
+}
+
 /** Турнирный специалист (Артём) — видит турнирный контур вместо рекламного. */
 export function isTournaments(session: SessionPayload): boolean {
   return session.track === "Tournaments";

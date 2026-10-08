@@ -118,8 +118,8 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
                 <div className="mt-0.5 text-sm text-ink-400">{m.email}</div>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`badge ${m.role === "Owner" || m.role === "Director" ? "badge-brand" : "badge-muted"}`}>
-                  {m.role === "Owner" ? "Админ" : m.role === "Director" ? "Руководитель" : "Менеджер"}
+                <span className={`badge ${m.role === "Owner" || m.role === "Director" || m.role === "Security" ? "badge-brand" : "badge-muted"}`}>
+                  {m.role === "Owner" ? "Админ" : m.role === "Director" ? "Руководитель" : m.role === "Security" ? "Безопасность" : "Менеджер"}
                 </span>
                 {isAdmin && (
                   <button className="btn-icon h-7 w-7 text-ink-400 hover:text-brand" title="Изменить" onClick={() => setEdit(m)}>
@@ -169,6 +169,7 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
             <select className="input" value={f.role} onChange={(e) => set("role", e.target.value)}>
               <option value="Manager">Менеджер — ведёт своих клиентов</option>
               <option value="Director">Руководитель — видит весь отдел + бюджет</option>
+              <option value="Security">Безопасность — журнал, запросы по ПДн, доступы; клиентов не видит</option>
             </select>
           </div>
           <FormError message={error} />
@@ -327,6 +328,7 @@ function EditMemberModal({
           <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="Manager">Менеджер — ведёт своих клиентов</option>
             <option value="Director">Руководитель — видит весь отдел + бюджет</option>
+              <option value="Security">Безопасность — журнал, запросы по ПДн, доступы; клиентов не видит</option>
             <option value="Owner">Админ — управление доступами</option>
           </select>
         </div>

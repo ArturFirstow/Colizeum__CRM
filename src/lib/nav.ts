@@ -18,7 +18,7 @@ export type NavItem = {
   // roles — пункт виден только этим ролям. Нужен там, где раздел не совпадает
   // с группой: журнал действий смотрят и руководитель, и админ, а запросы по
   // персональным данным — обязанность оператора, то есть только админ.
-  roles?: ("Owner" | "Director" | "Manager")[];
+  roles?: ("Owner" | "Director" | "Manager" | "Security")[];
 };
 
 // leadershipOnly — группа видна только руководителю.
@@ -64,8 +64,8 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
   {
     title: "Соответствие",
     items: [
-      { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов", roles: ["Director", "Owner"] },
-      { href: "/leadership/privacy", label: "Запросы по ПДн", icon: "🔎", hint: "Показать и удалить данные человека", roles: ["Owner"] },
+      { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов", roles: ["Director", "Owner", "Security"] },
+      { href: "/leadership/privacy", label: "Запросы по ПДн", icon: "🔎", hint: "Показать и удалить данные человека", roles: ["Owner", "Security"] },
     ],
   },
   {

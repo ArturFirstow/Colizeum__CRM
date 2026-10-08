@@ -253,14 +253,14 @@ export const userCreateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя"),
   email: z.string().trim().toLowerCase().email("Некорректный e-mail"),
   password: z.string().min(12, "Пароль минимум 12 символов"),
-  role: z.enum(["Manager", "Director"]).optional(),
+  role: z.enum(["Manager", "Director", "Security"]).optional(),
 });
 
 // Правка сотрудника (переименование, смена роли; страница «Команда», только Owner).
 // sheetUrl — личная таблица учёта; её сотрудник меняет себе сам (см. API).
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
-  role: z.enum(["Owner", "Manager", "Director"]).optional(),
+  role: z.enum(["Owner", "Manager", "Director", "Security"]).optional(),
   telegramChatId: clearableString,
   avatarUrl: clearableString,
   sheetUrl: z
