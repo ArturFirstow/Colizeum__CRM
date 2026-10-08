@@ -105,7 +105,12 @@ const ACTION_LABELS: Record<string, string> = {
   "login.fail": "Неудачная попытка входа",
   "login.blocked": "Вход заблокирован: много попыток",
   "logout": "Выход из сервиса",
-  "password.change": "Смена пароля",
+  "password.change": "Смена своего пароля",
+  "password.reset": "Администратор сменил пароль сотруднику",
+  "totp.enable": "Включил вход по коду",
+  "totp.disable": "Отключил вход по коду",
+  "consent.accept": "Принял правовые документы",
+  "security.alert": "⚠️ Подозрительная активность",
   "advertiser.view": "Открыл карточку клиента",
   "advertiser.create": "Завёл клиента",
   "advertiser.update": "Изменил клиента",
@@ -140,6 +145,7 @@ const ENTITY_LABELS: Record<string, string> = {
   user: "сотрудник",
   lead: "заявка",
   handover: "передача дел",
+  security: "безопасность",
 };
 
 export function describeEntity(entityType: string | null): string {

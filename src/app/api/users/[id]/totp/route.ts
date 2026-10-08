@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { writeAudit, clientIp } from "@/lib/audit";
+import { raiseAlert } from "@/lib/services/security-alerts";
 import {
   generateSecret,
   otpauthUrl,
@@ -108,6 +109,13 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
       entityId: id,
       ip: clientIp(req),
       ok: false, // отключение защиты — событие, которое должно бросаться в глаза
+    });
+    await raiseAlert({
+      kind: "totp-off",
+      userId: session.userId,
+      userName: session.name,
+      ip: clientIp(req),
+      detail: "Вход теперь только по паролю. Если телефон сменили — подключите код заново.",
     });
     return ok({ disabled: true });
   });

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { passwordChangeSchema } from "@/lib/validation";
+import { writeAudit, clientIp } from "@/lib/audit";
+import { raiseAlert } from "@/lib/services/security-alerts";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -39,6 +41,27 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       where: { id },
       data: { passwordHash: await hashPassword(data.newPassword) },
     });
+
+    const ip = clientIp(req);
+    writeAudit({
+      action: isSelf ? "password.change" : "password.reset",
+      userId: session.userId,
+      userName: session.name,
+      entityType: "user",
+      entityId: id,
+      ip,
+    });
+    // Сброс чужого пароля — законное действие админа, но именно так выглядит и
+    // захват доступа. Поэтому ответственный за ИБ узнаёт о нём сразу.
+    if (!isSelf) {
+      await raiseAlert({
+        kind: "password-reset",
+        userId: session.userId,
+        userName: session.name,
+        ip,
+        detail: `Пароль сменили сотруднику: ${user.name}.`,
+      });
+    }
 
     return ok({ changed: true });
   });

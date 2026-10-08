@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { withSession, handleError } from "@/lib/api";
 import { buildClientsWorkbook } from "@/lib/services/client-export";
 import { writeAudit, clientIp } from "@/lib/audit";
+import { raiseAlert } from "@/lib/services/security-alerts";
 
 // Выгрузка клиентов в Excel: «передаю дела, вот всё, что есть».
 // ?all=1 — весь отдел (сработает только у руководителя, иначе тихо отдадим своих).
@@ -21,6 +22,19 @@ export async function GET(req: NextRequest) {
         changedFields: [`клиентов: ${clientCount}`, everyone ? "весь отдел" : "свои"],
         ip: clientIp(req),
       });
+
+      // Выгрузка всего отдела — один файл со всеми контактами всех клиентов.
+      // Законное действие при передаче дел, но ответственный за ИБ должен
+      // знать, что такой файл покинул сервис (требование 6.7).
+      if (everyone) {
+        await raiseAlert({
+          kind: "mass-export",
+          userId: session.userId,
+          userName: session.name,
+          ip: clientIp(req),
+          detail: `В Excel выгружены клиенты всего отдела — ${clientCount} шт., с контактными лицами.`,
+        });
+      }
 
       return new Response(new Uint8Array(buffer), {
         headers: {

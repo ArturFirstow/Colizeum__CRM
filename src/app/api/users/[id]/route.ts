@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { userUpdateSchema } from "@/lib/validation";
+import { writeAudit, clientIp, changedFieldNames } from "@/lib/audit";
+import { raiseAlert } from "@/lib/services/security-alerts";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -31,6 +33,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       return fail("forbidden", "Имя, роль, Telegram и фото меняет администратор", 403);
     }
 
+    const before = await prisma.user.findUnique({
+      where: { id },
+      select: { name: true, role: true, telegramChatId: true, avatarUrl: true, sheetUrl: true },
+    });
+    if (!before) return fail("not_found", "Сотрудник не найден", 404);
+
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -51,6 +59,29 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         avatarUrl: true,
       },
     });
+
+    const ip = clientIp(req);
+    writeAudit({
+      action: "user.update",
+      userId: session.userId,
+      userName: session.name,
+      entityType: "user",
+      entityId: id,
+      changedFields: changedFieldNames({ ...data }, before),
+      ip,
+    });
+    // Смена роли — это смена того, что человек видит в сервисе. Менеджер,
+    // ставший руководителем, получает бюджет всего отдела; роль «Безопасность»
+    // даёт журнал действий. Такое не должно происходить незаметно.
+    if (data.role !== undefined && data.role !== before.role) {
+      await raiseAlert({
+        kind: "role-change",
+        userId: session.userId,
+        userName: session.name,
+        ip,
+        detail: `${user.name}: роль «${before.role}» → «${data.role}».`,
+      });
+    }
     return ok(user);
   });
 }

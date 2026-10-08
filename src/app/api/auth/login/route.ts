@@ -12,6 +12,7 @@ import { checkLoginAllowed, registerFailedLogin, clearLoginAttempts } from "@/li
 import { writeAudit, clientIp } from "@/lib/audit";
 import { verifyCode, normalizeRecoveryCode } from "@/lib/totp";
 import { verifyPassword } from "@/lib/auth";
+import { raiseAlert, checkLoginSignals } from "@/lib/services/security-alerts";
 
 // Вход устроен в два шага, если у сотрудника включён второй фактор:
 //   шаг 1 — почта и пароль, в ответ приходит временный пропуск;
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const ip = clientIp(req);
+    // Время берём до записи в журнал: проверка «входил ли раньше с этого
+    // адреса» смотрит строки СТАРШЕ этой метки, иначе нашла бы текущий вход.
+    const startedAt = new Date();
 
     // ── Шаг 2: пришёл код ────────────────────────────────────────────────────
     if (body && typeof body === "object" && "pending" in body) {
@@ -40,6 +44,13 @@ export async function POST(req: NextRequest) {
       if (!verdict.allowed) {
         const minutes = Math.ceil(verdict.retryAfterSec / 60);
         writeAudit({ action: "login.blocked", userId: user.id, userName: user.name, ip, ok: false });
+        await raiseAlert({
+          kind: "bruteforce",
+          userId: user.id,
+          userName: user.name,
+          ip,
+          detail: "Пароль подошёл, но код второго фактора перебирали до блокировки.",
+        });
         return fail("too_many_attempts", `Слишком много попыток. Попробуйте через ${minutes} мин.`, 429);
       }
 
@@ -81,6 +92,7 @@ export async function POST(req: NextRequest) {
         ip,
         changedFields: usedRecovery ? ["вход по запасному коду"] : ["вход с кодом"],
       });
+      await checkLoginSignals({ userId: user.id, userName: user.name, ip, at: startedAt });
       return ok({ user: payload, usedRecovery });
     }
 
@@ -93,6 +105,13 @@ export async function POST(req: NextRequest) {
     if (!verdict.allowed) {
       const minutes = Math.ceil(verdict.retryAfterSec / 60);
       writeAudit({ action: "login.blocked", entityType: "user", ip, ok: false, userName: email });
+      // Тревога идёт ответственному за ИБ: это уже не «забыл пароль», а перебор.
+      await raiseAlert({
+        kind: "bruteforce",
+        userName: email,
+        ip,
+        detail: "Вход с этого адреса заблокирован: слишком много неудачных попыток пароля.",
+      });
       return fail("too_many_attempts", `Слишком много неудачных попыток входа. Попробуйте через ${minutes} мин.`, 429);
     }
 
@@ -119,6 +138,7 @@ export async function POST(req: NextRequest) {
       entityId: result.user.userId,
       ip,
     });
+    await checkLoginSignals({ userId: result.user.userId, userName: result.user.name, ip, at: startedAt });
     return ok({ user: result.user });
   } catch (err) {
     return handleError(err);

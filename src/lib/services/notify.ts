@@ -85,6 +85,25 @@ export async function notifyLeadership(text: string): Promise<void> {
   await Promise.all(leaders.map((l) => send(l.telegramChatId!, text)));
 }
 
+/**
+ * Уведомить тех, кто отвечает за безопасность: роль «Безопасность» и админа.
+ * Руководителя отдела намеренно не трогаем — тревоги про входы и пароли не его
+ * забота, а поток лишних сообщений он быстро замьютит.
+ */
+export async function notifySecurity(
+  text: string,
+  path = "/leadership/audit",
+  label = "Открыть журнал действий",
+): Promise<void> {
+  if (!telegramConfigured()) return;
+  const people = await prisma.user.findMany({
+    where: { role: { in: ["Security", "Owner"] }, telegramChatId: { not: null } },
+    select: { telegramChatId: true },
+  });
+  const body = withLink(text, path, label);
+  await Promise.all(people.map((p) => send(p.telegramChatId!, body)));
+}
+
 // ── Готовые сообщения под события сервиса ────────────────────────────────────
 
 export async function notifyDecisionCreated(opts: {

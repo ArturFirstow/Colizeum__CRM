@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/primitives";
 import { describeAction, describeEntity, pruneAudit, AUDIT_KEEP_DAYS } from "@/lib/audit";
 import { canSeeCompliance } from "@/lib/scope";
+import { recentAlerts } from "@/lib/services/security-alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,10 @@ export default async function AuditPage({
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const failed = rows.filter((r) => !r.ok).length;
 
+  // Тревоги за две недели — наверх страницы. В общей таблице они теряются
+  // среди тысяч обычных строк, а смотреть надо именно их.
+  const alerts = await recentAlerts(new Date(Date.now() - 14 * 86400000), 20);
+
   return (
     <div>
       <PageHeader
@@ -74,6 +79,48 @@ export default async function AuditPage({
           В журнал намеренно не попадает содержимое записей — только названия изменённых полей.
           Из него видно, кто открывал карточку клиента, но не видно телефона из этой карточки.
         </p>
+      </section>
+
+      {/* Тревоги: подбор пароля, вход с нового адреса, выгрузка отдела и прочее,
+          о чём сервис сам пишет в Telegram ответственному за безопасность. */}
+      <section className="card mb-5 p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-semibold text-ink-50">Подозрительная активность</h2>
+          <span className="text-xs text-ink-500">за последние 14 дней</span>
+        </div>
+        {alerts.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-400">
+            Тревог нет. Сервис сам следит за подбором пароля, входами с незнакомых адресов и
+            в нерабочее время, отключением входа по коду, сменой роли и паролей, выгрузкой данных
+            всего отдела — и шлёт их в Telegram, как только они появляются.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {alerts.map((a) => (
+              <li
+                key={a.id}
+                className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <b className="text-red-200">{a.label}</b>
+                  <span className="text-xs text-ink-500">
+                    {a.at.toLocaleString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <div className="mt-1 text-ink-300">{a.detail}</div>
+                <div className="mt-1 text-xs text-ink-500">
+                  {a.userName ?? "сотрудник неизвестен"}
+                  {a.ip && <span className="ml-2 font-mono">{a.ip}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Фильтр по виду действия */}

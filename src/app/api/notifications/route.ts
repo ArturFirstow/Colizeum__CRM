@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok } from "@/lib/api";
 import { isLeadership } from "@/lib/scope";
+import { recentAlerts } from "@/lib/services/security-alerts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // События для всплывающих уведомлений на сайте.
@@ -13,7 +14,7 @@ import { isLeadership } from "@/lib/scope";
 
 export type NotificationItem = {
   id: string;
-  kind: "decision" | "answer" | "task" | "blocker" | "chat";
+  kind: "decision" | "answer" | "task" | "blocker" | "chat" | "security";
   title: string;
   body: string;
   href: string;
@@ -30,6 +31,21 @@ export async function GET(req: NextRequest) {
 
     const items: NotificationItem[] = [];
     const leader = isLeadership(session);
+
+    // Ответственным за безопасность — тревоги (требование 6.7). Telegram может
+    // быть не настроен или замьючен, поэтому то же самое всплывает в сервисе.
+    if (session.role === "Security" || session.role === "Owner") {
+      for (const a of await recentAlerts(since)) {
+        items.push({
+          id: `security:${a.id}`,
+          kind: "security",
+          title: a.label,
+          body: [a.userName, a.ip, a.detail].filter(Boolean).join(" · "),
+          href: "/leadership/audit",
+          at: a.at.toISOString(),
+        });
+      }
+    }
 
     // Руководителю: новые вопросы и поднятые блокеры по отделу.
     if (leader) {
