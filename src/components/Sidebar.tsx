@@ -11,18 +11,20 @@ import { initials } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
 import { ChangePassword } from "@/components/ChangePassword";
 import { UserMenu } from "@/components/UserMenu";
+import { TwoFactorPanel } from "@/components/security/TwoFactorButton";
 import { LEGAL_DOCS } from "@/lib/legal";
 
 export function Sidebar({
   user,
 }: {
-  user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null };
+  user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null; totpEnabled?: boolean };
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   // Счётчик-сигнал: увеличиваем — открывается окно смены пароля из меню.
   const [passwordSignal, setPasswordSignal] = useState(0);
+  const [twoFactorSignal, setTwoFactorSignal] = useState(0);
 
   // Кнопка «Ещё» в нижней панели просит открыть эту же шторку.
   useEffect(() => {
@@ -101,10 +103,13 @@ export function Sidebar({
           email: user.email,
           roleLabel: ROLE_LABELS[user.role as Role] ?? user.role,
           avatarUrl: user.avatarUrl,
+          totpEnabled: user.totpEnabled,
         }}
         onChangePassword={() => setPasswordSignal((n) => n + 1)}
+        onTwoFactor={() => setTwoFactorSignal((n) => n + 1)}
       />
       <ChangePassword userId={user.id} hideTrigger openSignal={passwordSignal} />
+      <TwoFactorPanel userId={user.id} enabled={!!user.totpEnabled} openSignal={twoFactorSignal} />
 
       {/* Правовые документы — те же, что в подвале страницы входа. Нужны и
           после входа: сотрудник должен иметь возможность перечитать их. */}

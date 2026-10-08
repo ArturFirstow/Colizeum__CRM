@@ -13,22 +13,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Второй шаг входа: пароль принят, ждём код из приложения.
+  const [pending, setPending] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [who, setWho] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      await apiFetch("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
+      const body = pending ? { pending, code } : { email, password };
+      const res = await apiFetch<{ need2fa?: boolean; pending?: string; name?: string }>(
+        "/api/auth/login",
+        { method: "POST", body: JSON.stringify(body) },
+      );
+      // Включён второй фактор — показываем поле для кода и остаёмся на месте.
+      if (res.need2fa && res.pending) {
+        setPending(res.pending);
+        setWho(res.name ?? "");
+        setLoading(false);
+        return;
+      }
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка входа");
       setLoading(false);
     }
+  }
+
+  function backToPassword() {
+    setPending(null);
+    setCode("");
+    setError(null);
   }
 
   return (
@@ -58,6 +76,35 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={onSubmit} className="card space-y-4 p-7">
+          {pending ? (
+            <>
+              <div className="text-center">
+                <div className="text-3xl">🔐</div>
+                <h2 className="mt-2 text-lg font-bold text-ink-50">Код из приложения</h2>
+                <p className="mt-1 text-sm text-ink-400">
+                  {who ? `${who}, откройте` : "Откройте"} приложение-аутентификатор и введите
+                  шестизначный код. Если телефона под рукой нет — введите запасной код.
+                </p>
+              </div>
+              <div>
+                <label className="label" htmlFor="code">
+                  Код
+                </label>
+                <input
+                  id="code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  className="input text-center font-mono text-xl tracking-[0.35em]"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="000000"
+                  required
+                />
+              </div>
+            </>
+          ) : (
+          <>
           <div>
             <label className="label" htmlFor="email">
               Логин (e-mail)
@@ -88,6 +135,8 @@ export default function LoginPage() {
               required
             />
           </div>
+          </>
+          )}
 
           {error && (
             <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">
@@ -96,8 +145,14 @@ export default function LoginPage() {
           )}
 
           <button type="submit" className="btn btn-primary w-full py-2.5" disabled={loading}>
-            {loading ? "Вход…" : "Войти"}
+            {loading ? "Проверяем…" : pending ? "Подтвердить" : "Войти"}
           </button>
+
+          {pending && (
+            <button type="button" className="btn btn-ghost w-full" onClick={backToPassword}>
+              ← Ввести пароль заново
+            </button>
+          )}
         </form>
 
         <p className="mt-6 text-center text-xs text-ink-500">

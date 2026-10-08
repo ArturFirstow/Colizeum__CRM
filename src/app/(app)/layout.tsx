@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Фото для меню профиля: в сессии его нет, берём из базы.
   const me = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { avatarUrl: true },
+    select: { avatarUrl: true, totpEnabledAt: true },
   });
 
   const user = {
@@ -22,7 +22,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     role: session.role,
     track: session.track,
     avatarUrl: me?.avatarUrl,
+    totpEnabled: Boolean(me?.totpEnabledAt),
   };
+
+  // Второй фактор обязателен для админа и безопасности (требование 5.1):
+  // у них доступ к управлению и к журналу. Жёстко не блокируем — человек,
+  // запертый снаружи, хуже, чем человек с предупреждением на экране.
+  const needsTwoFactor =
+    (session.role === "Owner" || session.role === "Security") && !me?.totpEnabledAt;
 
   return (
     // ⚠️ Раскладка в ряд только с планшета. Раньше здесь стоял просто «flex»,
@@ -34,6 +41,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="min-w-0 flex-1">
         {/* Отступ снизу на телефоне — под нижнюю панель навигации. */}
         <div className="page-enter mx-auto max-w-7xl px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8 lg:py-8">
+          {needsTwoFactor && (
+            <div className="mb-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+              <b>Включите вход по коду.</b> У вашей роли есть доступ к управлению и к журналу
+              действий, поэтому одного пароля мало — это требование по безопасности.
+              Откройте меню под своим именем слева внизу → «Вход по коду». Займёт минуту.
+            </div>
+          )}
           {children}
         </div>
       </main>

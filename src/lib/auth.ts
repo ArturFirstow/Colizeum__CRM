@@ -62,25 +62,32 @@ async function signSession(payload: SessionPayload): Promise<string> {
 }
 
 /** Проверяет логин/пароль и, при успехе, ставит cookie-сессию. */
-export async function login(
-  email: string,
-  password: string,
-): Promise<{ ok: true; user: SessionPayload } | { ok: false; error: string }> {
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-  if (!user) return { ok: false, error: "Неверный логин или пароль" };
+/** Промежуточный пропуск между «пароль верный» и «код введён».
+ *  Живёт 5 минут и ничего, кроме id сотрудника, не содержит. */
+const PENDING_TTL_SECONDS = 300;
 
-  const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) return { ok: false, error: "Неверный логин или пароль" };
+export async function createPendingToken(userId: string): Promise<string> {
+  return new SignJWT({ userId, stage: "totp" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${PENDING_TTL_SECONDS}s`)
+    .sign(secretKey());
+}
 
-  const payload: SessionPayload = {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role as Role,
-    track: (user.track as UserTrack) ?? "Ads",
-  };
+export async function readPendingToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey());
+    if (payload.stage !== "totp" || typeof payload.userId !== "string") return null;
+    return payload.userId;
+  } catch {
+    return null;
+  }
+}
+
+/** Ставит cookie-сессию. Вынесено отдельно: после второго фактора вход
+ *  завершается здесь же, а не повторным вводом пароля. */
+export async function startSession(payload: SessionPayload): Promise<void> {
   const token = await signSession(payload);
-
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
@@ -89,7 +96,47 @@ export async function login(
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
+}
 
+export function sessionPayloadOf(user: {
+  id: string; email: string; name: string; role: string; track: string | null;
+}): SessionPayload {
+  return {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as Role,
+    track: (user.track as UserTrack) ?? "Ads",
+  };
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<
+  | { ok: true; user: SessionPayload }
+  | { ok: "totp"; pending: string; userId: string; name: string }
+  | { ok: false; error: string }
+> {
+  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  if (!user) return { ok: false, error: "Неверный логин или пароль" };
+
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) return { ok: false, error: "Неверный логин или пароль" };
+
+  // Второй фактор включён — сессию пока не выдаём, просим код из приложения.
+  if (user.totpEnabledAt && user.totpSecret) {
+    return { ok: "totp", pending: await createPendingToken(user.id), userId: user.id, name: user.name };
+  }
+
+  const payload: SessionPayload = {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as Role,
+    track: (user.track as UserTrack) ?? "Ads",
+  };
+  await startSession(payload);
   return { ok: true, user: payload };
 }
 

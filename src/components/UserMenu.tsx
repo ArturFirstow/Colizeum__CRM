@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, KeyRound, Loader2 } from "lucide-react";
+import { Camera, LogOut, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,9 +12,11 @@ import { apiFetch } from "@/lib/client";
 export function UserMenu({
   user,
   onChangePassword,
+  onTwoFactor,
 }: {
-  user: { id: string; name: string; email: string; roleLabel: string; avatarUrl?: string | null };
+  user: { id: string; name: string; email: string; roleLabel: string; avatarUrl?: string | null; totpEnabled?: boolean };
   onChangePassword: () => void;
+  onTwoFactor: () => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -106,6 +108,15 @@ export function UserMenu({
             }}
           >
             Сменить пароль
+          </MenuItem>
+          <MenuItem
+            icon={<ShieldCheck size={14} />}
+            onClick={() => {
+              setOpen(false);
+              onTwoFactor();
+            }}
+          >
+            {user.totpEnabled ? "Вход по коду ✓" : "Вход по коду"}
           </MenuItem>
           <MenuItem icon={<LogOut size={14} />} onClick={logout} danger>
             Выйти
