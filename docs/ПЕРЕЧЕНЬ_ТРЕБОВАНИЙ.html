@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перечень требований к CRM — статус внедрения</title>
+<style>
+  :root{
+    --brand:#FCDF3B; --ink-950:#161616; --ink-900:#1F1F1F; --ink-800:#2B2B2B; --ink-700:#3A3A3A;
+    --ink-300:#C8C8C8; --ink-400:#9A9A9A; --ink-50:#F1F1F1;
+    --ok:#4ADE80; --warn:#FBBF24; --bad:#F87171; --info:#60A5FA;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--ink-950); color:var(--ink-50);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.55; font-size:15.5px}
+  .wrap{max-width:1180px; margin:0 auto; padding:36px 22px 80px}
+  header{border-bottom:3px solid var(--brand); padding-bottom:18px; margin-bottom:26px}
+  .logo{display:inline-block; background:var(--brand); color:var(--ink-900);
+    font-weight:800; letter-spacing:.08em; padding:4px 10px; border-radius:6px; font-size:12.5px}
+  h1{font-size:28px; margin:13px 0 5px; line-height:1.25}
+  .meta{color:var(--ink-400); font-size:13.5px}
+  .lead{background:var(--ink-900); border-left:4px solid var(--brand);
+    padding:16px 20px; border-radius:0 12px 12px 0; margin:24px 0}
+  .lead b{color:var(--brand)}
+  h2{font-size:21px; margin:44px 0 6px; padding-bottom:7px; border-bottom:1px solid var(--ink-700)}
+  h2 .n{color:var(--brand); margin-right:8px}
+  .sub{color:var(--ink-400); font-size:14px; margin:4px 0 14px}
+
+  .counts{display:flex; flex-wrap:wrap; gap:10px; margin:20px 0}
+  .cnt{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:10px;
+    padding:12px 16px; min-width:132px}
+  .cnt .big{font-size:26px; font-weight:800; line-height:1.1}
+  .cnt .lbl{font-size:12.5px; color:var(--ink-400); margin-top:2px}
+  .c-ok .big{color:var(--ok)} .c-part .big{color:var(--warn)}
+  .c-no .big{color:var(--bad)} .c-dec .big{color:var(--info)}
+
+  table{width:100%; border-collapse:collapse; margin:14px 0 8px; font-size:14px}
+  th{background:var(--brand); color:var(--ink-900); text-align:left; padding:9px 11px; font-weight:700; font-size:13px}
+  td{padding:11px; border-bottom:1px solid var(--ink-800); vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  td.num{color:var(--ink-400); font-variant-numeric:tabular-nums; white-space:nowrap; font-size:13px}
+  .who{display:block; color:var(--ink-400); font-size:12.5px; margin-top:3px; font-style:italic}
+  .proof{font-size:13px; color:var(--ink-300)}
+  .proof code{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:4px;
+    padding:1px 5px; font-size:12px; color:var(--brand); font-family:ui-monospace,Menlo,Consolas,monospace}
+  .proof .path{color:var(--ink-50)}
+  .gap{color:var(--bad)}
+
+  .st{display:inline-block; padding:3px 9px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap}
+  .s-ok{background:rgba(74,222,128,.15); color:var(--ok); border:1px solid rgba(74,222,128,.35)}
+  .s-part{background:rgba(251,191,36,.15); color:var(--warn); border:1px solid rgba(251,191,36,.35)}
+  .s-no{background:rgba(248,113,113,.15); color:var(--bad); border:1px solid rgba(248,113,113,.35)}
+  .s-dec{background:rgba(96,165,250,.15); color:var(--info); border:1px solid rgba(96,165,250,.35)}
+
+  .box{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:12px; padding:16px 20px; margin:18px 0}
+  .box.alarm{border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.07)}
+  .box h3{margin:0 0 8px; font-size:17px; color:var(--brand)}
+  .box.alarm h3{color:var(--bad)}
+  .legend{display:flex; flex-wrap:wrap; gap:18px; font-size:13.5px; color:var(--ink-300); margin:14px 0 0}
+  footer{margin-top:54px; padding-top:18px; border-top:1px solid var(--ink-800); color:var(--ink-400); font-size:13px}
+  @media print{
+    body{background:#fff; color:#000} .wrap{max-width:none}
+    h2{border-color:#bbb} td{border-color:#ddd} th{background:#FCDF3B; color:#000}
+    .box,.lead,.cnt{background:#f7f7f7; color:#000; border-color:#ccc}
+    .proof,.who,.meta{color:#555} .proof code{background:#eee; color:#7a6600; border-color:#ddd}
+    .box h3{color:#8a7400} tr:nth-child(even) td{background:#fafafa}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="logo">COLIZEUM AGENCY</span>
+  <h1>Перечень требований к CRM — статус внедрения</h1>
+  <div class="meta">8 октября 2026 · требования из транскрипта встречи 07.10.2026 и документа «Требования по безопасности при создании и запуске сервисов»</div>
+</header>
+
+<div class="lead">
+  Разобраны <b>77 требований</b> по двум источникам. Каждое проверено по коду сервиса:
+  в колонке «Доказательство» указано, где функция лежит в интерфейсе и каким файлом сделана.
+  Там, где требования нет, так и написано — <b>без доказательства пункт считается невыполненным</b>.
+</div>
+
+<div class="counts">
+  <div class="cnt c-ok"><div class="big">36</div><div class="lbl">внедрено</div></div>
+  <div class="cnt c-part"><div class="big">11</div><div class="lbl">частично</div></div>
+  <div class="cnt c-no"><div class="big">24</div><div class="lbl">не внедрено</div></div>
+  <div class="cnt c-dec"><div class="big">6</div><div class="lbl">решение не техническое</div></div>
+</div>
+
+<div class="legend">
+  <span><span class="st s-ok">внедрено</span> работает, есть доказательство</span>
+  <span><span class="st s-part">частично</span> механизм есть, доведено не до конца</span>
+  <span><span class="st s-no">не внедрено</span> в сервисе отсутствует</span>
+  <span><span class="st s-dec">решение</span> зависит от руководства, не от кода</span>
+</div>
+
+<div class="box alarm">
+  <h3>Поправка к предыдущему блупринту</h3>
+  <p style="margin:0">В документе от 7 октября взаимодействие с Aspro было свёрнуто в одну строку.
+  Это было неверно: в транскрипте <b>четыре разных требования по Aspro</b>, и ни одно не внедрено —
+  в базе данных нет ни одного поля со ссылкой на бизнес-процесс, в коде нет ни одного обращения
+  к Aspro. Раздел 7 ниже разбирает их по отдельности.</p>
+</div>
+
+<!-- ================= 1 ================= -->
+<h2><span class="n">1.</span>Заявки с сайта</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">1.1</td>
+  <td>Заявки с сайта видны в сервисе, не надо заходить на сайт
+    <span class="who">Марина, 0:05: «эта выгрузка очень нравится, я не люблю заходить в ту вкладку»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">Меню → «Входящие с сайта»</span>. Тянутся из рабочей Google-таблицы, синхронизация при открытии и кнопкой «Обновить».<br>Код: <code>src/lib/services/leads-sync.ts</code>, <code>/api/leads/sync</code></td></tr>
+<tr><td class="num">1.2</td>
+  <td>Видно дату, заявителя, компанию
+    <span class="who">Артур, 0:42</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Колонки таблицы заявок. Статус, ответственный и заметка живут в CRM и синхронизацией не перетираются.<br>Код: <code>src/lib/leads-parse.ts</code>, <code>/api/leads/[id]</code></td></tr>
+<tr><td class="num">1.3</td>
+  <td>Заявка с ответственным сама заводит задачу «Связаться с…»</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Назначение ответственного в заявке создаёт задачу на доске.</td></tr>
+</tbody></table>
+
+<!-- ================= 2 ================= -->
+<h2><span class="n">2.</span>Карточка клиента</h2>
+<p class="sub">Главный запрос встречи. Саша, 32:12: «Через год, если нам надо что-то вспомнить… мы спокойно заходим, быстро это всё видим».</p>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">2.1</td>
+  <td>Завести клиента, контакты, реквизиты
+    <span class="who">Катя, 9:34</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Клиенты» → «+ Рекламодатель» → карточка</span>: реквизиты, контакты, файл карточки контрагента.<br>Код: <code>src/app/(app)/advertisers/[id]/page.tsx</code></td></tr>
+<tr><td class="num">2.2</td>
+  <td>Несколько сделок на одного клиента
+    <span class="who">Артур, 11:59: «Т-Банк — один клиент, но сделки разные»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Связь «клиент → много сделок» в базе, кнопка «+ Сделка» в карточке.<br>Код: <code>prisma/schema.prisma</code> → <code>Advertiser.deals</code></td></tr>
+<tr><td class="num">2.3</td>
+  <td>Переход к сделкам прямо из карточки
+    <span class="who">Марина, 16:52: «сделка есть, но её я не вижу»</span></td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Сделки в карточке <b>есть и кликаются</b>, но спрятаны под заголовком <b>«Информация и контекст»</b> — поэтому их не находят.<br><span class="gap">Нужно: переименовать блок в «Сделки» и поднять выше.</span></td></tr>
+<tr><td class="num">2.4</td>
+  <td>Задачи клиента видны в его карточке
+    <span class="who">Марина, 30:45: «в клиентах у меня нет, что мне нужно что-то делать»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Карточка клиента грузит контакты, сделки, документы, креативы и хронологию — <b>задач среди них нет</b>.<br>Проверено: в <code>advertisers/[id]/page.tsx</code> нет <code>tasks</code>. Связь задачи с клиентом в базе при этом есть.</td></tr>
+<tr><td class="num">2.5</td>
+  <td>Закрытые задачи остаются архивом в карточке
+    <span class="who">Саша, 31:20: «через год заходим в карточку, и это всё прям в хронологии»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Задачи попадают только в общую ленту хронологии. Отдельного архива по клиенту нет.<br>Марина, 31:19: «я в хронологию не смотрю, там слишком много».</td></tr>
+<tr><td class="num">2.6</td>
+  <td>Ссылки на креативы вместо загруженных файлов
+    <span class="who">Марина, 17:01: «мы файлы редко используем, удобнее ссылкой»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">У креатива в базе есть название, размер, статус и заметка. <b>Поля для ссылки нет.</b><br>Проверено: <code>model Creative</code> в <code>prisma/schema.prisma</code>.</td></tr>
+<tr><td class="num">2.7</td>
+  <td>Хронология: вся история по клиенту в одном месте
+    <span class="who">Артур, 19:44 (по рекомендации Саши)</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">Карточка клиента → блок «Хронология»</span>: сделки, встречи, статусы дня, задачи, документы, оплаты, размещения, ОРД. Фильтры по типу, группировка по дням.<br>Код: <code>src/lib/services/client-timeline.ts</code></td></tr>
+<tr><td class="num">2.8</td>
+  <td>Кнопка «Пересказать историю» для передачи дел
+    <span class="who">Артур, 19:44</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Кнопка в блоке «Хронология», ИИ пересказывает последние 150 событий.<br>Код: <code>/api/ai/timeline-summary</code></td></tr>
+<tr><td class="num">2.9</td>
+  <td>Убрать поле «Цели и задачи»
+    <span class="who">Артур, 11:40: «мне кажется, это лишнее»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Поле <code>goals</code> по-прежнему в базе и в форме клиента.</td></tr>
+</tbody></table>
+
+<!-- ================= 3 ================= -->
+<h2><span class="n">3.</span>Сделки и стадии</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">3.1</td>
+  <td>Сократить воронку до 3–4 понятных этапов
+    <span class="who">Марина, 22:43: «подготовка, в работе, закрытие… слишком много шагов». Артур согласился, 23:07</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">В сервисе по-прежнему <b>9 стадий</b>: Лид · КП/условия · Договор · Приложение/спец. · Предоплата · Материалы+ОРД · Размещение · УПД+отчёт · Закрытие.<br>Проверено: <code>DEAL_STAGES</code> в <code>src/lib/enums.ts</code> — 9 значений.</td></tr>
+<tr><td class="num">3.2</td>
+  <td>Подписать каждый блок стадии
+    <span class="who">Саша, 21:32: «чтобы не просто как заряд батарейки»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Полоска стадий кликается, но подписей под блоками нет. Артур, 21:02: «они, конечно, неочевидные».</td></tr>
+<tr><td class="num">3.3</td>
+  <td>Пометка «стадия не актуальна»
+    <span class="who">Саша, 22:01: «это скипнули, потому что этого нет, или забыли?»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Поиск по коду не находит такой пометки. Пропуск стадии и её неактуальность сейчас неразличимы.</td></tr>
+<tr><td class="num">3.4</td>
+  <td>Стадии можно пропускать
+    <span class="who">Артур, 21:51</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Переход через стадию даёт предупреждение с вариантами «Знаю, принимаю» и «Уточню к дате».<br>Код: <code>src/lib/services/deal-stage.ts</code></td></tr>
+<tr><td class="num">3.5</td>
+  <td>Тип сделки: прямой клиент или агентство</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Поле в форме сделки, в карточке агентства — список его клиентов.</td></tr>
+<tr><td class="num">3.6</td>
+  <td>Не вести в CRM то, что уже ведётся в Aspro
+    <span class="who">Марина, 23:58; Артур: «это просто дублирование»</span></td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">На встрече договорились, что поля договора и маркировки необязательны. В сервисе это никак не отражено — обязательных полей и так нет, но и подсказки «это можно не заполнять» тоже нет.</td></tr>
+</tbody></table>
+
+<!-- ================= 4 ================= -->
+<h2><span class="n">4.</span>Документы и файлы</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">4.1</td>
+  <td>Хранение документов со структурой и версиями
+    <span class="who">Артур, 5:23: «самая главная вкладка для меня — документы»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Документы»</span>: 8 подразделов, версии файла с историей, несколько файлов в одну карточку.</td></tr>
+<tr><td class="num">4.2</td>
+  <td>Баг: карточка показывает «0 документов», хотя файлы загружены
+    <span class="who">Марина, 17:45; Артур, 18:06 подтвердил</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof"><b>Баг жив, причина найдена.</b> В сервисе два разных хранилища: раздел «Документы» (с версиями) и универсальные вложения-ячейки. Счётчик в списке клиентов считает <b>только первое</b>, а ячейка в карточке пишет во <b>второе</b>.<br>Проверено: <code>_count.documents</code> в <code>advertisers/page.tsx</code> против <code>FileCell ownerType="advertiser"</code> в карточке.</td></tr>
+<tr><td class="num">4.3</td>
+  <td>Загруженный документ появляется в своём разделе</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Проверено прямо на встрече: Марина загрузила тестовый договор, он появился в разделе «Договор» (18:06–19:25).</td></tr>
+</tbody></table>
+
+<!-- ================= 5 ================= -->
+<h2><span class="n">5.</span>Задачи</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">5.1</td>
+  <td>Задачи как личные напоминания, доска
+    <span class="who">Марина, 30:45</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Задачи»</span>: доска со сторонами «Мы / Клиент», приоритет полосой, перетаскивание, файлы к задаче.</td></tr>
+<tr><td class="num">5.2</td>
+  <td>При создании задачи указывается клиент
+    <span class="who">Саша, 31:20: «задачу ставишь на доске, указываешь клиента»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Клиент выбирается первым полем формы, его название уходит в начало заголовка задачи.<br>Код: <code>src/components/tasks/TasksView.tsx</code>, поле <code>advertiserId</code></td></tr>
+<tr><td class="num">5.3</td>
+  <td>Задача ставится из карточки клиента и появляется на доске
+    <span class="who">Саша, 31:20</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Обратное направление работает (задача → клиент), прямое нет: в карточке клиента нет ни блока задач, ни кнопки «+ Задача».</td></tr>
+<tr><td class="num">5.4</td>
+  <td>Задачи без привязки к клиенту тоже возможны
+    <span class="who">Саша, 31:20</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Поле клиента необязательное.</td></tr>
+</tbody></table>
+
+<!-- ================= 6 ================= -->
+<h2><span class="n">6.</span>ОРД и маркировки</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">6.1</td>
+  <td>Личный трекер маркировок вместо Excel
+    <span class="who">Артур, 28:26: «ЕРИД, ссылка, креатив — переношу эту таблицу сюда»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«ОРД / маркировка»</span>: ЕРИД, роль, площадка, даты, срочность, файлы креатива и акта.</td></tr>
+<tr><td class="num">6.2</td>
+  <td>Баг: нельзя удалить ошибочно загруженный креатив
+    <span class="who">Катя, передала Артур, 29:28: «нужно заново создавать вкладку»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof"><b>Баг подтверждён по коду.</b> Есть загрузка файла и скачивание, <b>удаления отдельного файла нет</b> — только удаление всей маркировки целиком.<br>Проверено: в <code>/api/ord/[id]/files/</code> только метод POST.</td></tr>
+<tr><td class="num">6.3</td>
+  <td>Каждый видит свои маркировки, руководитель — все
+    <span class="who">Артур, 29:28: «надо проверить, если так не работает — допилить»</span></td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">В коде разграничение <b>есть и выглядит правильным</b>: страница фильтрует маркировки по владельцу клиента.<br>Код: <code>ownScope(session)</code> в <code>ord/page.tsx</code>.<br><span class="gap">Живой проверкой под разными учётками не подтверждено — Артур просил именно проверить.</span></td></tr>
+</tbody></table>
+
+<!-- ================= 7 — ASPRO ================= -->
+<h2><span class="n">7.</span>Взаимодействие с Aspro</h2>
+<div class="box alarm">
+  <h3>Ни одно требование не внедрено</h3>
+  <p style="margin:0 0 6px">Проверено двумя способами: поиск по схеме базы данных не находит <b>ни одного поля</b>
+  для ссылки на бизнес-процесс; поиск по всему коду не находит <b>ни одного обращения</b> к Aspro
+  (единственное упоминание — слово «Аспро» в тексте руководства для ИИ-напарника).</p>
+  <p style="margin:0">При этом Артур на встрече (26:31) оценил это как обязательное:
+  «скорее всего, это даже обязательно, когда формируется сделка, в эту сделку нужно подгружать ссылки из Аспра».</p>
+</div>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">7.1</td>
+  <td>Ссылки на бизнес-процессы Aspro в карточке клиента
+    <span class="who">Саша, 26:25: «здесь можно в карточке клиента добавлять ссылки на бизнес-процессы Aspro?»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Поля нет в таблице клиента. <span class="gap">Нужно: поле ссылки (или список ссылок) в карточке.</span></td></tr>
+<tr><td class="num">7.2</td>
+  <td>Ссылки на бизнес-процессы Aspro в сделке
+    <span class="who">Артур, 26:31: «скорее всего, это даже обязательно»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Поля нет в таблице сделки. Смысл по Артуру: «все шаги по клиенту взаимосвязаны с юристами, дизайнерами, бухгалтерией — это всё в Aspro».<br><span class="gap">Нужно: несколько именованных ссылок на сделку (договор, дизайн, бухгалтерия).</span></td></tr>
+<tr><td class="num">7.3</td>
+  <td>Ссылка на бизнес-процесс в маркировке ОРД
+    <span class="who">Артур, 28:26: «в личном трекере ссылка на бизнес-процесс, чтобы была и маркировка, и быстрая ссылка»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Поля нет в таблице маркировки. Боль описал Саша (27:25): «найти нужный ЕРИД — в переписке, в чате… через Ctrl+F единственный шанс что-то найти».</td></tr>
+<tr><td class="num">7.4</td>
+  <td>Автоматический обмен данными с Aspro
+    <span class="who">Артур, 26:31: «не настроили взаимообмен данными, о котором говорил Влад. У меня нет идей, как это сделать»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Ни строки кода. <span class="gap">Блокируется не разработкой: нужен ответ от Влада или Aspro, есть ли у системы API и дадут ли к нему доступ. Пока ответа нет, оценить работу нельзя.</span></td></tr>
+<tr><td class="num">7.5</td>
+  <td>Конструкторы готовят текст задачи для Aspro
+    <span class="who">Артур, 35:16: «я просто копирую и в Aspro вставляю»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">Карточка сделки → «Запрос юристу» и «Запрос на размещение»</span>: галочки форматов, даты, сумма с автоподсчётом НДС, порядок оплаты, география, подписание — всё собирается в готовый текст с кнопкой «Копировать».<br>Код: <code>src/lib/request-templates.ts</code></td></tr>
+</tbody></table>
+
+<!-- ================= 8 ================= -->
+<h2><span class="n">8.</span>Конструкторы запросов</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">8.1</td>
+  <td>Конструктор задачи юристу: форматы, даты, сумма, оплата, гео, подписание</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Все перечисленные Артуром (35:16) поля на месте, включая выбор «кто готовит креативы».</td></tr>
+<tr><td class="num">8.2</td>
+  <td>Автоматический расчёт НДС 22 % от чистой суммы</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сумма вводится чистой, с НДС считается сама по ставке из даты договора. Единое правило по всему сервису.</td></tr>
+<tr><td class="num">8.3</td>
+  <td>Конструктор запроса на размещение макетов</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Форматы, даты, ссылки на макеты, ЕРИД.</td></tr>
+<tr><td class="num">8.4</td>
+  <td>Ссылка под каждый формат отдельно
+    <span class="who">Катя, 39:21: «на телек она не нужна». Артур, 39:37: «для кликабельного баннера вставляешь ссылку»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Поле ссылки появляется под каждым выбранным форматом: в кликабельные вшивается UTM, в статичные — ссылка под QR-код.</td></tr>
+<tr><td class="num">8.5</td>
+  <td>Сохранять сделанные запросы в историю клиента
+    <span class="who">Саша, 38:26: «как история браузера — всё, что делается, складывается в архив». Артур согласился: «можно»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof"><b>Проверено: конструкторы ничего не сохраняют</b> — в коде формы нет ни одного обращения к серверу, текст только копируется в буфер.<br>Марина, 38:02: «это важная информация, самая ключевая, которую ты фиксируешь».</td></tr>
+</tbody></table>
+
+<!-- ================= 9 ================= -->
+<h2><span class="n">9.</span>Напоминания</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">9.1</td>
+  <td>Напоминания из CRM приходят в Telegram
+    <span class="who">Марина, 33:37: «будут ли какие-то напоминания?»</span></td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Механизм работает: просроченные задачи, блокеры, поручения, вопросы руководителю.<br>Код: <code>src/lib/services/notify.ts</code>.<br><span class="gap">Подключён только Артуру — у остальных не заполнен адрес Telegram. Артур, 34:16: «нужно к каждому вашему подвязать, протестировать».</span></td></tr>
+<tr><td class="num">9.2</td>
+  <td>Поле адреса Telegram у сотрудника</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Команда» → карандаш у сотрудника → поле Telegram</span>. Заполняет администратор.</td></tr>
+<tr><td class="num">9.3</td>
+  <td>Напоминания по делу: закрытие квартала, отчёт в ОРД, снять размещение
+    <span class="who">Марина, 33:37</span></td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Истечение маркировки и сроки задач в сервисе есть и попадают в хронологию. <span class="gap">Отдельных напоминаний именно под квартальную сверку и снятие размещения нет.</span></td></tr>
+</tbody></table>
+
+<!-- ================= 10 ================= -->
+<h2><span class="n">10.</span>Мессенджер, передача дел, выгрузки</h2>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">10.1</td>
+  <td>Мессенджер для важного, чтобы не терялось в Telegram
+    <span class="who">Артур, 40:59: «чтобы они не терялись в нашей общей переписке»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Мессенджер»</span>: каналы, личные диалоги, вложения, закрепы, маячок непрочитанного, мгновенная доставка.</td></tr>
+<tr><td class="num">10.2</td>
+  <td>Передача дел в два клика при отпуске
+    <span class="who">Артур, 30:23: «это всё в два клика передастся одной карточкой»</span></td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof"><span class="path">«Передача дел»</span>: выбор клиентов, саммари по каждому, передача и возврат одной кнопкой. Сверху — календарь отпусков с указанием, кто подхватывает дела.</td></tr>
+<tr><td class="num">10.3</td>
+  <td>Выгрузка всего по клиентам в Excel</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Кнопка «Выгрузить в Excel» на «Клиентах» и в «Передаче дел»: книга на девять листов.<br>Код: <code>src/lib/services/client-export.ts</code></td></tr>
+<tr><td class="num">10.4</td>
+  <td>Бронь в календаре размещений появляется из сделки
+    <span class="who">Марина, 8:26: «ты завёл клиента — у тебя в календаре он вплюхнется?»</span></td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Артур, 8:39: «пока что только вручную». Связи между сделкой и бронью нет.</td></tr>
+</tbody></table>
+
+<!-- ================= 11 ================= -->
+<h2><span class="n">11.</span>Планы Саши — отдельный поток</h2>
+<p class="sub">Эти работы Саша ведёт сам. В оценку разработки CRM не входят, но перечислены, чтобы картина была полной.</p>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Комментарий</th></tr></thead>
+<tbody>
+<tr><td class="num">11.1</td><td>Панель статистики в CRM: загрузка инвентаря, выручка, динамика <span class="who">Саша, 44:18</span></td>
+  <td><span class="st s-no">не внедрено</span></td><td class="proof">В CRM не интегрирована.</td></tr>
+<tr><td class="num">11.2</td><td>Конструктор медиапланов в CRM <span class="who">Саша, 44:18</span></td>
+  <td><span class="st s-no">не внедрено</span></td><td class="proof">Инструмент работает отдельно и уже используется. Внутрь CRM не встроен. Замечания к интерфейсу собирает Саша: поиск города, сложение периодов.</td></tr>
+<tr><td class="num">11.3</td><td>ИИ-база протоколов встреч и рабочих переписок <span class="who">Саша, 42:27</span></td>
+  <td><span class="st s-dec">решение</span></td><td class="proof">Саша взял на свою проработку. Затрагивает требования по персональным данным — переписки сотрудников.</td></tr>
+<tr><td class="num">11.4</td><td>Мониторинг конкурентов и изменений в законе <span class="who">Саша, 50:36</span></td>
+  <td><span class="st s-dec">решение</span></td><td class="proof">Зона Саши.</td></tr>
+<tr><td class="num">11.5</td><td>Личный кабинет Артёма под турниры <span class="who">Артур, 55:51</span></td>
+  <td><span class="st s-part">частично</span></td><td class="proof">Турнирный контур в сервисе есть: контрагенты, турниры со сметой, бронь арены. Артур: «нужно получить его таблицы» — отдельная встреча перенесена.</td></tr>
+</tbody></table>
+
+<!-- ================= 12 ================= -->
+<h2><span class="n">12.</span>Безопасность — требования руководства</h2>
+<p class="sub">Нумерация по разделам документа «Требования по безопасности при создании и запуске сервисов».</p>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:11%">Статус</th><th style="width:55%">Доказательство / чего нет</th></tr></thead>
+<tbody>
+<tr><td class="num">5.1</td><td>Вход по логину и паролю обязателен</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Любая страница с данными требует входа, иначе перебрасывает на форму входа.<br>Код: <code>requireSession()</code></td></tr>
+<tr><td class="num">5.1</td><td>Пароль от 12 символов, хранится хэшем</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сделано 7 октября. Пароли в базе — bcrypt-хэш, в открытом виде не хранятся.<br><span class="gap">Старые короткие пароли сотрудников нужно сменить: <code>npx tsx scripts/reset-passwords.ts</code></span></td></tr>
+<tr><td class="num">5.1</td><td>Блокировка после 5–10 неудачных попыток</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">7 попыток за 15 минут по паре «почта + адрес».<br>Код: <code>src/lib/rate-limit.ts</code></td></tr>
+<tr><td class="num">5.1</td><td>Второй фактор для администратора</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Кода нет. Требование документа для админов и доступа к персональным данным.</td></tr>
+<tr><td class="num">5.2</td><td>Проверка прав на сервере, а не скрытие кнопок</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Каждый запрос проверяет область видимости на сервере: чужого клиента не отдаёт даже по прямой ссылке.<br>Код: <code>src/lib/scope.ts</code>, <code>canSeeOwned</code></td></tr>
+<tr><td class="num">5.3</td><td>Журнал действий с персональными данными</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Таблица в базе заведена, но <b>ни одной записи в неё не пишется</b> — поиск по коду не находит обращений. Требование приказа ФСТЭК № 21, хранить не меньше года.</td></tr>
+<tr><td class="num">5.4</td><td>Только HTTPS</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сертификат certbot, HTTP перенаправляется на HTTPS.</td></tr>
+<tr><td class="num">5.4</td><td>Резервные копии зашифрованы</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сделано 7 октября. Проверено: расшифрованная копия совпадает с оригиналом байт в байт, с неверным паролем не открывается.<br><span class="gap">На сервере нужно задать <code>BACKUP_PASSPHRASE</code> — без него копии делаются открытыми.</span></td></tr>
+<tr><td class="num">5.5</td><td>Секретов нет в коде</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Все ключи в <code>.env</code>, файл не попадает в репозиторий.</td></tr>
+<tr><td class="num">5.6</td><td>Защита от SQL-инъекций и проверка входных данных</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Запросы к базе через Prisma (параметризованные), все формы проверяются схемами Zod на сервере.</td></tr>
+<tr><td class="num">5.6</td><td>Защита от подделки запросов и посторонних скриптов</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Сделано 7 октября: заголовки безопасности, запрет чужих скриптов и открытия в рамке, кука с ограничением <code>sameSite</code>.<br><span class="gap">Полноценной защиты от подделки запросов (токен в форме) нет.</span></td></tr>
+<tr><td class="num">5.7</td><td>Собирать минимум данных</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Лишних полей о людях немного, но пересмотра по списку не делали. Пункт 2.9 (убрать «Цели и задачи») — как раз из этой серии.</td></tr>
+<tr><td class="num">5.8</td><td>Показать и удалить все данные человека по запросу</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Такого раздела в сервисе нет. Закон даёт на ответ 10 рабочих дней; сейчас собирать пришлось бы руками по всем разделам.</td></tr>
+<tr><td class="num">5.8</td><td>Фиксация согласия: дата, время, версия текста</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Тексты согласия и политики опубликованы (<span class="path">подвал страницы входа</span>), но факт принятия нигде не записывается — доказать принятие нечем.</td></tr>
+<tr><td class="num">5.9</td><td>Проверка и обновление зависимостей</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Команда проверки есть (<code>npm audit</code>), ежемесячного регламента и ответственного нет.</td></tr>
+<tr><td class="num">5.10</td><td>Ошибки не раскрывают внутренности системы</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сделано 7 октября. Проверено на живом сервисе: наружу уходит «Что-то пошло не так» с кодом, подробности — только в журнал сервера.<br>Код: <code>src/lib/api.ts</code>, <code>src/lib/errors.ts</code></td></tr>
+<tr><td class="num">6.1</td><td>Российский хостинг, база в РФ</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Сервер и база в России.</td></tr>
+<tr><td class="num">6.1</td><td>Заявки с сайта не хранятся за рубежом</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof"><b>Нарушение.</b> Форма сайта собирает имя, компанию, контакт и текст обращения в <b>Google-таблицу</b>. Это персональные данные граждан РФ на зарубежном сервере.<br>Код: <code>src/lib/services/leads-sync.ts</code> читает <code>docs.google.com</code>.</td></tr>
+<tr><td class="num">6.2</td><td>Тестовая и боевая среды разделены</td>
+  <td><span class="st s-no">не внедрено</span></td>
+  <td class="proof">Проверка новых функций идёт на боевом сервисе.</td></tr>
+<tr><td class="num">6.3</td><td>Именной доступ к серверу по ключам</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Вход на сервер под общей учётной записью root. <span class="gap">Нужно: именные учётки и вход по ключу.</span></td></tr>
+<tr><td class="num">6.4</td><td>Лишние порты закрыты, файрвол включён</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Наружу открыты только 80 и 443, база недоступна из интернета.<br>Код: <code>deploy/setup-server.sh</code></td></tr>
+<tr><td class="num">6.5</td><td>Ежедневные копии, проверка восстановления раз в квартал</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Копии по расписанию делаются и шифруются. <span class="gap">Квартальная проверка восстановления в регламент не заведена.</span></td></tr>
+<tr><td class="num">6.7</td><td>Уведомления о недоступности и подозрительной активности</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Есть проверка состояния сервера (<code>deploy/healthcheck.sh</code>). <span class="gap">Уведомлений о всплеске неудачных входов или выгрузок нет.</span></td></tr>
+<tr><td class="num">6.8</td><td>Акт уровня защищённости, модель угроз, перечень мер</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Готовит ответственный за ИБ. Черновики могу подготовить. Ориентир — <b>УЗ-4</b> (обычные категории данных, меньше 100 000 человек, биометрии нет); подтверждает специалист.</td></tr>
+<tr><td class="num">4.1</td><td>Уведомление Роскомнадзора до запуска</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Подаёт ответственный за обработку ПДн.</td></tr>
+<tr><td class="num">4.5</td><td>Трансграничная передача оформлена или прекращена</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Три канала передачи за рубеж: <b>ИИ-помощник</b> (сейчас DeepSeek, Китай — в запросы уходят имена контактов и расшифровки встреч), <b>Telegram</b> (имена сотрудников и клиентов в уведомлениях), <b>Google-таблицы</b> (заявки и показатели встреч).<br>Переключение ИИ на YandexGPT код уже поддерживает — меняются две строки настроек.</td></tr>
+<tr><td class="num">4.10</td><td>Плашка про cookie</td>
+  <td><span class="st s-ok">внедрено</span></td>
+  <td class="proof">Плашка на входе и внутри. Сервис ставит ровно одну техническую куку для входа, аналитики и трекеров нет.</td></tr>
+</tbody></table>
+
+<footer>
+  Источники: транскрипт встречи 07.10.2026 (Артур, Марина, Саша, Катя; тайм-коды из записи) и документ
+  «Требования по безопасности при создании и запуске сервисов».<br>
+  Статус каждого пункта проверен по коду сервиса 8 октября 2026. Пункты без доказательства считаются невыполненными.<br>
+  Оценка уровня защищённости УЗ-4 — ориентир, а не заключение: подтверждает специалист по информационной безопасности.
+</footer>
+
+</div>
+</body>
+</html>
