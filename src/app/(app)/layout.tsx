@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileTabs } from "@/components/MobileTabs";
 import { Notifications } from "@/components/ui/Notifications";
+import { ConsentGate } from "@/components/legal/ConsentGate";
+import { pendingConsents } from "@/lib/services/consent";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -31,6 +33,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const needsTwoFactor =
     (session.role === "Owner" || session.role === "Security") && !me?.totpEnabledAt;
 
+  // Непринятые правовые документы перекрывают работу: без согласия обработка
+  // персональных данных незаконна (требование 4.2).
+  const consentDocs = await pendingConsents(session.userId);
+
   return (
     // ⚠️ Раскладка в ряд только с планшета. Раньше здесь стоял просто «flex»,
     // и на телефоне мобильная шапка становилась соседней КОЛОНКОЙ рядом с
@@ -51,6 +57,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {children}
         </div>
       </main>
+      {consentDocs.length > 0 && <ConsentGate docs={consentDocs} />}
       {/* Всплывающие уведомления — на всех страницах кабинета */}
       <Notifications />
       <MobileTabs user={user} />

@@ -15,6 +15,8 @@ type Member = {
   email: string;
   role: string;
   sheetUrl: string | null;
+  totpEnabledAt?: string | Date | null;
+  consents?: { docSlug: string; docVersion: string; acceptedAt: string | Date }[];
   createdAt: string | Date;
   _count: { ownedAdvertisers: number; ownedTasks: number };
 };
@@ -134,6 +136,26 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
               <span>с {formatDate(m.createdAt)}</span>
               <span className={m.sheetUrl ? "text-emerald-300" : "text-ink-500"}>
                 📊 {m.sheetUrl ? "таблица указана" : "таблицы нет"}
+              </span>
+              {/* Доказательства для проверки по безопасности: включён ли второй
+                  фактор и приняты ли правовые документы. */}
+              <span className={m.totpEnabledAt ? "text-emerald-300" : "text-ink-500"}>
+                🔐 {m.totpEnabledAt ? "вход по коду" : "только пароль"}
+              </span>
+              <span
+                className={(m.consents?.length ?? 0) >= 3 ? "text-emerald-300" : "text-amber-300"}
+                title={
+                  m.consents?.length
+                    ? m.consents
+                        .map(
+                          (c) =>
+                            `${c.docSlug} · версия ${c.docVersion} · ${new Date(c.acceptedAt).toLocaleString("ru-RU")}`,
+                        )
+                        .join("\n")
+                    : "документы ещё не приняты"
+                }
+              >
+                ✓ согласие: {m.consents?.length ?? 0} из 3
               </span>
             </div>
           </div>

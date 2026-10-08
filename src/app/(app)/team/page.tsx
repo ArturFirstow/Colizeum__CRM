@@ -17,6 +17,8 @@ export default async function TeamPage() {
       telegramChatId: true,
       avatarUrl: true,
       createdAt: true,
+      totpEnabledAt: true,
+      consents: { select: { docSlug: true, docVersion: true, acceptedAt: true } },
       _count: { select: { ownedAdvertisers: true, ownedTasks: true } },
     },
     orderBy: { createdAt: "asc" },

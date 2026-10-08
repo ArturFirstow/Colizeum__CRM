@@ -63,6 +63,7 @@ model User {
   channelMemberships ChannelMember[]
   assignedLeads    Lead[]            @relation("LeadAssignee")
   decisionRequests DecisionRequest[] @relation("DecisionRequester")
+  consents         ConsentRecord[]   @relation("ConsentUser")
   absences         Absence[]         @relation("AbsencePerson")
   coveringFor      Absence[]         @relation("AbsenceCover")
   handoversGiven   Handover[]        @relation("HandoverFrom")
@@ -665,6 +666,29 @@ model DailyStatus {
 }
 
 // ── Аудит-лог (v2) ───────────────────────────────────────────────────────────
+// ── Принятие правовых документов ────────────────────────────────────────────
+// Требование 5.8: фиксация согласия — дата, время, версия текста.
+//
+// Версия — отпечаток самого текста документа (первые символы хэша). Так она
+// меняется сама, как только текст поправили: нельзя случайно оставить людей
+// с принятым старым согласием и думать, что они приняли новое.
+//
+// Храним и адрес: при споре «я этого не принимал» это единственное, что
+// подтверждает обстоятельства принятия.
+model ConsentRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  docSlug    String   // polzovatelskoe | politika | soglasie
+  docVersion String   // отпечаток текста на момент принятия
+  acceptedAt DateTime @default(now())
+  ip         String?
+
+  user User @relation("ConsentUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([docSlug, docVersion])
+}
+
 // ── Журнал действий с персональными данными ─────────────────────────────────
 // Требование приказа ФСТЭК № 21 и п. 5.3 требований по безопасности: кто, когда
 // вошёл, что открыл, изменил, удалил, выгрузил.
