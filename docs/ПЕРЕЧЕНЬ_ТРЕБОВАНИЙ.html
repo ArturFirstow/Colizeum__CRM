@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Соответствие требованиям безопасности — CRM Colizeum Agency</title>
+<title>Перечень требований к CRM Agency — статус исполнения</title>
 <style>
   :root{
     --brand:#FCDF3B; --ink-950:#161616; --ink-900:#1F1F1F; --ink-800:#2B2B2B; --ink-700:#3A3A3A;
@@ -15,37 +15,37 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     line-height:1.5; font-size:15px}
   .wrap{max-width:1200px; margin:0 auto; padding:34px 20px 80px}
-  header{border-bottom:3px solid var(--brand); padding-bottom:16px; margin-bottom:22px}
+  header{border-bottom:3px solid var(--brand); padding-bottom:16px; margin-bottom:20px}
   .logo{display:inline-block; background:var(--brand); color:var(--ink-900);
     font-weight:800; letter-spacing:.08em; padding:4px 10px; border-radius:6px; font-size:12px}
   h1{font-size:26px; margin:12px 0 5px; line-height:1.25}
   .meta{color:var(--ink-400); font-size:13px}
   .lead{background:var(--ink-900); border-left:4px solid var(--brand);
-    padding:15px 19px; border-radius:0 12px 12px 0; margin:22px 0; font-size:14.5px}
+    padding:15px 19px; border-radius:0 12px 12px 0; margin:20px 0; font-size:14.5px}
   .lead b{color:var(--brand)}
-  h2{font-size:20px; margin:42px 0 4px; padding-bottom:7px; border-bottom:2px solid var(--brand)}
-  h2 .n{color:var(--brand); margin-right:9px; font-variant-numeric:tabular-nums}
-  h3{font-size:16px; margin:26px 0 2px; color:var(--brand)}
+  h2{font-size:21px; margin:46px 0 4px; padding-bottom:8px; border-bottom:2px solid var(--brand)}
+  h2 .who{color:var(--brand)}
+  h3{font-size:16.5px; margin:28px 0 2px; color:var(--brand)}
+  h4{font-size:15px; margin:20px 0 2px; color:var(--ink-50)}
   .sub{color:var(--ink-400); font-size:13.5px; margin:3px 0 12px}
 
-  .counts{display:flex; flex-wrap:wrap; gap:9px; margin:18px 0}
-  .cnt{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:10px; padding:11px 15px; min-width:118px}
-  .cnt .big{font-size:25px; font-weight:800; line-height:1.1}
+  .counts{display:flex; flex-wrap:wrap; gap:9px; margin:16px 0}
+  .cnt{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:10px; padding:11px 15px; min-width:112px}
+  .cnt .big{font-size:24px; font-weight:800; line-height:1.1}
   .cnt .lbl{font-size:12px; color:var(--ink-400); margin-top:2px}
   .c-ok .big{color:var(--ok)} .c-part .big{color:var(--warn)}
   .c-no .big{color:var(--bad)} .c-dec .big{color:var(--info)} .c-na .big{color:var(--na)}
 
-  table{width:100%; border-collapse:collapse; margin:10px 0 6px; font-size:13.8px}
+  table{width:100%; border-collapse:collapse; margin:10px 0 6px; font-size:13.6px}
   th{background:var(--brand); color:var(--ink-900); text-align:left; padding:8px 10px; font-weight:700; font-size:12.5px}
   td{padding:10px; border-bottom:1px solid var(--ink-800); vertical-align:top}
   tr:nth-child(even) td{background:rgba(255,255,255,.02)}
   td.num{color:var(--ink-400); font-variant-numeric:tabular-nums; white-space:nowrap; font-size:12.5px}
-  .proof{font-size:13px; color:var(--ink-300)}
+  .proof{font-size:12.8px; color:var(--ink-300)}
   .proof code{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:4px;
     padding:1px 5px; font-size:11.5px; color:var(--brand); font-family:ui-monospace,Menlo,Consolas,monospace}
   .proof .path{color:var(--ink-50)}
-  .gap{color:var(--bad)}
-  .own{color:var(--info)}
+  .gap{color:var(--bad)} .own{color:var(--info)}
 
   .st{display:inline-block; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:700; white-space:nowrap}
   .s-ok{background:rgba(74,222,128,.15); color:var(--ok); border:1px solid rgba(74,222,128,.35)}
@@ -56,17 +56,20 @@
 
   .box{background:var(--ink-900); border:1px solid var(--ink-800); border-radius:12px; padding:15px 19px; margin:16px 0}
   .box.alarm{border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.07)}
+  .box.info{border-color:rgba(96,165,250,.4); background:rgba(96,165,250,.06)}
   .box h4{margin:0 0 7px; font-size:15.5px; color:var(--bad)}
+  .box.info h4{color:var(--info)}
+  .box.plain h4{color:var(--brand)}
   .legend{display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--ink-300); margin:12px 0 0}
   .appendix{margin-top:56px; padding-top:22px; border-top:3px dashed var(--ink-700)}
   footer{margin-top:50px; padding-top:16px; border-top:1px solid var(--ink-800); color:var(--ink-400); font-size:12.5px}
   @media print{
-    body{background:#fff; color:#000; font-size:11pt} .wrap{max-width:none; padding:0}
+    body{background:#fff; color:#000; font-size:10.5pt} .wrap{max-width:none; padding:0}
     h2{border-color:#8a7400} td{border-color:#ddd} th{background:#FCDF3B; color:#000}
     .box,.lead,.cnt{background:#f7f7f7; color:#000; border-color:#ccc}
     .proof,.meta,.sub{color:#444} .proof code{background:#eee; color:#7a6600; border-color:#ddd}
-    h3,h2 .n{color:#8a7400} tr:nth-child(even) td{background:#fafafa}
-    table{page-break-inside:auto} tr{page-break-inside:avoid}
+    h3,h2 .who,.box.plain h4{color:#8a7400} tr:nth-child(even) td{background:#fafafa}
+    tr{page-break-inside:avoid}
   }
 </style>
 </head>
@@ -75,386 +78,491 @@
 
 <header>
   <span class="logo">COLIZEUM AGENCY</span>
-  <h1>Соответствие требованиям безопасности</h1>
-  <div class="meta">Внутренний сервис менеджера рекламных проектов (CRM) · проверка на 8 октября 2026</div>
+  <h1>Перечень требований к CRM Agency — статус исполнения</h1>
+  <div class="meta">Внутренний сервис отдела рекламы · проверка на 8 октября 2026</div>
 </header>
 
 <div class="lead">
-  Документ построен <b>строго по разделам 4–8</b> документа «Требования по безопасности при создании
-  и запуске сервисов»: та же нумерация, тот же порядок, та же формулировка требований.
+  Документ повторяет структуру исходного «Перечня требований»: сначала общие пункты,
+  затем разделы <b>Руслана</b>, <b>Ильи</b> и <b>Влада</b> — в том же порядке и с той же нумерацией.
   Проверять можно сверху вниз по своему экземпляру.<br><br>
   В колонке «Доказательство» указано, <b>где функция живёт в сервисе и каким файлом сделана</b>.
   Пункт без доказательства считается невыполненным.<br><br>
-  Правки от коллег по интерфейсу — наше внутреннее обсуждение — вынесены
-  <b>в приложение в самом конце</b> и на соответствие требованиям не влияют.
+  Правки коллег по интерфейсу — внутреннее обсуждение отдела — вынесены <b>в приложение в конце</b>
+  и на исполнение требований не влияют.
 </div>
 
 <div class="counts">
-  <div class="cnt c-ok"><div class="big">22</div><div class="lbl">сделано</div></div>
-  <div class="cnt c-part"><div class="big">15</div><div class="lbl">частично</div></div>
-  <div class="cnt c-no"><div class="big">18</div><div class="lbl">не сделано</div></div>
-  <div class="cnt c-dec"><div class="big">11</div><div class="lbl">решение руководства</div></div>
-  <div class="cnt c-na"><div class="big">5</div><div class="lbl">не применимо</div></div>
+  <div class="cnt c-ok"><div class="big">17</div><div class="lbl">сделано</div></div>
+  <div class="cnt c-part"><div class="big">17</div><div class="lbl">частично</div></div>
+  <div class="cnt c-no"><div class="big">25</div><div class="lbl">не сделано</div></div>
+  <div class="cnt c-dec"><div class="big">10</div><div class="lbl">решение руководства</div></div>
+  <div class="cnt c-na"><div class="big">4</div><div class="lbl">не применимо</div></div>
 </div>
-<p class="sub" style="margin-top:-6px">71 требование по разделам 4–7. Раздел 8 — чек-лист запуска, он сводит эти же пункты и отдельно не считается.</p>
+<p class="sub" style="margin-top:-6px">73 требования. Разделы 2 и 3 (какие данные есть, какие законы применимы) и чек-лист раздела 8 в счёт не идут: первые — классификация, второй сводит те же пункты.</p>
 
 <div class="legend">
   <span><span class="st s-ok">сделано</span> работает, есть доказательство</span>
   <span><span class="st s-part">частично</span> механизм есть, не доведено</span>
   <span><span class="st s-no">не сделано</span> в сервисе отсутствует</span>
   <span><span class="st s-dec">решение</span> бумаги и решения, не код</span>
-  <span><span class="st s-na">не применимо</span> к этому сервису не относится</span>
+  <span><span class="st s-na">не применимо</span> к сервису не относится</span>
 </div>
 
 <div class="box alarm">
-  <h4>Два пункта блокируют запуск по чек-листу раздела 8</h4>
-  <p style="margin:0 0 6px"><b>4.4 Хранение в России.</b> Заявки с сайта (имя, компания, контакт, текст обращения)
-  собираются и хранятся в Google-таблице — персональные данные граждан РФ на зарубежном сервере.</p>
-  <p style="margin:0"><b>4.5 Трансграничная передача.</b> Три действующих канала за рубеж: ИИ-помощник
-  (DeepSeek, Китай), Telegram-уведомления, Google-таблицы. Уведомление в РКН не подавалось.</p>
+  <h4>Первое, что нужно сделать с самим этим документом</h4>
+  <p style="margin:0">В шапке исходного перечня <b>указан логин и пароль руководителя в открытом виде</b>.
+  Документ пересылается и хранится в файлах — этот пароль нужно считать скомпрометированным
+  и сменить, а в дальнейшем доступы передавать отдельно от документов.
+  Это прямо противоречит пунктам <b>5.5</b> и <b>7.2</b> раздела Ильи.<br>
+  Сменить: <span class="path">меню профиля → «Сменить пароль»</span>, либо на сервере
+  <code>npx tsx scripts/set-password.ts</code>.</p>
 </div>
 
-<!-- ============ РАЗДЕЛ 4 ============ -->
-<h2><span class="n">4.</span>Требования Роскомнадзора (организационные)</h2>
-<p class="sub">Делается людьми, а не кодом. Claude готовит черновики, подписывает и подаёт ответственный сотрудник.</p>
+<!-- ============ ОБЩИЙ ПЕРЕЧЕНЬ ============ -->
+<h2>Общий перечень требований</h2>
+<p class="sub">Три пункта в начале документа, без привязки к разделам.</p>
 <table>
-<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование документа</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
+<thead><tr><th style="width:4%">№</th><th style="width:26%">Требование</th><th style="width:12%">Статус</th><th style="width:58%">Доказательство / что мешает</th></tr></thead>
 <tbody>
-<tr><td class="num">4.1</td><td>Уведомление Роскомнадзора — ДО начала обработки. Если организация уже в реестре — проверить, что цели и категории нового сервиса покрыты</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Не подавалось и не проверялось. <span class="own">Кто делает: ответственный за обработку ПДн.</span> Нужно решить, подпадает ли сервис под действующее уведомление организации.</td></tr>
-<tr><td class="num">4.2</td><td>Согласие — отдельный документ или отдельная галочка, не «зашитая» в соглашение</td>
-  <td><span class="st s-part">частично</span></td>
-  <td class="proof">Текст согласия работника написан и опубликован отдельным документом.<br>Код: <code>src/lib/legal.ts</code> → <span class="path">/legal/soglasie</span>.<br><span class="gap">Галочки принятия нет: согласие просто лежит ссылкой, факт принятия не фиксируется (см. 5.8).</span></td></tr>
-<tr><td class="num">4.2</td><td>Галочка не отмечена заранее</td>
+<tr><td class="num">О-1</td><td><b>Логирование операций</b></td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Галочки нет вовсе. Акцепт сейчас — сам факт первого входа, как написано в пользовательском соглашении.</td></tr>
-<tr><td class="num">4.2</td><td>В согласии указаны: оператор, какие данные, цель, срок, кому передаются</td>
+  <td class="proof">Таблица журнала в базе заведена, но <b>ни одной записи в неё не пишется</b> — проверено поиском по коду.<br>То же требование повторяется у Ильи (п. 5.3) и у Влада (журнал обращений по API-ключу, фиксация передач ПДн). <b>Это один и тот же пункт в трёх разделах</b> — делать его надо один раз, с запасом под все три применения.<br><span class="gap">Оценка: 1,5 дня с учётом требований Влада.</span></td></tr>
+<tr><td class="num">О-2</td><td><b>Перенос системы на наши сервера</b></td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Сервис работает на отдельном VPS, арендованном под него, домен <span class="path">colizeum-agensy.space</span>. На серверы компании не переносился.<br>Связано с единым стандартом размещения, который Кольцов, Руслан и Дмитрий готовят к концу месяца (со слов Саши на встрече 7 октября).<br><span class="gap">Переносить имеет смысл вместе с п. 9.5 Влада (тестовый контур) и п. 6.3 Ильи (именной доступ по ключам) — это одна работа над сервером.</span></td></tr>
+<tr><td class="num">О-3</td><td><b>Передача прав на УК</b></td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">⚠️ <b>Противоречие с действующими документами сервиса.</b> Сейчас в репозитории лежат <code>LICENSE</code> и <code>docs/ПРАВА_НА_РАЗРАБОТКУ.md</code>, где авторство кода закреплено за разработчиком, а компании дана отзывная лицензия; данные компании при этом остаются компании.<br>Требование предполагает обратное — передачу прав управляющей компании.<br><span class="own">Это решение владельца кода и руководства, не техническая задача. Нужно: определиться с моделью и привести документы в соответствие, иначе в репозитории останутся два противоречащих утверждения.</span></td></tr>
+</tbody></table>
+
+<!-- ============ РУСЛАН ============ -->
+<h2>Раздел <span class="who">Руслана</span></h2>
+<div class="box plain">
+  <h4>Раздел пуст</h4>
+  <p style="margin:0">В исходном документе под именем Руслана стоит пустой пункт — требования не сформулированы.
+  <span class="own">Нужно запросить у Руслана его часть.</span> По контексту встречи 7 октября он вместе
+  с Кольцовым и Дмитрием готовит единый стандарт размещения сервисов на серверах компании —
+  вероятно, его требования будут связаны с пунктом О-2.</p>
+</div>
+
+<!-- ============ ИЛЬЯ ============ -->
+<h2>Раздел <span class="who">Ильи</span> — требования по безопасности</h2>
+<p class="sub">Нумерация и формулировки сохранены по исходному документу, разделы 1–10.</p>
+
+<h3>1. Главные правила в трёх предложениях</h3>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Правило</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
+<tbody>
+<tr><td class="num">1.1</td><td>Данные о людях хранятся в России, согласие взято, Роскомнадзор уведомлён до запуска</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Выполнена одна часть из трёх: база сервиса в РФ. <b>Заявки с сайта хранятся в Google-таблице</b> (п. 4.4), согласие не фиксируется (п. 4.2), РКН не уведомлён (п. 4.1).</td></tr>
+<tr><td class="num">1.2</td><td>Реальные данные людей не вставляются в чат с ИИ, не отправляются в зарубежные сервисы, не хранятся в открытом виде</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">В <b>разработке</b> правило соблюдалось: работа шла на вымышленных демо-данных.<br>Но <b>сам сервис в работе</b> отправляет реальные данные в зарубежные сервисы: ИИ-помощник (DeepSeek, Китай), Telegram, Google-таблицы. База на сервере не зашифрована.</td></tr>
+<tr><td class="num">1.3</td><td>Ни один сервис не выходит «в бой» без проверки по чек-листу и согласования с ответственным за ИБ</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof"><b>Сервис уже работает на домене с реальными данными.</b> Чек-лист проходится сейчас — этот документ первый такой прогон. Согласования с ответственным за ИБ не было, сам ответственный не назначен.</td></tr>
+</tbody></table>
+
+<h3>2. Какие персональные данные есть в сервисе</h3>
+<p class="sub">Разбор по таблице раздела 2. Важное: в колонке «часто не замечают» сервис держит больше, чем кажется.</p>
+<table>
+<thead><tr><th style="width:30%">Категория из документа</th><th style="width:12%">Есть?</th><th style="width:58%">Что именно и где</th></tr></thead>
+<tbody>
+<tr><td>ФИО, телефон, e-mail, адрес</td><td><span class="st s-ok">есть</span></td><td class="proof">Контактные лица клиентов (ФИО, роль, телефон, почта, телеграм), сотрудники (имя, служебная почта).</td></tr>
+<tr><td>Паспорт, СНИЛС</td><td><span class="st s-na">нет</span></td><td class="proof">Не собираются.</td></tr>
+<tr><td>ИНН</td><td><span class="st s-part">частично</span></td><td class="proof">Хранится ИНН <b>организаций</b>-контрагентов — это не ПДн. <span class="gap">Если среди контрагентов появится ИП, его ИНН станет персональными данными. Сейчас таких записей нет, но ограничения в сервисе тоже нет.</span></td></tr>
+<tr><td>Дата рождения, должность</td><td><span class="st s-part">частично</span></td><td class="proof">Дат рождения нет. Должность контактного лица — есть (поле «роль»).</td></tr>
+<tr><td>Данные сотрудников (табель, зарплата)</td><td><span class="st s-na">нет</span></td><td class="proof">Зарплат и табеля нет. Бюджет отдела — суммы по статьям, не по людям.</td></tr>
+<tr><td><b>IP-адрес</b></td><td><span class="st s-ok">есть</span></td><td class="proof"><b>Не было учтено раньше.</b> Адрес читается при входе и хранится в памяти для защиты от подбора пароля (<code>src/app/api/auth/login/route.ts</code>), а также пишется в журнал обращений веб-сервера на диск.<br><span class="gap">Срок хранения журналов не задан, в политике обработки IP-адреса не упомянуты.</span></td></tr>
+<tr><td>Cookies</td><td><span class="st s-ok">есть</span></td><td class="proof">Ровно одна техническая кука входа. Описана в политике, плашка показывается (п. 4.10).</td></tr>
+<tr><td>Логин</td><td><span class="st s-ok">есть</span></td><td class="proof">Служебная почта сотрудника как логин.</td></tr>
+<tr><td>Фото</td><td><span class="st s-ok">есть</span></td><td class="proof">Фото сотрудника, по желанию. Указано в согласии работника.</td></tr>
+<tr><td><b>Голосовая запись</b></td><td><span class="st s-ok">есть</span></td><td class="proof"><b>Не было учтено раньше.</b> В «Дневник» прикрепляются файлы записей встреч и их расшифровки — это голоса и слова конкретных людей, в том числе сотрудников клиента.<br><span class="gap">Согласие участников встречи на запись нигде не фиксируется.</span></td></tr>
+<tr><td>Геолокация, ID устройства</td><td><span class="st s-na">нет</span></td><td class="proof">Не собираются.</td></tr>
+<tr><td><b>История действий</b></td><td><span class="st s-ok">есть</span></td><td class="proof">Хронология по клиенту, статусы дня, записи дневника — фактически история работы сотрудника.</td></tr>
+<tr><td><b>Переписка, заявки с сайта</b></td><td><span class="st s-ok">есть</span></td><td class="proof">Внутренний мессенджер, заметки по клиентам, обращения с сайта (имя, компания, контакт, текст).</td></tr>
+<tr><td>Особые категории (здоровье, национальность, религия, судимость, биометрия)</td><td><span class="st s-na">нет</span></td><td class="proof">Не собираются. Фото сотрудника биометрией не является — для опознания не используется.</td></tr>
+</tbody></table>
+
+<h3>3. Какие законы применимы к этому сервису</h3>
+<table>
+<thead><tr><th style="width:30%">Документ</th><th style="width:12%">Применяется?</th><th style="width:58%">Почему и что из этого следует</th></tr></thead>
+<tbody>
+<tr><td>152-ФЗ «О персональных данных»</td><td><span class="st s-ok">да</span></td><td class="proof">В сервисе есть данные о людях (см. раздел 2). Отсюда вся часть 4.</td></tr>
+<tr><td>Постановление Правительства № 1119 (уровень защищённости)</td><td><span class="st s-ok">да</span></td><td class="proof">Уровень не определён. <b>Ориентир — УЗ-4</b>: обычные категории, меньше 100 000 человек, биометрии нет. Подтверждает специалист (п. 6.8).</td></tr>
+<tr><td>Приказ ФСТЭК № 21 (меры защиты)</td><td><span class="st s-ok">да</span></td><td class="proof">Набор мер под УЗ-4. Основное невыполненное отсюда — журнал действий (п. 5.3).</td></tr>
+<tr><td>149-ФЗ «Об информации»</td><td><span class="st s-ok">да</span></td><td class="proof">Общие требования к защите и ограничению доступа. Разграничение ролей выполнено (п. 5.2).</td></tr>
+<tr><td>КоАП ст. 13.11, УК ст. 272.1</td><td><span class="st s-ok">да</span></td><td class="proof">Ответственность за нарушения. Актуальные риски — п. 4.4 и 4.5.</td></tr>
+<tr><td>Приказ ФСТЭК № 117 (с 01.03.2026)</td><td><span class="st s-na">нет</span></td><td class="proof">Только для государственных систем и заказов госорганов. Сервис внутренний, коммерческий.</td></tr>
+<tr><td>187-ФЗ о КИИ, приказ ФСТЭК № 239</td><td><span class="st s-na">нет</span></td><td class="proof">Компания не относится к критической инфраструктуре. <span class="own">Подтвердить у ответственного за ИБ.</span></td></tr>
+<tr><td>Требования ФСБ (приказ № 378)</td><td><span class="st s-na">нет</span></td><td class="proof">Сертифицированные средства шифрования не используются. Шифрование копий сделано обычным openssl — это не СКЗИ.<br><span class="gap">Если для защиты ПДн потребуется сертифицированная криптография, пункт станет применимым.</span></td></tr>
+<tr><td>Роспотребнадзор (права потребителей)</td><td><span class="st s-na">нет</span></td><td class="proof">Закрытый служебный сервис, продаж физлицам нет.</td></tr>
+</tbody></table>
+
+<h3>4. Требования Роскомнадзора (организационные)</h3>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
+<tbody>
+<tr><td class="num">4.1</td><td>Уведомление Роскомнадзора до начала обработки</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Не подавалось, покрытие действующим уведомлением организации не проверялось. <span class="own">Ответственный за обработку ПДн.</span></td></tr>
+<tr><td class="num">4.2</td><td>Согласие — отдельный документ или отдельная галочка; галочка не отмечена заранее; указаны оператор, данные, цель, срок, кому передаются</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Оператор, состав данных и цель в тексте есть. <span class="gap">Конкретные сроки хранения не проставлены (см. 4.7).</span><br>⚠️ Текст — рабочая адаптация, не заключение юриста.</td></tr>
-<tr><td class="num">4.2</td><td>Особые категории и биометрия — письменное согласие</td>
+  <td class="proof">Текст согласия работника написан и опубликован отдельно: <code>src/lib/legal.ts</code> → <span class="path">/legal/soglasie</span>. Оператор, состав данных и цель указаны.<br><span class="gap">Галочки принятия нет вовсе — акцептом считается первый вход. Сроки хранения не проставлены. Факт принятия не фиксируется (п. 5.8).</span></td></tr>
+<tr><td class="num">4.2</td><td>Особые категории и биометрия — письменное согласие; согласие на рассылки отдельное</td>
   <td><span class="st s-na">не применимо</span></td>
-  <td class="proof">Сервис не собирает данные о здоровье, национальности, судимости и биометрию. Фото сотрудника — по желанию, биометрией не является, так как не используется для опознания.</td></tr>
-<tr><td class="num">4.2</td><td>Согласие на рассылки — отдельное от согласия на обработку</td>
-  <td><span class="st s-na">не применимо</span></td>
-  <td class="proof">Рассылок нет. Уведомления идут только работникам по служебным делам.</td></tr>
-<tr><td class="num">4.3</td><td>Политика обработки ПДн опубликована, ссылка на каждой странице, где собираются данные</td>
+  <td class="proof">Особых категорий и рассылок нет (см. раздел 2).</td></tr>
+<tr><td class="num">4.3</td><td>Политика опубликована, ссылка на каждой странице, где собираются данные</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Политика опубликована, ссылка в <span class="path">подвале страницы входа</span> и под меню профиля.<br>Код: <code>src/app/legal/[slug]/page.tsx</code>.<br><span class="gap">Данные людей со стороны собирает форма на сайте агентства — там ссылка на политику обязательна, и это вне CRM.</span></td></tr>
+  <td class="proof">Опубликована, ссылка в <span class="path">подвале страницы входа</span> и под меню профиля.<br><span class="gap">Данные посторонних людей собирает форма на сайте агентства — там ссылка обязательна, и это вне CRM.</span></td></tr>
 <tr><td class="num">4.4</td><td><b>Первичный сбор, запись и хранение ПДн граждан РФ — только в базах на территории РФ</b></td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof"><b>Нарушение.</b> База самого сервиса в РФ, но <b>заявки с сайта собираются и хранятся в Google-таблице</b> (имя, компания, контакт, текст обращения), CRM читает их оттуда.<br>Код: <code>src/lib/services/leads-sync.ts</code> → <code>docs.google.com</code>.<br><span class="gap">Нужно: перевести приём формы на свой сервер в РФ. Затрагивает сайт агентства.</span></td></tr>
-<tr><td class="num">4.5</td><td>Трансграничная передача — до начала нужно отдельное уведомление в РКН</td>
+  <td class="proof"><b>Нарушение.</b> База сервиса в РФ, но <b>заявки с сайта собираются и хранятся в Google-таблице</b>, CRM читает их оттуда.<br>Код: <code>src/lib/services/leads-sync.ts</code> → <code>docs.google.com</code>.<br><span class="gap">Нужно: перевести приём формы на свой сервер. Затрагивает сайт агентства.</span></td></tr>
+<tr><td class="num">4.5</td><td>Трансграничная передача — отдельное уведомление в РКН до начала</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof"><b>Передача идёт, уведомление не подано. Три канала:</b><br>
-  1. <b>ИИ-помощник</b> — сейчас DeepSeek (Китай). В запросы уходят имена контактных лиц, названия клиентов, расшифровки встреч. <code>src/lib/ai.ts</code><br>
-  2. <b>Telegram</b> — уведомления с именами сотрудников и клиентов. <code>src/lib/services/notify.ts</code><br>
-  3. <b>Google-таблицы</b> — заявки с сайта и показатели встреч.<br>
-  Переключение ИИ на YandexGPT (данные в РФ) код уже поддерживает — меняются две строки настроек.</td></tr>
-<tr><td class="num">4.6</td><td>Минимизация: собирать только то, без чего сервис не работает</td>
+  <td class="proof"><b>Передача идёт, уведомление не подано. Три канала:</b> ИИ-помощник (DeepSeek, Китай — имена контактов, расшифровки встреч), Telegram-уведомления, Google-таблицы.<br>Переключение ИИ на YandexGPT код уже поддерживает — две строки настроек.</td></tr>
+<tr><td class="num">4.6</td><td>Минимизация: только то, без чего сервис не работает</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Лишних данных о людях немного: по контакту клиента — ФИО, роль, телефон, почта, телеграм; паспортов и прочего нет. <span class="gap">Формального пересмотра полей по списку не проводилось.</span></td></tr>
-<tr><td class="num">4.7</td><td>Для каждого типа данных определён срок хранения; после — удаление</td>
+  <td class="proof">Лишнего немного, паспортов и дат рождения нет. <span class="gap">Формального пересмотра полей не проводилось; поле «Цели и задачи» признано лишним и не убрано.</span></td></tr>
+<tr><td class="num">4.7</td><td>Определены сроки хранения; человек может запросить и потребовать удалить свои данные</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">В политике есть только общая отсылка к закону и договору. <b>Конкретных сроков по типам данных нет</b>, автоматического удаления нет.</td></tr>
-<tr><td class="num">4.7</td><td>Человек может запросить свои данные и потребовать удалить; ответ за 10 рабочих дней</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Механизма нет (см. 5.8). Собирать пришлось бы руками по всем разделам.</td></tr>
-<tr><td class="num">4.8</td><td>Приказом назначен ответственный за организацию обработки ПДн; создатели сервисов знают, кто это</td>
+  <td class="proof">Конкретных сроков по типам данных нет, автоудаления нет. Механизма выдачи и удаления по запросу нет (п. 5.8).</td></tr>
+<tr><td class="num">4.8</td><td>Приказом назначен ответственный за организацию обработки ПДн</td>
   <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Не назначен в привязке к этому сервису. <span class="own">Кто делает: руководство.</span></td></tr>
-<tr><td class="num">4.9</td><td>Утечка: 24 часа — уведомить РКН о факте, 72 часа — о результатах расследования. Сотрудники знают, что сообщать немедленно</td>
+  <td class="proof">Не назначен. <span class="own">Руководство.</span></td></tr>
+<tr><td class="num">4.9</td><td>Утечка: 24 часа — уведомить РКН, 72 часа — о результатах расследования; сотрудники знают порядок</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Порядка действий при утечке нет ни в одном документе сервиса — проверено поиском в <code>docs/БЕЗОПАСНОСТЬ.md</code>. Сотрудникам не доводился.<br><span class="gap">Нужно: короткая инструкция «увидел странное — кому звонить» и доведение под подпись.</span></td></tr>
-<tr><td class="num">4.10</td><td>Cookies: баннер с информированием; аналитика — российская или обезличенная</td>
+  <td class="proof">Порядка действий нет ни в одном документе сервиса, сотрудникам не доводился.<br><span class="gap">Нужно: короткая инструкция «увидел странное — кому сообщить».</span></td></tr>
+<tr><td class="num">4.10</td><td>Cookies: баннер; аналитика российская или обезличенная</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Плашка показывается на входе и внутри сервиса. Код: <code>src/components/ui/CookieNotice.tsx</code>.<br>Сервис ставит <b>ровно одну техническую куку</b> для входа, систем аналитики и трекеров нет — поэтому отказываться не от чего.</td></tr>
-<tr><td class="num">4.11</td><td>Роспотребнадзор: оферта, реквизиты, цены, порядок возврата — если есть клиенты-физлица</td>
+  <td class="proof">Плашка на входе и внутри: <code>src/components/ui/CookieNotice.tsx</code>. Одна техническая кука, аналитики и трекеров нет.</td></tr>
+<tr><td class="num">4.11</td><td>Роспотребнадзор: оферта, реквизиты, цены, возврат</td>
   <td><span class="st s-na">не применимо</span></td>
-  <td class="proof">Закрытый служебный сервис. Доступ только у работников с выданным логином, продаж физлицам в нём нет.</td></tr>
-<tr><td class="num">4.12</td><td>Данные из других источников: для каждого записано правовое основание, цель совпадает с той, под которую собирали</td>
+  <td class="proof">Закрытый служебный сервис, клиентов-физлиц нет.</td></tr>
+<tr><td class="num">4.12</td><td>Данные из других источников: записано правовое основание, цель совпадает, люди уведомлены</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Сервис получает данные из двух внешних источников — <b>форма сайта</b> (обращения людей) и <b>рабочие Google-таблицы</b> отдела. Правовое основание по каждому нигде не зафиксировано.<br><span class="gap">Нужно: записать основание по каждому источнику, прежде чем сервис пойдёт в работу.</span></td></tr>
-<tr><td class="num">4.12</td><td>Уведомить человека, если данные получены не от него самого</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Касается контактных лиц контрагентов: их данные мы берём из переписки и договоров, а не от них напрямую. <span class="own">Решает ответственный за ПДн: уведомлять или зафиксировать исключение (исполнение договора).</span></td></tr>
-<tr><td class="num">4.12</td><td>Не использовать открытые источники, купленные базы, данные из ИИ-поиска</td>
+  <td class="proof">Два внешних источника: форма сайта и рабочие Google-таблицы отдела. Правовое основание нигде не зафиксировано, уведомление контактных лиц не производилось.</td></tr>
+<tr><td class="num">4.12</td><td>Не используются открытые источники, купленные базы, данные из ИИ-поиска</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Парсинга и покупных баз в сервисе нет. Все данные — из собственной работы отдела: обращения с сайта, переписка с клиентами, договоры.</td></tr>
-<tr><td class="num">4.12</td><td>Интеграции защищены: шифрованный канал, ключ с минимальными правами, только нужные поля, передачи логируются</td>
+  <td class="proof">Парсинга и покупных баз нет. Все данные — из работы отдела.</td></tr>
+<tr><td class="num">4.12</td><td>Интеграции: защищённый канал, ключ с минимальными правами, только нужные поля, передачи логируются</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Обмен идёт по HTTPS, Google-таблица открыта только на чтение по ссылке, лишние поля не тянутся.<br><span class="gap">Журнала передач нет (см. 5.3). Ключ доступа как таковой не используется — доступ «по ссылке», что само по себе слабее именованного ключа.</span></td></tr>
+  <td class="proof">Обмен по HTTPS, таблица открыта только на чтение, лишние поля не тянутся. <span class="gap">Журнала передач нет; доступ «по ссылке» слабее именованного ключа.</span></td></tr>
 </tbody></table>
 
-<!-- ============ РАЗДЕЛ 5 ============ -->
-<h2><span class="n">5.</span>Требования к разработке</h2>
-<p class="sub">Что должно быть внутри сервиса.</p>
+<h3>5. Требования к разработке</h3>
 <table>
-<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование документа</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
 <tbody>
-<tr><td class="num">5.1</td><td>Вход по логину и паролю обязателен везде, где есть ПДн. Никаких «открытых ссылок»</td>
+<tr><td class="num">5.1</td><td>Вход обязателен везде, где есть ПДн</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Любая страница с данными требует входа и иначе перебрасывает на форму входа.<br>Код: <code>requireSession()</code> в <code>src/lib/auth.ts</code>.<br><b>Как проверить:</b> откройте адрес сервиса в режиме инкогнито — пустит только на страницу входа.</td></tr>
-<tr><td class="num">5.1</td><td>Пароль минимум 12 символов; пароли не хранятся в открытом виде</td>
+  <td class="proof">Любая страница с данными требует входа.<br>Код: <code>requireSession()</code>. <b>Проверка:</b> открыть адрес в режиме инкогнито.</td></tr>
+<tr><td class="num">5.1</td><td>Пароль ≥ 12 символов, хранится хэшем</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Требование 12 символов внедрено 7 октября — при создании сотрудника, при смене, в служебных скриптах. В базе лежит bcrypt-хэш.<br>Код: <code>src/lib/validation.ts</code>, <code>src/lib/auth.ts</code>.<br><span class="gap">Старые короткие пароли сотрудников нужно сменить: <code>npx tsx scripts/reset-passwords.ts</code></span></td></tr>
-<tr><td class="num">5.1</td><td>Для админов и доступа к ПДн — второй фактор</td>
+  <td class="proof">Внедрено 7 октября: создание, смена, служебные скрипты. В базе bcrypt-хэш.<br><span class="gap">Старые короткие пароли сотрудников сменить: <code>npx tsx scripts/reset-passwords.ts</code>. Пароль из шапки этого документа — в первую очередь.</span></td></tr>
+<tr><td class="num">5.1</td><td>Второй фактор для админов и доступа к ПДн</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Кода нет. Вход только по паролю, включая администратора.</td></tr>
-<tr><td class="num">5.1</td><td>Блокировка после 5–10 неудачных попыток входа</td>
+  <td class="proof">Вход только по паролю, включая администратора.</td></tr>
+<tr><td class="num">5.1</td><td>Блокировка после 5–10 неудачных попыток</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">7 попыток за 15 минут по паре «почта + адрес».<br>Код: <code>src/lib/rate-limit.ts</code>.<br><span class="gap">Счётчик живёт в памяти процесса — при переходе на несколько серверов его надо выносить в общее хранилище.</span></td></tr>
-<tr><td class="num">5.2</td><td>Каждый видит только то, что нужно для его работы; роли разделены</td>
+  <td class="proof">7 попыток за 15 минут по паре «почта + адрес». Код: <code>src/lib/rate-limit.ts</code>.<br><span class="gap">Счётчик в памяти процесса — при нескольких серверах выносить в общее хранилище.</span></td></tr>
+<tr><td class="num">5.2</td><td>Каждый видит только своё; права проверяются на сервере</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Три роли: специалист видит своих клиентов, руководитель — весь отдел, администратор управляет доступами.<br>Код: <code>src/lib/scope.ts</code></td></tr>
-<tr><td class="num">5.2</td><td>Права проверяются на сервере для каждого запроса, а не скрытием кнопок</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Чужая запись не отдаётся даже по прямой ссылке — сервер отвечает «не найдено».<br>Код: <code>canSeeOwned()</code>, вызывается в каждом разделе.<br><b>Как проверить:</b> войти менеджером и подставить в адрес идентификатор чужого клиента.</td></tr>
-<tr><td class="num">5.3</td><td>Журнал: кто, когда вошёл, что открыл, изменил, удалил, выгрузил с ПДн</td>
+  <td class="proof">Три роли; чужая запись не отдаётся даже по прямой ссылке.<br>Код: <code>src/lib/scope.ts</code>, <code>canSeeOwned()</code>. <b>Проверка:</b> войти менеджером и подставить чужой идентификатор в адрес.</td></tr>
+<tr><td class="num">5.3</td><td><b>Журнал: кто, когда, что открыл, изменил, удалил, выгрузил; хранить год; ПДн в логи не попадают</b></td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Таблица в базе заведена, но <b>ни одной записи в неё не пишется</b> — проверено поиском по коду. Требование приказа ФСТЭК № 21.</td></tr>
-<tr><td class="num">5.3</td><td>Логи хранятся не меньше года, обычный пользователь их не правит</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Нечего хранить — журнала нет.</td></tr>
-<tr><td class="num">5.3</td><td>В логи не попадают сами ПДн и пароли</td>
-  <td><span class="st s-part">частично</span></td>
-  <td class="proof">Пароли нигде не логируются. Служебный журнал ошибок сервера может содержать данные запроса — при создании журнала действий это надо учесть сразу.</td></tr>
-<tr><td class="num">5.4</td><td>Только HTTPS, HTTP перенаправляется</td>
+  <td class="proof">Таблица заведена, записей нет. <b>Совпадает с общим требованием О-1 и с требованиями Влада</b> — делать один раз на все три.</td></tr>
+<tr><td class="num">5.4</td><td>Только HTTPS</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Сертификат certbot, перенаправление настроено.<br>Код: <code>deploy/nginx.conf.template</code>.<br><b>Как проверить:</b> замочек в адресной строке браузера.</td></tr>
+  <td class="proof">Сертификат certbot, перенаправление с HTTP. Код: <code>deploy/nginx.conf.template</code>.</td></tr>
 <tr><td class="num">5.4</td><td>Резервные копии и выгрузки с ПДн зашифрованы</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof"><b>Копии</b> — сделано 7 октября: шифрование паролем, проверено, что расшифрованная копия совпадает с оригиналом байт в байт.<br>Код: <code>deploy/backup.sh</code>.<br><span class="gap">На сервере нужно задать <code>BACKUP_PASSPHRASE</code> — без него копии делаются открытыми.<br><b>Выгрузка в Excel</b> не шифруется: файл с данными клиентов скачивается на компьютер сотрудника как есть.</span></td></tr>
-<tr><td class="num">5.4</td><td>Особые категории и паспортные данные зашифрованы в базе</td>
+  <td class="proof">Копии шифруются с 7 октября, восстановление проверено байт в байт. Код: <code>deploy/backup.sh</code>.<br><span class="gap">На сервере нужно задать <code>BACKUP_PASSPHRASE</code>. Выгрузка в Excel не шифруется — файл с данными клиентов скачивается как есть.</span></td></tr>
+<tr><td class="num">5.4</td><td>Особые категории и паспорта зашифрованы в базе</td>
   <td><span class="st s-na">не применимо</span></td>
-  <td class="proof">Сервис не хранит паспортных данных и особых категорий. Сама база при этом не зашифрована — если состав данных изменится, требование станет применимым.</td></tr>
+  <td class="proof">Таких данных нет. Сама база не зашифрована — при изменении состава данных пункт станет применимым.</td></tr>
 <tr><td class="num">5.5</td><td>Секреты не в коде, а в переменных окружения</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Все ключи и пароли в файле <code>.env</code>, который не попадает в репозиторий.<br><b>Как проверить:</b> поиск по коду слов <code>password</code>, <code>secret</code>, <code>key</code> не находит настоящих значений.</td></tr>
-<tr><td class="num">5.6</td><td>Проверка всех входных данных</td>
+  <td class="proof">Ключи в <code>.env</code>, в репозиторий не попадает. <span class="gap">Нарушено за пределами кода: пароль в шапке исходного документа.</span></td></tr>
+<tr><td class="num">5.6</td><td>Проверка входных данных; параметризованные запросы; экранирование вывода</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Каждая форма проверяется схемой на сервере, а не только в браузере.<br>Код: <code>src/lib/validation.ts</code> (Zod)</td></tr>
-<tr><td class="num">5.6</td><td>Параметризованные запросы к базе (защита от SQL-инъекций)</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Все обращения к базе идут через Prisma, которая подставляет значения параметрами. Запросов, собранных строкой, в коде нет.</td></tr>
-<tr><td class="num">5.6</td><td>Экранирование вывода (защита от XSS)</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">React экранирует текст автоматически. Дополнительно 7 октября закрыт запрет на загрузку посторонних скриптов.<br>Код: <code>next.config.mjs</code> → заголовок Content-Security-Policy</td></tr>
+  <td class="proof">Проверка форм на сервере (Zod), запросы через Prisma, React экранирует вывод, посторонние скрипты запрещены заголовком безопасности.</td></tr>
 <tr><td class="num">5.6</td><td>Защита от подделки запросов (CSRF)</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Кука входа ограничена признаком <code>sameSite</code> — чужой сайт не может отправить запрос от имени сотрудника обычной формой. <span class="gap">Отдельного одноразового токена в формах нет.</span></td></tr>
+  <td class="proof">Кука ограничена признаком <code>sameSite</code>. <span class="gap">Одноразового токена в формах нет.</span></td></tr>
 <tr><td class="num">5.6</td><td>Ограничение частоты запросов</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Ограничение стоит <b>только на входе</b> (7 попыток / 15 мин). <span class="gap">Остальные разделы, включая выгрузку в Excel и запросы к ИИ, частоту не ограничивают.</span></td></tr>
-<tr><td class="num">5.6</td><td>Ограничение размера и типа загружаемых файлов</td>
+  <td class="proof">Только на входе. <span class="gap">Остальные разделы, включая выгрузку в Excel и запросы к ИИ, не ограничены. Для публичного API (Влад, 9.1) это станет обязательным.</span></td></tr>
+<tr><td class="num">5.6</td><td><b>Ограничение размера и типа загружаемых файлов</b></td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof"><b>Найдено при этой проверке.</b> В коде приёма файлов <b>нет ни проверки типа, ни проверки размера</b> — тип просто записывается со слов браузера.<br>Код: <code>src/app/api/files/route.ts</code>.<br>Единственное ограничение — общий лимит 60 МБ на стороне nginx.<br><span class="gap">Нужно: белый список типов (документы, картинки, PDF) и свой предел размера.</span></td></tr>
-<tr><td class="num">5.7</td><td>Каждое поле формы обосновано, лишнее убрано</td>
+  <td class="proof"><b>Найдено при этой проверке.</b> В коде приёма файлов нет ни проверки типа, ни проверки размера — тип записывается со слов браузера.<br>Код: <code>src/app/api/files/route.ts</code>. Единственный предел — 60 МБ на стороне nginx.</td></tr>
+<tr><td class="num">5.7</td><td>Минимум полей в форме; ПДн не уходят в кэш и сторонние виджеты</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Обязательных полей о людях почти нет. <span class="gap">Пересмотра по списку не делали; поле «Цели и задачи» в карточке клиента признано лишним и до сих пор не убрано.</span></td></tr>
-<tr><td class="num">5.7</td><td>Поля с ПДн не уходят в кэш, аналитику, сторонние виджеты</td>
+  <td class="proof">Аналитики и виджетов нет, страницы с данными не кэшируются. <span class="gap">Пересмотра полей по списку не делали.</span></td></tr>
+<tr><td class="num">5.8</td><td><b>Показать и удалить все данные человека; фиксация согласия (дата, версия)</b></td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Такого раздела нет. Факт принятия согласия нигде не записывается.</td></tr>
+<tr><td class="num">5.9</td><td>Актуальные библиотеки, команда проверки уязвимостей</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Систем аналитики и сторонних виджетов в сервисе нет. Страницы с данными помечены как некэшируемые.</td></tr>
-<tr><td class="num">5.8</td><td>Возможность выгрузить и показать все данные конкретного человека</td>
+  <td class="proof"><code>npm audit</code>. Проверка 7 октября: критических нет.</td></tr>
+<tr><td class="num">5.9</td><td>Раз в месяц обновление, результат фиксируется</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Такого раздела в сервисе нет.</td></tr>
-<tr><td class="num">5.8</td><td>Возможность удалить данные человека по запросу или обезличить</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Удалить можно карточку целиком, но не «данные конкретного человека по всем разделам».</td></tr>
-<tr><td class="num">5.8</td><td>Фиксация согласия: дата, время, версия текста</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Тексты опубликованы, но факт принятия нигде не записывается — доказать принятие нечем.</td></tr>
-<tr><td class="num">5.9</td><td>Актуальные версии библиотек; есть команда проверки уязвимостей</td>
+  <td class="proof">Регламента, ответственного и записей нет.</td></tr>
+<tr><td class="num">5.10</td><td>Ошибки не раскрывают внутренности системы</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Команда проверки — <code>npm audit</code>. Последняя проверка 7 октября: критических нет; одна умеренная пришла с библиотекой выгрузки в Excel, остальные — в самом фреймворке.</td></tr>
-<tr><td class="num">5.9</td><td>Раз в месяц обновление зависимостей, результат фиксируется</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Регламента и ответственного нет, записи о проверках не ведутся.</td></tr>
-<tr><td class="num">5.10</td><td>Пользователь при ошибке видит «Что-то пошло не так», а не внутренности системы</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Внедрено 7 октября и проверено на живом сервисе: наружу уходит общая фраза с коротким кодом, подробности пишутся только в журнал сервера.<br>Код: <code>src/lib/api.ts</code>, <code>src/lib/errors.ts</code></td></tr>
+  <td class="proof">Внедрено 7 октября, проверено на живом сервисе: наружу общая фраза с кодом, подробности в журнал сервера.<br>Код: <code>src/lib/api.ts</code>, <code>src/lib/errors.ts</code>.</td></tr>
 </tbody></table>
 
-<!-- ============ РАЗДЕЛ 6 ============ -->
-<h2><span class="n">6.</span>Требования к развёртыванию</h2>
+<h3>6. Требования к развёртыванию</h3>
 <table>
-<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование документа</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:12%">Статус</th><th style="width:54%">Доказательство / что мешает</th></tr></thead>
 <tbody>
-<tr><td class="num">6.1</td><td>Только российский хостинг из реестра РКН; база физически в РФ</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Сервер и база в России, домен через российского регистратора.<br><span class="gap">Проверку провайдера по реестру РКН нужно подтвердить документально — это бумажная часть.</span></td></tr>
-<tr><td class="num">6.1</td><td>Никаких зарубежных облаков и таблиц для хранения ПДн</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof"><b>Нарушается:</b> заявки с сайта хранятся в Google-таблице, показатели встреч выгружаются туда же. См. 4.4.</td></tr>
-<tr><td class="num">6.1</td><td>Зарубежные сервисы — только после согласования и оформления трансграничной передачи</td>
-  <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Используются DeepSeek, Telegram, Google без оформления. См. 4.5.</td></tr>
-<tr><td class="num">6.2</td><td>Тестовая и боевая среды разделены; в тестовой — вымышленные данные</td>
+<tr><td class="num">6.1</td><td>Российский хостинг из реестра РКН; база в РФ; никаких зарубежных облаков для ПДн</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Разработка ведётся на отдельной машине с <b>вымышленными демо-данными</b> — реальные данные в разработку не попадают, это требование соблюдено.<br><span class="gap">Отдельного тестового сервера нет: новые функции проверяются сразу на боевом.</span></td></tr>
-<tr><td class="num">6.3</td><td>Вход на сервер по ключам, не по паролю; каждый под своим именем, общих учёток нет</td>
+  <td class="proof">Сервер и база в России. <span class="gap">Заявки с сайта и показатели встреч — в Google-таблицах (п. 4.4). Проверку провайдера по реестру РКН подтвердить документально.</span></td></tr>
+<tr><td class="num">6.2</td><td>Тестовая и боевая среды разделены; в тестовой вымышленные данные</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">Разработка на отдельной машине с вымышленными данными — реальные в разработку не попадают. <span class="gap">Отдельного тестового сервера нет: новое проверяется на боевом. Совпадает с требованием Влада 9.5.</span></td></tr>
+<tr><td class="num">6.3</td><td>Вход на сервер по ключам, именные учётки, утверждённый список доступа</td>
   <td><span class="st s-no">не сделано</span></td>
-  <td class="proof">Работа ведётся под общей учётной записью <code>root</code>. Именных учёток нет.<br><span class="gap">Нужно: завести именные учётки, вход по ключу, root закрыть.</span></td></tr>
-<tr><td class="num">6.3</td><td>Доступ к боевому серверу только у назначенных лиц, список утверждён</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Список не составлялся. <span class="own">Кто делает: руководство совместно с ответственным за ИБ.</span></td></tr>
-<tr><td class="num">6.3</td><td>При увольнении доступ отключается в тот же день</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Порядка нет. В самом сервисе удалить сотрудника администратор может сразу — это работает.</td></tr>
-<tr><td class="num">6.4</td><td>Снаружи открыты только 80 и 443; база и служебные порты закрыты</td>
+  <td class="proof">Работа ведётся под общей учётной записью <code>root</code>, именных учёток нет, список не утверждался.</td></tr>
+<tr><td class="num">6.4</td><td>Открыты только 80 и 443; файрвол включён</td>
   <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Файрвол настраивается при установке, наружу открыты только веб-порты. База — файл на диске сервера, из интернета недоступна.<br>Код: <code>deploy/setup-server.sh</code></td></tr>
+  <td class="proof">Файрвол настраивается при установке, база из интернета недоступна. Код: <code>deploy/setup-server.sh</code>.</td></tr>
 <tr><td class="num">6.4</td><td>Сертифицированные средства защиты для УЗ-1 / УЗ-2</td>
   <td><span class="st s-na">не применимо</span></td>
-  <td class="proof">При ориентировочном уровне УЗ-4 не требуются. <span class="gap">Если специалист определит более высокий уровень — пункт станет обязательным.</span></td></tr>
-<tr><td class="num">6.5</td><td>Копии ежедневно, автоматически, зашифрованы, на отдельном хранилище в РФ</td>
+  <td class="proof">При ориентире УЗ-4 не требуются.</td></tr>
+<tr><td class="num">6.5</td><td>Копии ежедневно, зашифрованы, на отдельном хранилище в РФ; проверка восстановления раз в квартал</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Ежедневно по расписанию, автоматически, шифруются (с 7 октября), хранится 14 последних.<br>Код: <code>deploy/backup.sh</code>.<br><span class="gap">Копии лежат на том же сервере, что и сам сервис. Требование «отдельное хранилище» не выполнено: при потере сервера теряются и копии.</span></td></tr>
-<tr><td class="num">6.5</td><td>Раз в квартал проверка, что копия восстанавливается</td>
+  <td class="proof">Ежедневно, автоматически, шифруются, хранится 14 копий.<br><span class="gap">Копии лежат на том же сервере — при его потере теряются вместе с ним. Квартальная проверка в регламент не заведена.</span></td></tr>
+<tr><td class="num">6.6</td><td>Антивирус и автообновления ОС</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Не ставился, не проверялось. <span class="own">Ответственный за ИБ.</span></td></tr>
+<tr><td class="num">6.7</td><td>Уведомления о недоступности и подозрительной активности</td>
   <td><span class="st s-part">частично</span></td>
-  <td class="proof">Восстановление проверено один раз, при внедрении шифрования 7 октября. <span class="gap">В регламент квартальная проверка не заведена, ответственного нет.</span></td></tr>
-<tr><td class="num">6.6</td><td>Антивирус на серверах и рабочих компьютерах; автообновления ОС</td>
+  <td class="proof">Есть ручная проверка состояния: <code>deploy/healthcheck.sh</code>. <span class="gap">Автоматических уведомлений нет.</span></td></tr>
+<tr><td class="num">6.8</td><td>Акт уровня защищённости, модель угроз, перечень мер ФСТЭК № 21, перечень лиц с доступом, приказ</td>
   <td><span class="st s-dec">решение</span></td>
-  <td class="proof">На сервере антивирус не ставился, автообновления не проверялись. Рабочие компьютеры сотрудников — вне сервиса.<br><span class="own">Кто делает: ответственный за ИБ.</span></td></tr>
-<tr><td class="num">6.7</td><td>Уведомления о недоступности сервиса и подозрительной активности</td>
-  <td><span class="st s-part">частично</span></td>
-  <td class="proof">Есть проверка состояния сервера одной командой: <code>deploy/healthcheck.sh</code>.<br><span class="gap">Автоматических уведомлений нет: ни о падении, ни о всплеске неудачных входов, ни о массовой выгрузке.</span></td></tr>
-<tr><td class="num">6.8</td><td>Акт определения уровня защищённости</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Не составлялся. <b>Ориентир — УЗ-4</b>: обычные категории данных, меньше 100 000 человек, биометрии нет. Это ориентир, а не заключение. <span class="own">Подписывает ответственный за ИБ.</span></td></tr>
-<tr><td class="num">6.8</td><td>Модель угроз по методике ФСТЭК</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Для УЗ-4 — по решению ответственного. Не составлялась.</td></tr>
-<tr><td class="num">6.8</td><td>Перечень мер защиты по приказу ФСТЭК № 21 под свой уровень</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Не составлялся. Черновик могу подготовить на основе этой таблицы.</td></tr>
-<tr><td class="num">6.8</td><td>Перечень лиц с доступом к ПДн, приказ о назначении ответственного</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof">Не составлялись. Фактический список доступа виден в разделе <span class="path">«Команда»</span> — пять сотрудников.</td></tr>
+  <td class="proof">Не составлялись. Ориентир — УЗ-4. Черновики могу подготовить на основе этой таблицы. <span class="own">Подписывает ответственный за ИБ.</span></td></tr>
 </tbody></table>
 
-<!-- ============ РАЗДЕЛ 7 ============ -->
-<h2><span class="n">7.</span>Правила работы с Claude и другими ИИ-инструментами</h2>
-<p class="sub">Относится к процессу разработки, а не к коду сервиса.</p>
+<h3>7. Правила работы с Claude</h3>
 <table>
-<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование документа</th><th style="width:12%">Статус</th><th style="width:54%">Как соблюдалось</th></tr></thead>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Правило</th><th style="width:12%">Статус</th><th style="width:54%">Как соблюдалось</th></tr></thead>
 <tbody>
-<tr><td class="num">7.1</td><td>Никаких реальных ПДн в чат с ИИ</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Разработка велась на вымышленных демо-данных. Реальная база живёт только на боевом сервере, в переписку с Claude не выгружалась.<br><span class="gap">Отдельно: сам сервис в работе отправляет реальные данные в ИИ-помощника — это другой вопрос, он в пункте 4.5.</span></td></tr>
-<tr><td class="num">7.2</td><td>Никаких секретов в чат: пароли, ключи, содержимое .env</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Ключи задавались на сервере напрямую. Настоящих значений в переписке нет.</td></tr>
-<tr><td class="num">7.3</td><td>Никаких выгрузок из боевой базы «чтобы ИИ посмотрел структуру»</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Структура обсуждалась по схеме базы и демо-данным.</td></tr>
-<tr><td class="num">7.4</td><td>Код от ИИ — черновик; перед запуском прогон по чек-листу и проверка ответственным за ИБ</td>
-  <td><span class="st s-part">частично</span></td>
-  <td class="proof">Чек-лист пройден — этот документ и есть прогон. <span class="gap">Проверки ответственным за ИБ не было.</span></td></tr>
-<tr><td class="num">7.5</td><td>Просить ИИ перечислять, что сделано для безопасности и что НЕ сделано</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Этот документ и есть такой перечень, включая невыполненное.</td></tr>
-<tr><td class="num">7.6</td><td>Понимание, что ИИ не сертифицирует, не аттестует, не подаёт уведомления и не подписывает</td>
-  <td><span class="st s-ok">сделано</span></td>
-  <td class="proof">Все такие пункты в этом документе помечены как решения руководства, а не как задачи разработки.</td></tr>
-<tr><td class="num">7.7</td><td>Корпоративный аккаунт ИИ, сохранение истории по политике компании</td>
-  <td><span class="st s-dec">решение</span></td>
-  <td class="proof"><span class="own">Нужно подтверждение руководства, что используемый аккаунт соответствует политике компании.</span></td></tr>
+<tr><td class="num">7.1</td><td>Никаких реальных ПДн в чат с ИИ</td><td><span class="st s-ok">сделано</span></td>
+  <td class="proof">Разработка на вымышленных демо-данных, боевая база в переписку не выгружалась.<br><span class="gap">Отдельно: сам сервис в работе шлёт реальные данные в ИИ — это п. 4.5.</span></td></tr>
+<tr><td class="num">7.2</td><td>Никаких секретов в чат</td><td><span class="st s-part">частично</span></td>
+  <td class="proof">В переписке с ИИ настоящих ключей нет. <span class="gap">Нарушено в самом перечне требований: логин и пароль руководителя в открытом виде в шапке документа.</span></td></tr>
+<tr><td class="num">7.3</td><td>Никаких выгрузок из боевой базы для ИИ</td><td><span class="st s-ok">сделано</span></td>
+  <td class="proof">Обсуждение шло по схеме базы и демо-данным.</td></tr>
+<tr><td class="num">7.4</td><td>Код от ИИ — черновик; перед запуском чек-лист и проверка ответственным за ИБ</td><td><span class="st s-part">частично</span></td>
+  <td class="proof">Чек-лист пройден — это и есть прогон. <span class="gap">Проверки ответственным за ИБ не было, сервис уже работает.</span></td></tr>
+<tr><td class="num">7.5</td><td>Просить ИИ перечислять сделанное и несделанное</td><td><span class="st s-ok">сделано</span></td>
+  <td class="proof">Этот документ и есть такой перечень.</td></tr>
+<tr><td class="num">7.6</td><td>ИИ не сертифицирует, не аттестует, не подаёт уведомления, не подписывает</td><td><span class="st s-ok">сделано</span></td>
+  <td class="proof">Все такие пункты помечены как решения руководства.</td></tr>
+<tr><td class="num">7.7</td><td>Корпоративный аккаунт ИИ, история по политике компании</td><td><span class="st s-dec">решение</span></td>
+  <td class="proof"><span class="own">Нужно подтверждение, что используемый аккаунт соответствует политике компании.</span></td></tr>
 </tbody></table>
 
-<!-- ============ РАЗДЕЛ 8 ============ -->
-<h2><span class="n">8.</span>Чек-лист перед запуском</h2>
-<p class="sub">Формулировка документа: «Отметьте каждый пункт. Один „нет“ — запуск откладывается».</p>
-
-<h3>Организационное</h3>
+<h3>8. Чек-лист перед запуском</h3>
+<p class="sub">«Отметьте каждый пункт. Один „нет“ — запуск откладывается».</p>
 <table>
-<thead><tr><th style="width:62%">Пункт чек-листа</th><th style="width:14%">Статус</th><th style="width:24%">Где подробно</th></tr></thead>
+<thead><tr><th style="width:62%">Пункт чек-листа</th><th style="width:14%">Статус</th><th style="width:24%">Подробно</th></tr></thead>
 <tbody>
-<tr><td>Определено, есть ли в сервисе ПДн и какие категории</td><td><span class="st s-ok">сделано</span></td><td class="proof">Три категории: работники, контактные лица контрагентов, обратившиеся через форму сайта. Описано в политике.</td></tr>
-<tr><td>Определён уровень защищённости — акт подписан</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 6.8</td></tr>
+<tr><td><b>Организационное</b> · Определено, есть ли ПДн и какие категории</td><td><span class="st s-ok">сделано</span></td><td class="proof">раздел 2</td></tr>
+<tr><td>Определён уровень защищённости, акт подписан</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 6.8</td></tr>
 <tr><td>Роскомнадзор уведомлён</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.1</td></tr>
 <tr><td>Есть отдельное согласие, галочка не проставлена заранее</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.2</td></tr>
 <tr><td>Политика опубликована и доступна с формы сбора</td><td><span class="st s-part">частично</span></td><td class="proof">п. 4.3</td></tr>
 <tr><td>Ответственные за ПДн и ИБ согласовали запуск</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.8, 7.4</td></tr>
 <tr><td>Определены сроки хранения и порядок удаления</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.7</td></tr>
-<tr><td>Нет трансграничной передачи, либо она оформлена</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.5 — три действующих канала</td></tr>
+<tr><td>Нет трансграничной передачи либо она оформлена</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.5</td></tr>
 <tr><td>Для каждого внешнего источника записано правовое основание</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.12</td></tr>
 <tr><td>Люди уведомлены о новой обработке либо зафиксировано исключение</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.12</td></tr>
-<tr><td>Не используются открытые источники, купленные базы, ИИ-поиск</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 4.12</td></tr>
-<tr><td>Оферта и реквизиты на сайте (если клиенты-физлица)</td><td><span class="st s-na">не применимо</span></td><td class="proof">п. 4.11</td></tr>
-</tbody></table>
-
-<h3>Технически</h3>
-<table>
-<thead><tr><th style="width:62%">Пункт чек-листа</th><th style="width:14%">Статус</th><th style="width:24%">Где подробно</th></tr></thead>
-<tbody>
-<tr><td>Российский хостинг из реестра РКН; база в РФ</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.1 — сервер да, заявки в Google нет</td></tr>
+<tr><td>Не используются открытые источники и купленные базы</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 4.12</td></tr>
+<tr><td>Оферта и реквизиты (если клиенты-физлица)</td><td><span class="st s-na">не применимо</span></td><td class="proof">п. 4.11</td></tr>
+<tr><td><b>Технически</b> · Российский хостинг; база в РФ</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.1</td></tr>
 <tr><td>Только HTTPS</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.4</td></tr>
-<tr><td>Пароль ≥ 12, хэширование, блокировка перебора; для админов второй фактор</td><td><span class="st s-part">частично</span></td><td class="proof">п. 5.1 — всё, кроме второго фактора</td></tr>
-<tr><td>Роли и проверка прав на сервере — проверено попыткой открыть чужую запись</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.2</td></tr>
-<tr><td>Логи действий с ПДн ведутся, ПДн в логах нет</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 5.3</td></tr>
-<tr><td>Секретов в коде нет — проверено поиском</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.5</td></tr>
-<tr><td>Защиты OWASP Top 10 реализованы</td><td><span class="st s-part">частично</span></td><td class="proof">п. 5.6 — инъекции, XSS, валидация закрыты; лимит частоты, тип и размер файлов нет</td></tr>
-<tr><td>Тестовая и боевая среды разделены; в тестовой вымышленные данные</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.2</td></tr>
-<tr><td>Копии настроены, зашифрованы, восстановление проверено</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.5 — хранятся на том же сервере</td></tr>
+<tr><td>Пароль ≥ 12, хэш, блокировка перебора; второй фактор для админов</td><td><span class="st s-part">частично</span></td><td class="proof">п. 5.1 — нет второго фактора</td></tr>
+<tr><td>Роли и проверка прав на сервере</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.2</td></tr>
+<tr><td>Логи действий с ПДн ведутся</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 5.3, О-1</td></tr>
+<tr><td>Секретов в коде нет</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.5</td></tr>
+<tr><td>Защиты OWASP Top 10 реализованы</td><td><span class="st s-part">частично</span></td><td class="proof">п. 5.6 — нет лимита частоты и контроля файлов</td></tr>
+<tr><td>Тестовая и боевая среды разделены</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.2</td></tr>
+<tr><td>Копии зашифрованы, восстановление проверено</td><td><span class="st s-part">частично</span></td><td class="proof">п. 6.5 — лежат на том же сервере</td></tr>
 <tr><td>Лишние порты закрыты, файрвол включён</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 6.4</td></tr>
-<tr><td>Доступ к серверу именной, по ключам, список утверждён</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 6.3 — работа под root</td></tr>
+<tr><td>Доступ к серверу именной, по ключам</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 6.3</td></tr>
 <tr><td>Функция «показать и удалить данные человека» работает</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 5.8</td></tr>
-<tr><td>Интеграции: защищённый канал, ключ с минимальными правами, только нужные поля, передачи логируются</td><td><span class="st s-part">частично</span></td><td class="proof">п. 4.12</td></tr>
-<tr><td>Ошибки не показывают внутренностей системы</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.10</td></tr>
+<tr><td>Интеграции защищены, передачи логируются</td><td><span class="st s-part">частично</span></td><td class="proof">п. 4.12</td></tr>
+<tr><td>Ошибки не показывают внутренностей</td><td><span class="st s-ok">сделано</span></td><td class="proof">п. 5.10</td></tr>
+<tr><td><b>Эксплуатация</b> · Назначен человек для ежемесячных обновлений</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 5.9, 6.6</td></tr>
+<tr><td>Все знают порядок действий при утечке</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.9</td></tr>
+<tr><td>Раз в год — пересмотр чек-листа</td><td><span class="st s-dec">решение</span></td><td class="proof">Первый прогон — 8 октября 2026, следующий — октябрь 2027</td></tr>
 </tbody></table>
 
-<h3>Эксплуатация</h3>
+<h3>9–10. Промпты и распределение ответственности</h3>
 <table>
-<thead><tr><th style="width:62%">Пункт чек-листа</th><th style="width:14%">Статус</th><th style="width:24%">Где подробно</th></tr></thead>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Пункт</th><th style="width:12%">Статус</th><th style="width:54%">Состояние</th></tr></thead>
 <tbody>
-<tr><td>Назначен человек, ежемесячно обновляющий зависимости и ОС</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 5.9, 6.6</td></tr>
-<tr><td>Все знают: при подозрении на утечку — немедленно сообщить ответственному за ИБ</td><td><span class="st s-no">не сделано</span></td><td class="proof">п. 4.9 — инструкции нет</td></tr>
-<tr><td>Раз в год — пересмотр чек-листа для сервиса</td><td><span class="st s-dec">решение</span></td><td class="proof">Первый прогон — этот документ, 8 октября 2026. Следующий — октябрь 2027.</td></tr>
+<tr><td class="num">9.1</td><td>Промпт по безопасности в начало каждого разговора с ИИ</td><td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Систематически не вставлялся. <span class="gap">Правильнее не вставлять руками каждый раз, а записать эти правила в постоянные инструкции проекта — тогда они действуют всегда.</span></td></tr>
+<tr><td class="num">9.2</td><td>Промпт аудита перед деплоем</td><td><span class="st s-ok">сделано</span></td>
+  <td class="proof">Выполнен — результат перед вами.</td></tr>
+<tr><td class="num">9.3</td><td>Черновики документов (политика, согласие, уведомление)</td><td><span class="st s-part">частично</span></td>
+  <td class="proof">Политика, согласие и пользовательское соглашение подготовлены и опубликованы. <span class="gap">Текст уведомления в РКН не готовился.</span></td></tr>
+<tr><td class="num">10</td><td>Создатель сервиса</td><td><span class="st s-part">частично</span></td>
+  <td class="proof">Артур Фирстов. Чек-лист пройден, реальные ПДн в ИИ не вставлялись. <span class="gap">Запуск состоялся без согласования.</span></td></tr>
+<tr><td class="num">10</td><td>Ответственный за организацию обработки ПДн</td><td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Не назначен. Без него закрыть пункты 4.1, 4.7, 4.9, 4.12 невозможно.</td></tr>
+<tr><td class="num">10</td><td>Ответственный за ИБ</td><td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Не назначен. Без него закрыть 6.6, 6.8 и согласовать запуск невозможно.</td></tr>
+<tr><td class="num">10</td><td>Руководитель: утверждает запуск, выделяет ресурсы</td><td><span class="st s-dec">решение</span></td>
+  <td class="proof">Утверждение запуска не производилось.</td></tr>
 </tbody></table>
 
-<div class="box">
-  <h4 style="color:var(--brand)">Вывод по разделу 8</h4>
-  <p style="margin:0">По правилу «один „нет“ — запуск откладывается» сервис <b>к запуску с реальными данными
-  не готов</b>: открыто 12 пунктов. Из них <b>7 закрываются бумагами и решениями</b> (уведомление РКН,
-  акт уровня защищённости, приказы, сроки хранения, трансграничная передача), <b>5 — разработкой</b>
-  (журнал действий, права человека на свои данные, второй фактор, ограничение файлов, заявки с сайта).</p>
+<!-- ============ ВЛАД ============ -->
+<h2>Раздел <span class="who">Влада</span> — интеграция с Aspro.Cloud</h2>
+<p class="sub">Передача данных из Colizeum Agency в Aspro.Cloud при создании и изменении. Обратная синхронизация не требуется.</p>
+
+<div class="box alarm">
+  <h4>Ни один пункт не начат</h4>
+  <p style="margin:0 0 6px">Проверено по коду: в сервисе <b>нет публичного контура API</b>, <b>нет механизма
+  служебных ключей</b>, <b>нет webhook’ов</b>, <b>нет полей сопоставления</b> и <b>нет тестового контура</b>.
+  Вся авторизация — сессия в cookie для собственного фронтенда, как и описано в задании.</p>
+  <p style="margin:0">Это самый объёмный блок работ из всего перечня: <b>ориентировочно 13–18 рабочих дней</b>
+  только по стороне Agency, не считая коннектора.</p>
+</div>
+
+<h4>Модель разграничения и перечень сущностей</h4>
+<table>
+<thead><tr><th style="width:34%">Colizeum Agency</th><th style="width:34%">Aspro.Cloud</th><th style="width:10%">Приоритет</th><th style="width:22%">Готовность</th></tr></thead>
+<tbody>
+<tr><td>Рекламодатели (/advertisers)</td><td>CRM → Контрагенты</td><td>P0</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+<tr><td>Сделки (/deals)</td><td>CRM → Сделка</td><td>P0</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+<tr><td>Финансы, счета и акты (/finances)</td><td>Финансы → Счёт / Акт</td><td>P0</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+<tr><td>Документы (/documents)</td><td>Документы</td><td>P1</td><td class="proof">Данные есть; передача файлов потребует отдельного решения</td></tr>
+<tr><td>Задачи (/tasks)</td><td>Задачи</td><td>P1</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+<tr><td>Подрядчики турниров (/tournaments/contractors)</td><td>CRM → Контрагент (подрядчик)</td><td>P2</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+<tr><td>Сотрудники (/leadership/employee)</td><td>Команда (справочник)</td><td>P2</td><td class="proof">Данные есть, выгружать нечем</td></tr>
+</tbody></table>
+<p class="proof" style="margin-top:4px">Не синхронизируются: мессенджер, ИИ-ассистент, журнал событий, база знаний, модуль ОРД.
+<b>Важно для отдела:</b> задание прямо закрепляет, что мастер-системой по ОРД остаётся Agency. На встрече
+7 октября обсуждалось, что модуль ОРД дублирует Aspro — теперь это снято, модуль нужен.</p>
+
+<h4>Требования к доработке Colizeum Agency</h4>
+<table>
+<thead><tr><th style="width:4%">№</th><th style="width:30%">Требование</th><th style="width:12%">Статус</th><th style="width:40%">Состояние и что потребуется</th><th style="width:14%">Оценка</th></tr></thead>
+<tbody>
+<tr><td class="num">9.1</td><td>Публичный REST API с версионированием: чтение по сущностям, пагинация, фильтр по дате изменения и признаку синхронизации, OpenAPI и Postman-коллекция</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Контура <code>/api/v1</code> нет. Текущее API обслуживает только собственный фронтенд.<br>Дату изменения сущности хранят — фильтр по ней сделать несложно. Основная работа — отдельный публичный слой, чтобы не раскрыть внутренние поля.</td>
+  <td class="proof">4–5 дней</td></tr>
+<tr><td class="num">9.2</td><td>Служебные API-ключи: выпуск в настройках, назначение, срок, скоуп, отзыв и ротация без простоя, журналирование обращений</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Механизма нет. <b>Зависит от журнала действий</b> (О-1 / 5.3) — журналирование обращений по ключу без него не сделать.</td>
+  <td class="proof">2–3 дня<br>(после журнала)</td></tr>
+<tr><td class="num">9.3</td><td>Webhook’и: регистрация URL, список событий, HMAC-подпись, очередь с ретраями и DLQ, идемпотентность, ручной перезапуск из интерфейса</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Механизма нет. <b>Самый тяжёлый пункт и единственный, который упирается в архитектуру:</b> сейчас сервис — один процесс с базой-файлом и очередями в памяти. Гарантированная доставка с ретраями и DLQ требует постоянной очереди (Redis или RabbitMQ) и отдельного рабочего процесса.<br><span class="gap">Это надо решать вместе с переносом на серверы компании (О-2).</span></td>
+  <td class="proof">5–7 дней</td></tr>
+<tr><td class="num">9.4</td><td>Поля в моделях: <code>aspro_id</code>, <code>sync_enabled</code>, <code>sync_status</code>, <code>synced_at</code>; отображаются в карточке</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Полей нет. <b>Самый простой пункт:</b> добавление полей ядра не затрагивает, данные при этом сохраняются.</td>
+  <td class="proof">1 день</td></tr>
+<tr><td class="num">9.5</td><td>Тестовый контур (staging) с отдельной базой</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Нет. <b>Закрывает заодно требование Ильи 6.2</b> — разделение тестовой и боевой сред.</td>
+  <td class="proof">1–2 дня</td></tr>
+</tbody></table>
+
+<h4>Сторона Aspro.Cloud и коннектор</h4>
+<table>
+<thead><tr><th style="width:34%">Требование</th><th style="width:12%">Статус</th><th style="width:54%">Комментарий</th></tr></thead>
+<tbody>
+<tr><td>API-ключ служебного аккаунта, кастом-поля <code>agency_id</code> и <code>entity_legal</code> в сущностях Aspro</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof">Сторона Aspro.Cloud, не наша зона. <span class="own">Исполнитель — администратор Aspro.</span></td></tr>
+<tr><td>Промежуточный сервис-коннектор: приём webhook с проверкой подписи, очередь с ретраями и DLQ, маппинг полей, журнал транзакций, интерфейс мониторинга, метрики и алерты</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof"><b>Отдельная система, не часть CRM.</b> В задании сказано «целесообразно развернуть» — но не сказано, кто разрабатывает и где размещает.<br><span class="own">Нужно решение: делает ли это отдел рекламы или ИТ компании. От ответа зависит, входит ли в мою оценку (это ещё примерно 10–15 дней).</span></td></tr>
+<tr><td>Обмен по HTTPS (TLS 1.2+), секреты в защищённом хранилище</td>
+  <td><span class="st s-part">частично</span></td>
+  <td class="proof">HTTPS уже используется. Секреты в переменных окружения — это допускается заданием.</td></tr>
+<tr><td>Все передачи ПДн фиксируются в журнале по 152-ФЗ</td>
+  <td><span class="st s-no">не сделано</span></td>
+  <td class="proof">Снова журнал действий — третье место, где он требуется.</td></tr>
+<tr><td>Интеграция закрепляется приказом или соглашением о порядке обмена данными</td>
+  <td><span class="st s-dec">решение</span></td>
+  <td class="proof"><span class="own">Руководство.</span> Пересекается с требованием Ильи 4.12 — правовое основание передачи.</td></tr>
+</tbody></table>
+
+<h4>Ответы на вопросы к разработчику</h4>
+<p class="sub">В задании шесть прямых вопросов. Проверено по коду 8 октября 2026.</p>
+<table>
+<thead><tr><th style="width:34%">Вопрос</th><th style="width:66%">Ответ</th></tr></thead>
+<tbody>
+<tr><td>Есть ли уже API-ключи или служебные эндпоинты?</td>
+  <td class="proof"><b>Нет.</b> Вся авторизация — сессия в cookie для собственного фронтенда. Поиск по коду не находит ни ключей, ни Bearer-токенов, ни контура <code>/api/v1</code>.</td></tr>
+<tr><td>Есть ли механизм webhook, даже неполный?</td>
+  <td class="proof"><b>Нет, вообще.</b> Исходящих вызовов во внешние системы три, и все одноразовые без гарантии доставки: Telegram-уведомления, выгрузка строки встречи в Google-таблицу, запросы к ИИ.</td></tr>
+<tr><td>Какие есть ограничения по нагрузке (rate limits)?</td>
+  <td class="proof"><b>Только на входе:</b> 7 попыток за 15 минут. Остальные разделы не ограничены. <b>Для публичного API ограничение придётся делать с нуля</b> — и это же закроет пункт Ильи 5.6.</td></tr>
+<tr><td>Есть ли sandbox-контур?</td>
+  <td class="proof"><b>Нет.</b> Есть только машина разработки с демо-данными. Отдельного тестового сервера с базой нет — это пункт 9.5.</td></tr>
+<tr><td>Возможно ли расширить модели полями из п. 9.4 без переработки ядра?</td>
+  <td class="proof"><b>Да.</b> Добавление полей в схему не затрагивает существующую логику, данные при обновлении сохраняются. Это самая простая часть задания — около дня вместе с показом в карточке.</td></tr>
+<tr><td>Оценка сроков и трудоёмкости по каждому пункту</td>
+  <td class="proof">В таблице выше по каждому пункту. <b>Итого по стороне Agency: 13–18 рабочих дней</b>, из них 5–7 — webhook’и с гарантированной доставкой.<br>Коннектор в оценку не входит — нужно решение, кто его делает.<br><b>Порядок:</b> сначала журнал действий и поля (9.4), затем API (9.1) и ключи (9.2), затем тестовый контур (9.5), в последнюю очередь webhook’и (9.3) — вместе с переносом на серверы компании.</td></tr>
+</tbody></table>
+
+<div class="box info">
+  <h4>Что важно сказать на обсуждении</h4>
+  <p style="margin:0 0 6px"><b>Три требования из разных разделов — это одна работа.</b> Журнал операций просят
+  в общем перечне (О-1), у Ильи (5.3) и у Влада (журнал обращений по ключу, фиксация передач ПДн).
+  Делать его надо один раз, сразу с запасом под все три применения.</p>
+  <p style="margin:0 0 6px"><b>Перенос на серверы компании (О-2), тестовый контур (9.5) и разделение сред
+  (6.2) — тоже одна работа</b> над инфраструктурой. Разумно делать их вместе, а не тремя заходами.</p>
+  <p style="margin:0"><b>Webhook’и упираются в архитектуру.</b> Сейчас сервис — один процесс с базой-файлом.
+  Гарантированная доставка требует постоянной очереди и отдельного рабочего процесса, то есть другой
+  конфигурации сервера. Это единственный пункт, который нельзя «дописать» — он меняет устройство.</p>
 </div>
 
 <!-- ============ ПРИЛОЖЕНИЕ ============ -->
 <div class="appendix">
-<h2><span class="n">Приложение.</span>Правки от коллег по интерфейсу</h2>
+<h2>Приложение. Правки от коллег по интерфейсу</h2>
 <p class="sub">Внутреннее обсуждение отдела по итогам встречи 7 октября 2026 (Артур, Марина, Саша, Катя).
-К требованиям безопасности отношения не имеет и на готовность к запуску не влияет. Приведено, чтобы
-картина работ была полной.</p>
-
+К требованиям руководства отношения не имеет и на готовность к запуску не влияет.</p>
 <table>
 <thead><tr><th style="width:4%">№</th><th style="width:32%">Что просили</th><th style="width:12%">Статус</th><th style="width:52%">Состояние</th></tr></thead>
 <tbody>
-<tr><td class="num">И-1</td><td>Задачи клиента видны в его карточке <span style="color:var(--ink-400)">(Марина, Саша)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Карточка грузит контакты, сделки, документы, креативы и хронологию — задач среди них нет.</td></tr>
-<tr><td class="num">И-2</td><td>Сделки в карточке заметнее <span style="color:var(--ink-400)">(Марина: «сделка есть, но я её не вижу»)</span></td><td><span class="st s-part">частично</span></td><td class="proof">Сделки есть и кликаются, но спрятаны под заголовком «Информация и контекст».</td></tr>
-<tr><td class="num">И-3</td><td>Баг: «0 документов» при загруженных файлах</td><td><span class="st s-no">не сделано</span></td><td class="proof">Причина найдена: два разных хранилища файлов, счётчик знает только об одном.</td></tr>
-<tr><td class="num">И-4</td><td>Ссылки на креативы вместо файлов <span style="color:var(--ink-400)">(Марина)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">У креатива нет поля для ссылки.</td></tr>
-<tr><td class="num">И-5</td><td><b>Ссылки на бизнес-процессы Aspro</b> в карточке, сделке и маркировке <span style="color:var(--ink-400)">(Саша, Артур: «даже обязательно»)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">В базе нет ни одного поля для такой ссылки, в коде нет ни одного обращения к Aspro.</td></tr>
-<tr><td class="num">И-6</td><td><b>Автоматический обмен данными с Aspro</b> <span style="color:var(--ink-400)">(Артур, со слов Влада)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Упирается не в разработку: нужен ответ, есть ли у Aspro интерфейс обмена и дадут ли доступ.</td></tr>
-<tr><td class="num">И-7</td><td>Стадии сделки сократить с 9 до 3–4 <span style="color:var(--ink-400)">(Марина, Артур согласился)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">В сервисе по-прежнему 9 стадий.</td></tr>
-<tr><td class="num">И-8</td><td>Подписать блоки стадий и пометка «стадия не актуальна» <span style="color:var(--ink-400)">(Саша)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Полоска кликается, но подписей нет.</td></tr>
-<tr><td class="num">И-9</td><td>Баг: нельзя удалить ошибочно загруженный креатив ОРД <span style="color:var(--ink-400)">(Катя)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Есть загрузка и скачивание, удаления отдельного файла нет.</td></tr>
-<tr><td class="num">И-10</td><td>Проверить видимость маркировок между сотрудниками <span style="color:var(--ink-400)">(Артур)</span></td><td><span class="st s-part">частично</span></td><td class="proof">В коде разграничение есть и выглядит верным; живой проверкой под разными учётками не подтверждено.</td></tr>
-<tr><td class="num">И-11</td><td>Сохранять запросы из конструкторов в историю клиента <span style="color:var(--ink-400)">(Саша, Марина)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Конструкторы не делают ни одного обращения к серверу — текст только копируется в буфер.</td></tr>
-<tr><td class="num">И-12</td><td>Напоминания в Telegram всем сотрудникам <span style="color:var(--ink-400)">(Марина)</span></td><td><span class="st s-part">частично</span></td><td class="proof">Механизм работает, подключён только Артуру — у остальных не заполнен адрес.</td></tr>
-<tr><td class="num">И-13</td><td>Убрать поле «Цели и задачи» <span style="color:var(--ink-400)">(Артур)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Поле на месте. Пересекается с требованием 5.7 о минимуме данных.</td></tr>
-<tr><td class="num">И-14</td><td>Бронь размещения создаётся из сделки <span style="color:var(--ink-400)">(Марина)</span></td><td><span class="st s-no">не сделано</span></td><td class="proof">Только вручную.</td></tr>
-<tr><td class="num">И-15</td><td>Что работает и нареканий не вызвало</td><td><span class="st s-ok">сделано</span></td><td class="proof">Заявки с сайта, документы с версиями, хронология клиента и «Пересказать историю», конструкторы запросов юристу и на размещение с расчётом НДС, мессенджер, передача дел с календарём отпусков, выгрузка в Excel, доска задач с выбором клиента.</td></tr>
+<tr><td class="num">И-1</td><td>Задачи клиента видны в его карточке</td><td><span class="st s-no">не сделано</span></td><td class="proof">Карточка грузит контакты, сделки, документы, креативы и хронологию — задач среди них нет.</td></tr>
+<tr><td class="num">И-2</td><td>Сделки в карточке заметнее</td><td><span class="st s-part">частично</span></td><td class="proof">Сделки есть и кликаются, но спрятаны под заголовком «Информация и контекст».</td></tr>
+<tr><td class="num">И-3</td><td>Баг: «0 документов» при загруженных файлах</td><td><span class="st s-no">не сделано</span></td><td class="proof">Причина: два разных хранилища файлов, счётчик знает только об одном.</td></tr>
+<tr><td class="num">И-4</td><td>Ссылки на креативы вместо файлов</td><td><span class="st s-no">не сделано</span></td><td class="proof">У креатива нет поля для ссылки.</td></tr>
+<tr><td class="num">И-5</td><td>Ссылки на бизнес-процессы Aspro в карточке, сделке и маркировке</td><td><span class="st s-no">не сделано</span></td><td class="proof">Полей нет. <b>Относится к разделу Влада</b> — ручные ссылки стоит делать вместе с полями сопоставления (9.4).</td></tr>
+<tr><td class="num">И-6</td><td>Стадии сделки сократить с 9 до 3–4</td><td><span class="st s-no">не сделано</span></td><td class="proof">В сервисе по-прежнему 9 стадий.</td></tr>
+<tr><td class="num">И-7</td><td>Подписать блоки стадий, пометка «стадия не актуальна»</td><td><span class="st s-no">не сделано</span></td><td class="proof">Полоска кликается, подписей нет.</td></tr>
+<tr><td class="num">И-8</td><td>Баг: нельзя удалить ошибочно загруженный креатив ОРД</td><td><span class="st s-no">не сделано</span></td><td class="proof">Есть загрузка и скачивание, удаления отдельного файла нет.</td></tr>
+<tr><td class="num">И-9</td><td>Проверить видимость маркировок между сотрудниками</td><td><span class="st s-part">частично</span></td><td class="proof">В коде разграничение есть и выглядит верным; живой проверкой не подтверждено.</td></tr>
+<tr><td class="num">И-10</td><td>Сохранять запросы из конструкторов в историю клиента</td><td><span class="st s-no">не сделано</span></td><td class="proof">Конструкторы не делают ни одного обращения к серверу.</td></tr>
+<tr><td class="num">И-11</td><td>Напоминания в Telegram всем сотрудникам</td><td><span class="st s-part">частично</span></td><td class="proof">Механизм работает, подключён только Артуру.</td></tr>
+<tr><td class="num">И-12</td><td>Убрать поле «Цели и задачи»</td><td><span class="st s-no">не сделано</span></td><td class="proof">Поле на месте. Пересекается с требованием 4.6 и 5.7 о минимуме данных.</td></tr>
+<tr><td class="num">И-13</td><td>Бронь размещения создаётся из сделки</td><td><span class="st s-no">не сделано</span></td><td class="proof">Только вручную.</td></tr>
+<tr><td class="num">И-14</td><td>Что работает и нареканий не вызвало</td><td><span class="st s-ok">сделано</span></td><td class="proof">Заявки с сайта, документы с версиями, хронология клиента и «Пересказать историю», конструкторы запросов юристу и на размещение с расчётом НДС, мессенджер, передача дел с календарём отпусков, выгрузка в Excel, доска задач с выбором клиента.</td></tr>
 </tbody></table>
 </div>
 
 <footer>
-  Источник требований: документ «Требования по безопасности при создании и запуске сервисов»
-  (нормативная база на август 2026), разделы 4–8. Нумерация и формулировки сохранены.<br>
+  Источники: «Перечень требований к CRM Agency» (общий перечень, разделы Руслана, Ильи и Влада)
+  и транскрипт встречи отдела 07.10.2026.<br>
   Статус каждого пункта проверен по коду сервиса 8 октября 2026. Пункт без доказательства считается невыполненным.<br>
-  Приложение — транскрипт встречи отдела 07.10.2026.<br>
-  Уровень защищённости УЗ-4 указан как ориентир и требует подтверждения специалиста по информационной безопасности.
+  Оценки в днях — чистое время работы, без согласований и ожидания ответов. Уровень защищённости УЗ-4 —
+  ориентир, требует подтверждения специалиста по информационной безопасности.<br>
+  Логин и пароль из шапки исходного документа в этот документ намеренно не перенесены.
 </footer>
 
 </div>
