@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
+import { checkUpload } from "@/lib/upload-rules";
+import { writeAudit, clientIp } from "@/lib/audit";
 
 // Список вложений владельца (карточка сделки, статья базы знаний и т.д.).
 export async function GET(req: NextRequest) {
@@ -36,6 +38,11 @@ export async function POST(req: NextRequest) {
     const advertiserId = String(form.get("advertiserId") ?? "").trim() || null;
     const dealId = String(form.get("dealId") ?? "").trim() || null;
 
+    // Тип и размер проверяем ДО чтения файла в память: иначе гигабайтный файл
+    // сначала целиком попадёт в память сервера и только потом будет отвергнут.
+    const verdict = checkUpload(file.name, file.type, file.size);
+    if (!verdict.ok) return fail("bad_file", verdict.message, 400);
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const created = await prisma.fileAsset.create({
       data: {
@@ -56,6 +63,15 @@ export async function POST(req: NextRequest) {
     const storageKey = `files/${ownerType}/${created.id}/${sanitizeFileName(file.name)}`;
     await getStorage().put(storageKey, buffer, file.type || "application/octet-stream");
     const saved = await prisma.fileAsset.update({ where: { id: created.id }, data: { storageKey } });
+    writeAudit({
+      action: "file.upload",
+      userId: session.userId,
+      userName: session.name,
+      entityType: "file",
+      entityId: saved.id,
+      changedFields: [kind, `${Math.round(buffer.length / 1024)} КБ`],
+      ip: clientIp(req),
+    });
     return ok(saved);
   });
 }

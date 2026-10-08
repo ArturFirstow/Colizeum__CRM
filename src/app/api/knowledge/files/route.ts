@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
+import { checkUpload } from "@/lib/upload-rules";
 
 // Загрузка рабочего файла в базу знаний (шаблон договора, прайс, презентация).
 export async function POST(req: NextRequest) {
@@ -9,6 +10,10 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) return fail("no_file", "Выберите файл", 400);
+
+    // Тип и размер — общее правило на весь сервис (src/lib/upload-rules.ts).
+    const verdict = checkUpload(file.name, file.type, file.size);
+    if (!verdict.ok) return fail("bad_file", verdict.message, 400);
 
     const title = String(form.get("title") ?? "").trim() || file.name;
     const category = String(form.get("category") ?? "").trim() || "Материалы для клиента";

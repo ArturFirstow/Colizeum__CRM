@@ -25,6 +25,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
     items: [
       { href: "/leadership", label: "Обзор отдела", icon: "◎", hint: "Кто чем занят и как идут сделки" },
       { href: "/leadership/budget", label: "Бюджет отдела", icon: "₽", hint: "Доходы, расходы, остаток бюджета" },
+      { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов" },
     ],
   },
   {

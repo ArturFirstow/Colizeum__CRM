@@ -4,6 +4,7 @@ import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
 import { notifyChatDm } from "@/lib/services/notify";
 import { emitChatMessage } from "@/lib/chat-events";
+import { checkUpload } from "@/lib/upload-rules";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,13 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const form = await req.formData();
     const body = String(form.get("body") ?? "").trim();
     const files = form.getAll("files").filter((f): f is File => typeof f !== "string" && !!f);
+
+    // Тип и размер — общее правило на весь сервис (src/lib/upload-rules.ts).
+    // Во вложениях чата их тоже надо проверять: иначе ограничение обходится.
+    for (const f of files) {
+      const verdict = checkUpload(f.name, f.type, f.size);
+      if (!verdict.ok) return fail("bad_file", verdict.message, 400);
+    }
     if (!body && files.length === 0) return fail("empty", "Пустое сообщение", 400);
 
     const contextType = String(form.get("contextType") ?? "") || null;

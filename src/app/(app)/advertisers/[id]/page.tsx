@@ -12,6 +12,7 @@ import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
 import { Creatives } from "@/components/advertisers/Creatives";
 import { ClientTimeline } from "@/components/advertisers/ClientTimeline";
 import { buildClientTimeline } from "@/lib/services/client-timeline";
+import { writeAudit } from "@/lib/audit";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { AiSummaryButton } from "@/components/ai/AiButtons";
 import { formatMoney } from "@/lib/format";
@@ -36,6 +37,16 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
   // Чужого клиента не показываем (личные кабинеты).
   const session = await requireSession();
   if (!canSeeOwned(session, advertiser.ownerId)) notFound();
+
+  // Открытие карточки клиента — действие с персональными данными: внутри
+  // контакты, телефоны, почты. По требованию 5.3 это попадает в журнал.
+  writeAudit({
+    action: "advertiser.view",
+    userId: session.userId,
+    userName: session.name,
+    entityType: "advertiser",
+    entityId: advertiser.id,
+  });
 
   // Единая лента событий по клиенту — собирается из всех разделов сразу.
   const timeline = await buildClientTimeline(advertiser.id);
