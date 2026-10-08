@@ -48,7 +48,13 @@ export function Sidebar({
     .filter((g) => !g.leadershipOnly || isDirector)
     .map((g) => ({
       ...g,
-      items: g.items.filter((it) => !it.track || isDirector || it.track === user.track),
+      items: g.items.filter(
+        (it) =>
+          (!it.track || isDirector || it.track === user.track) &&
+          // roles сильнее track: журнал действий и запросы по ПДн не зависят
+          // от направления работы, только от роли.
+          (!it.roles || it.roles.includes(user.role as "Owner" | "Director" | "Manager")),
+      ),
     }))
     .filter((g) => g.items.length > 0);
 

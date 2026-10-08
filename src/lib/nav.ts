@@ -15,6 +15,10 @@ export type NavItem = {
   // track — пункт виден только сотрудникам этого направления (руководитель видит всё).
   // Отсутствие track = пункт общий для всех.
   track?: UserTrack;
+  // roles — пункт виден только этим ролям. Нужен там, где раздел не совпадает
+  // с группой: журнал действий смотрят и руководитель, и админ, а запросы по
+  // персональным данным — обязанность оператора, то есть только админ.
+  roles?: ("Owner" | "Director" | "Manager")[];
 };
 
 // leadershipOnly — группа видна только руководителю.
@@ -25,7 +29,6 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
     items: [
       { href: "/leadership", label: "Обзор отдела", icon: "◎", hint: "Кто чем занят и как идут сделки" },
       { href: "/leadership/budget", label: "Бюджет отдела", icon: "₽", hint: "Доходы, расходы, остаток бюджета" },
-      { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов" },
     ],
   },
   {
@@ -56,6 +59,13 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
       { href: "/leads", label: "Входящие с сайта", icon: "⚑", hint: "Обращения с colizeum-agency.ru" },
       { href: "/handover", label: "Передача дел", icon: "⇄", hint: "Отпуск: клиенты уходят замещающему" },
       { href: "/team", label: "Команда", icon: "◉", hint: "Сотрудники и доступы" },
+    ],
+  },
+  {
+    title: "Соответствие",
+    items: [
+      { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов", roles: ["Director", "Owner"] },
+      { href: "/leadership/privacy", label: "Запросы по ПДн", icon: "🔎", hint: "Показать и удалить данные человека", roles: ["Owner"] },
     ],
   },
   {
