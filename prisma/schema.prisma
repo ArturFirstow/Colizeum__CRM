@@ -108,6 +108,16 @@ model Advertiser {
   signatory     String? // подписант
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   owner           User?            @relation("AdvertiserOwner", fields: [ownerId], references: [id])
   contacts        Contact[]
@@ -121,7 +131,6 @@ model Advertiser {
   dailyStatuses   DailyStatus[]
   promoBatches    PromoBatch[]
   decisionRequests DecisionRequest[]
-
   @@index([ownerId])
 }
 
@@ -206,7 +215,6 @@ model Deal {
   notes                String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
-
   advertiser  Advertiser   @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   owner       User?        @relation("DealOwner", fields: [ownerId], references: [id])
   assignee    User?        @relation("DealAssignee", fields: [assigneeId], references: [id])
@@ -222,6 +230,16 @@ model Deal {
   placements      Placement[]
   dailyStatuses   DailyStatus[]
   decisionRequests DecisionRequest[]
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   @@index([advertiserId])
   @@index([stage])
@@ -237,10 +255,19 @@ model Document {
   currentVersionId String? // id актуальной DocumentVersion
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
   advertiser Advertiser        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   deal       Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
   versions   DocumentVersion[]
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   @@index([advertiserId])
   @@index([dealId])
@@ -292,13 +319,22 @@ model Task {
   movedAt      DateTime @default(now())
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: Cascade)
   advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
   assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
   owner      User?       @relation("TaskOwner", fields: [ownerId], references: [id])
   assignedBy User?       @relation("TaskAssignedBy", fields: [assignedById], references: [id])
-
   @@index([dealId])
   @@index([status])
   @@index([assignedById])
@@ -353,9 +389,18 @@ model Invoice {
   issuedAt       DateTime?
   appendixNo     String?
   createdAt      DateTime  @default(now())
-
   deal     Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
   payments Payment[]
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   @@index([dealId])
 }
@@ -676,10 +721,19 @@ model TournamentContractor {
   ownerId       String? // сотрудник-владелец (Артём); null — данные до разделения
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
+  // asproId        — id этой же записи на стороне Aspro.Cloud.
+  // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
+  // syncStatus     — disabled | pending | synced | failed.
+  // asproSyncedAt  — когда ушло в Aspro в последний раз.
+  // Видны сотруднику в карточке: понятно, что и когда ушло.
+  asproId       String?
+  syncEnabled   Boolean   @default(false)
+  syncStatus    String    @default("disabled")
+  asproSyncedAt DateTime?
 
   tournaments Tournament[]
   bookings    ArenaBooking[]
-
   @@index([ownerId])
   @@index([status])
 }
@@ -923,7 +977,6 @@ model FileAsset {
   @@index([advertiserId])
   @@index([dealId])
 }
-
 
 // ── Передача дел на время отпуска ────────────────────────────────────────────
 // Клиенты временно переходят к замещающему вместе с саммари по каждому: где
