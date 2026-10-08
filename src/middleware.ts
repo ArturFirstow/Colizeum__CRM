@@ -123,6 +123,7 @@ function retryPhrase(sec: number): string {
 const SECURITY_ALLOWED = [
   "/leadership/audit", // журнал действий
   "/leadership/privacy", // запросы по персональным данным
+  "/leadership/retention", // сроки хранения
   "/team", // список доступов — требование 6.3
   "/legal", // правовые документы
   "/api/privacy",

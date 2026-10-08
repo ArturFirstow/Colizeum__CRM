@@ -66,6 +66,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
     items: [
       { href: "/leadership/audit", label: "Журнал действий", icon: "📋", hint: "Кто и что делал с данными клиентов", roles: ["Director", "Owner", "Security"] },
       { href: "/leadership/privacy", label: "Запросы по ПДн", icon: "🔎", hint: "Показать и удалить данные человека", roles: ["Owner", "Security"] },
+      { href: "/leadership/retention", label: "Сроки хранения", icon: "⏳", hint: "Сколько храним данные и что убираем по сроку", roles: ["Owner", "Security"] },
     ],
   },
   {
