@@ -126,6 +126,7 @@ const SECURITY_ALLOWED = [
   "/leadership/retention", // сроки хранения
   "/team", // список доступов — требование 6.3
   "/legal", // правовые документы
+  "/incident", // что делать при утечке — это как раз его работа
   "/api/privacy",
   "/api/users", // смена своего пароля
   "/api/auth",

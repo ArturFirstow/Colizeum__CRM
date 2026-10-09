@@ -111,6 +111,17 @@ export function Sidebar({
       <ChangePassword userId={user.id} hideTrigger openSignal={passwordSignal} />
       <TwoFactorPanel userId={user.id} enabled={!!user.totpEnabled} openSignal={twoFactorSignal} />
 
+      {/* Что делать при утечке (требование 4.9). Стоит отдельной заметной
+          строкой, а не пунктом меню: искать её будут в спешке, и она должна
+          попадаться на глаза каждому, независимо от роли и направления. */}
+      <Link
+        href="/incident"
+        className="mt-2 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 px-2.5 py-1.5 text-[11px] leading-tight text-red-300/90 transition hover:border-red-500/60 hover:text-red-200"
+      >
+        <span>🚨</span>
+        <span>Данные могли утечь — что делать</span>
+      </Link>
+
       {/* Правовые документы — те же, что в подвале страницы входа. Нужны и
           после входа: сотрудник должен иметь возможность перечитать их. */}
       <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 px-2 text-[10px] leading-tight text-ink-600">
