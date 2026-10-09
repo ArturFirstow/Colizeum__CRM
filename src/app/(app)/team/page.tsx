@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/primitives";
 import { TeamView } from "@/components/team/TeamView";
 import { ApiKeys } from "@/components/team/ApiKeys";
+import { TelegramBinding } from "@/components/team/TelegramBinding";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,17 @@ export default async function TeamPage() {
       <TeamView members={members} isAdmin={session.role === "Owner"} meId={session.userId} />
       {/* Ключи для внешних систем — рядом с доступами людей: это тот же список
           «кому открыт сервис», только вместо человека программа. */}
+      {/* Привязка Telegram — рядом с доступами: это тоже «кто что получает». */}
+      {session.role === "Owner" && (
+        <TelegramBinding
+          members={members.map((m) => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            telegramChatId: m.telegramChatId,
+          }))}
+        />
+      )}
       {session.role === "Owner" && <ApiKeys />}
     </div>
   );
