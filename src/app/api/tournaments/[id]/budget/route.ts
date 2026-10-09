@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { canSeeTournaments } from "@/lib/scope";
 import { budgetLineCreateSchema } from "@/lib/validation";
+import { guardTournament } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -11,6 +12,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     if (!canSeeTournaments(session)) return fail("forbidden", "Нет доступа", 403);
     const { id } = await ctx.params;
+    await guardTournament(session, id);
     const data = budgetLineCreateSchema.parse(await req.json());
     const line = await prisma.tournamentBudgetLine.create({
       data: {

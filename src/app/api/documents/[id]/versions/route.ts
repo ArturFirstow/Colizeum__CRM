@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sha256, buildStorageKey } from "@/lib/storage";
 import { checkUpload } from "@/lib/upload-rules";
+import { guardDocument } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -12,6 +13,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDocument(session, id);
 
     const document = await prisma.document.findUnique({
       where: { id },

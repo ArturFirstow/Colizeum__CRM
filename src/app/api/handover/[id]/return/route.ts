@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { notifyUser } from "@/lib/services/notify";
+import { guardHandover } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -9,6 +10,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(_req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardHandover(session, id);
     const handover = await prisma.handover.findUnique({ where: { id }, include: { items: true } });
     if (!handover) return fail("not_found", "Передача не найдена", 404);
     if (handover.status !== "Активна") return fail("bad_request", "Эта передача уже завершена", 400);

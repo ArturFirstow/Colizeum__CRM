@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
 import { fail } from "@/lib/api";
+import { guardDocumentVersion } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -12,6 +13,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   if (!session) return fail("unauthorized", "Требуется вход", 401);
 
   const { id } = await ctx.params;
+
+  await guardDocumentVersion(session, id);
   const version = await prisma.documentVersion.findUnique({ where: { id } });
   if (!version) return fail("not_found", "Версия не найдена", 404);
 

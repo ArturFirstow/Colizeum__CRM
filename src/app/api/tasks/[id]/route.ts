@@ -2,12 +2,14 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok } from "@/lib/api";
 import { taskUpdateSchema } from "@/lib/validation";
+import { guardTask } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardTask(session, id);
     const data = taskUpdateSchema.parse(await req.json());
     // Перетащили в другую колонку — карточка встаёт первой, иначе теряется
     // в середине списка и человек её больше не находит.
@@ -21,8 +23,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardTask(session, id);
     await prisma.task.delete({ where: { id } });
     return ok({ ok: true });
   });

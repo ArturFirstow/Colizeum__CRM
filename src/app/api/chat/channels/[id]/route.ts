@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { withSession, ok, fail } from "@/lib/api";
+import { withSession, ok } from "@/lib/api";
+import { guardChannelDelete } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 // Удалить канал (кроме «Общего»). Сообщения и вложения удаляются каскадом.
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
-    const channel = await prisma.channel.findUnique({ where: { id } });
-    if (!channel) return fail("not_found", "Канал не найден", 404);
-    if (channel.isGeneral) return fail("forbidden", "«Общий» канал удалить нельзя", 400);
+    // Личку сносит только её участник, общий канал — создатель или админ.
+    await guardChannelDelete(session, id);
     await prisma.channel.delete({ where: { id } });
     return ok({ ok: true });
   });

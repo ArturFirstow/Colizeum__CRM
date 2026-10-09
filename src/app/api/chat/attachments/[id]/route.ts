@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
 import { fail } from "@/lib/api";
+import { guardChatAttachment } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -12,8 +13,9 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   if (!session) return fail("unauthorized", "Требуется вход", 401);
 
   const { id } = await ctx.params;
-  const att = await prisma.chatAttachment.findUnique({ where: { id } });
-  if (!att) return fail("not_found", "Вложение не найдено", 404);
+  // Проверка участия в канале: без неё файл из чужой личной переписки
+  // скачивался по прямой ссылке любым вошедшим сотрудником.
+  const att = await guardChatAttachment(session, id);
 
   const obj = await getStorage().get(att.storageKey);
   if (!obj) return fail("not_found", "Файл отсутствует в хранилище", 404);

@@ -4,13 +4,15 @@ import { withSession, ok, fail } from "@/lib/api";
 import { getStorage, sanitizeFileName } from "@/lib/storage";
 import { checkUpload } from "@/lib/upload-rules";
 import { writeAudit, clientIp } from "@/lib/audit";
+import { guardOrd } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 // Загрузка файла к записи ОРД: kind = creative (картинка креатива) | act (PDF акта).
 export async function POST(req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardOrd(session, id);
     const ord = await prisma.ordMarking.findUnique({ where: { id } });
     if (!ord) return fail("not_found", "Запись ОРД не найдена", 404);
 
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 export async function DELETE(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardOrd(session, id);
     const kind = new URL(req.url).searchParams.get("kind");
     if (kind !== "creative" && kind !== "act") return fail("bad_kind", "kind: creative | act", 400);
 

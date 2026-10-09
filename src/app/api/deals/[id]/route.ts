@@ -5,12 +5,14 @@ import { dealUpdateSchema } from "@/lib/validation";
 import { checkStageTransition, isValidStage } from "@/lib/services/deal-stage";
 import { notifyBlockerRaised } from "@/lib/services/notify";
 import type { DealStage } from "@/lib/enums";
+import { guardDeal } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDeal(session, id);
     const deal = await prisma.deal.findUnique({
       where: { id },
       include: { advertiser: true, owner: true, assignee: true },
@@ -23,6 +25,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDeal(session, id);
     const { confirm, launchDate, nextStepDate, ...data } = dealUpdateSchema.parse(await req.json());
 
     const existing = await prisma.deal.findUnique({ where: { id } });
@@ -70,8 +73,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDeal(session, id);
     await prisma.deal.delete({ where: { id } });
     return ok({ ok: true });
   });

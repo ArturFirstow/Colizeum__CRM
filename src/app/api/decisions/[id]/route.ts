@@ -4,6 +4,7 @@ import { withSession, ok, fail } from "@/lib/api";
 import { isLeadership } from "@/lib/scope";
 import { decisionPatchSchema } from "@/lib/validation";
 import { notifyDecisionResolved } from "@/lib/services/notify";
+import { guardDecision } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -11,6 +12,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDecision(session, id);
     const data = decisionPatchSchema.parse(await req.json());
     const item = await prisma.decisionRequest.findUnique({
       where: { id },
@@ -46,6 +48,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardDecision(session, id);
     const item = await prisma.decisionRequest.findUnique({ where: { id }, select: { requesterId: true } });
     if (!item) return fail("not_found", "Запрос не найден", 404);
     if (!isLeadership(session) && item.requesterId !== session.userId) {

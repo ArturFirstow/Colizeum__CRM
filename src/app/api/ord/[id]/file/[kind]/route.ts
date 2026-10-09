@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
 import { fail } from "@/lib/api";
+import { guardOrd } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string; kind: string }> };
 
@@ -12,6 +13,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   if (!session) return fail("unauthorized", "Требуется вход", 401);
 
   const { id, kind } = await ctx.params;
+
+  await guardOrd(session, id);
   const ord = await prisma.ordMarking.findUnique({ where: { id } });
   if (!ord) return fail("not_found", "Запись не найдена", 404);
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok } from "@/lib/api";
 import { ORD_ROLES } from "@/lib/enums";
+import { guardOrd } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -17,8 +18,9 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardOrd(session, id);
     const data = patchSchema.parse(await req.json());
     const ord = await prisma.ordMarking.update({ where: { id }, data });
     return ok(ord);
@@ -26,8 +28,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 }
 
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardOrd(session, id);
     await prisma.ordMarking.delete({ where: { id } });
     return ok({ ok: true });
   });

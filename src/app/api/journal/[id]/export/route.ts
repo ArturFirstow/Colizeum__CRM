@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { meetingSheetConfigured, pushMeetingToSheet, rowAsTsv } from "@/lib/services/meeting-sheet";
+import { guardJournalEntry } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -9,6 +10,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(_req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
+    await guardJournalEntry(session, id);
     const entry = await prisma.journalEntry.findUnique({ where: { id } });
     if (!entry) return fail("not_found", "Запись не найдена", 404);
     if (entry.ownerId && entry.ownerId !== session.userId) {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { canSeeTournaments } from "@/lib/scope";
 import { tournamentUpdateSchema } from "@/lib/validation";
+import { guardTournament } from "@/lib/guard";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -10,6 +11,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     if (!canSeeTournaments(session)) return fail("forbidden", "Нет доступа", 403);
     const { id } = await ctx.params;
+    await guardTournament(session, id);
     const data = tournamentUpdateSchema.parse(await req.json());
     const tournament = await prisma.tournament.update({
       where: { id },
@@ -34,6 +36,7 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     if (!canSeeTournaments(session)) return fail("forbidden", "Нет доступа", 403);
     const { id } = await ctx.params;
+    await guardTournament(session, id);
     await prisma.tournament.delete({ where: { id } });
     return ok({ ok: true });
   });
