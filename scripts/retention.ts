@@ -13,7 +13,7 @@
  * видит служебные модули сервиса (они помечены «только для сервера»).
  *
  * В расписание (раз в сутки, ночью) — см. docs/ДЕПЛОЙ.md:
- *   30 4 * * * cd /root/Colizeum__CRM && npm run retention >> /var/log/colizeum-retention.log 2>&1
+ *   30 4 * * * cd /var/www/colizeum && npm run retention >> /var/log/colizeum-retention.log 2>&1
  */
 import { retentionStatus, sweepRetention } from "../src/lib/services/retention";
 import { writeAudit } from "../src/lib/audit";

@@ -33,7 +33,7 @@
 ## Шаг 2. Прописываем токен на сервере
 
 ```bash
-cd /root/Colizeum__CRM
+cd /var/www/colizeum
 nano .env
 ```
 
@@ -56,7 +56,7 @@ APP_URL="https://colizeum-agensy.space"
 ## Шаг 4. Привязываем чаты к сотрудникам
 
 ```bash
-cd /root/Colizeum__CRM
+cd /var/www/colizeum
 npx tsx scripts/telegram-chats.ts
 ```
 
@@ -101,7 +101,7 @@ pm2 restart colizeum --update-env
 
 | Что проверить | Как |
 |---|---|
-| Токен прописан | `grep TELEGRAM /root/Colizeum__CRM/.env` |
+| Токен прописан | `grep TELEGRAM /var/www/colizeum/.env` |
 | Сервис перезапущен после правки `.env` | `pm2 restart colizeum --update-env` |
 | Сотрудник написал боту `/start` | без этого Telegram блокирует отправку |
 | Chat id привязан | `npx tsx scripts/telegram-chats.ts` — в списке сотрудников должно быть «→ чат …» |

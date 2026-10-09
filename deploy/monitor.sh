@@ -15,7 +15,7 @@
 #
 # Установка в расписание (раз в 5 минут):
 #   crontab -e
-#   */5 * * * * bash /root/Colizeum__CRM/deploy/monitor.sh >/dev/null 2>&1
+#   */5 * * * * bash /var/www/colizeum/deploy/monitor.sh >/dev/null 2>&1
 #
 # Куда писать — в .env рядом с настройками бота:
 #   TELEGRAM_BOT_TOKEN="…"            (уже есть, см. docs/TELEGRAM.md)
