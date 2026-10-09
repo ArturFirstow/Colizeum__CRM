@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/primitives";
 import { TeamView } from "@/components/team/TeamView";
+import { ApiKeys } from "@/components/team/ApiKeys";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,9 @@ export default async function TeamPage() {
         icon="👥"
       />
       <TeamView members={members} isAdmin={session.role === "Owner"} meId={session.userId} />
+      {/* Ключи для внешних систем — рядом с доступами людей: это тот же список
+          «кому открыт сервис», только вместо человека программа. */}
+      {session.role === "Owner" && <ApiKeys />}
     </div>
   );
 }

@@ -21,18 +21,18 @@ datasource db {
 
 // ── Пользователи сервиса ─────────────────────────────────────────────────────
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String   @default("Manager") // Owner | Manager | Director (см. enums.ts)
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  role              String    @default("Manager") // Owner | Manager | Director (см. enums.ts)
   // Направление работы: Ads — реклама/коллаборации, Tournaments — турниры (Артём).
   // От track зависит набор разделов в кабинете (см. src/lib/nav.ts).
-  track        String   @default("Ads") // Ads | Tournaments
+  track             String    @default("Ads") // Ads | Tournaments
   // Личная Google-таблица учёта сотрудника: ссылка целиком, вместе с «?gid=…»
   // (адрес конкретного листа). Раньше таблица была одна на всех в настройках
   // сервера — теперь каждый указывает свою (src/lib/sheet-url.ts).
-  sheetUrl     String?
+  sheetUrl          String?
   // ── Второй фактор (требование 5.1) ────────────────────────────────────────
   // totpSecret        — общий секрет с приложением-аутентификатором.
   // totpEnabledAt     — когда подтверждён. Пока null, вход идёт по одному паролю.
@@ -43,31 +43,32 @@ model User {
   totpRecoveryCodes String?
   // Куда слать уведомления (вопрос руководителю, поручение, блокер).
   // Пусто — сотрудник уведомления не получает. Настройка — docs/TELEGRAM.md.
-  telegramChatId String?
+  telegramChatId    String?
   // До какого момента сотрудник видел мессенджер: по нему считается маячок
   // непрочитанного. Одно поле на человека — проще, чем отметки по каналам.
-  chatSeenAt   DateTime?
+  chatSeenAt        DateTime?
   // Фото сотрудника. Храним ссылку на файл в общем хранилище (/api/files/<id>),
   // чтобы не заводить отдельный механизм картинок.
-  avatarUrl    String?
-  createdAt    DateTime @default(now())
+  avatarUrl         String?
+  createdAt         DateTime  @default(now())
 
-  ownedDeals       Deal[]            @relation("DealOwner")
-  assignedDeals    Deal[]            @relation("DealAssignee")
-  assignedTasks    Task[]            @relation("TaskAssignee")
-  uploadedVersions DocumentVersion[] @relation("VersionUploader")
-  ownedAdvertisers Advertiser[]      @relation("AdvertiserOwner")
-  ownedTasks       Task[]            @relation("TaskOwner")
-  assignedByMe     Task[]            @relation("TaskAssignedBy")
-  chatMessages     ChatMessage[]     @relation("ChatAuthor")
+  ownedDeals         Deal[]            @relation("DealOwner")
+  assignedDeals      Deal[]            @relation("DealAssignee")
+  assignedTasks      Task[]            @relation("TaskAssignee")
+  uploadedVersions   DocumentVersion[] @relation("VersionUploader")
+  ownedAdvertisers   Advertiser[]      @relation("AdvertiserOwner")
+  ownedTasks         Task[]            @relation("TaskOwner")
+  assignedByMe       Task[]            @relation("TaskAssignedBy")
+  chatMessages       ChatMessage[]     @relation("ChatAuthor")
   channelMemberships ChannelMember[]
-  assignedLeads    Lead[]            @relation("LeadAssignee")
-  decisionRequests DecisionRequest[] @relation("DecisionRequester")
-  consents         ConsentRecord[]   @relation("ConsentUser")
-  absences         Absence[]         @relation("AbsencePerson")
-  coveringFor      Absence[]         @relation("AbsenceCover")
-  handoversGiven   Handover[]        @relation("HandoverFrom")
-  handoversTaken   Handover[]        @relation("HandoverTo")
+  assignedLeads      Lead[]            @relation("LeadAssignee")
+  decisionRequests   DecisionRequest[] @relation("DecisionRequester")
+  consents           ConsentRecord[]   @relation("ConsentUser")
+  apiKeys            ApiKey[]          @relation("ApiKeyAuthor")
+  absences           Absence[]         @relation("AbsencePerson")
+  coveringFor        Absence[]         @relation("AbsenceCover")
+  handoversGiven     Handover[]        @relation("HandoverFrom")
+  handoversTaken     Handover[]        @relation("HandoverTo")
 }
 
 // ── Отсутствие сотрудника (календарь отпусков в разделе «Передача дел») ──────
@@ -95,28 +96,28 @@ model Absence {
 
 // ── Рекламодатель / агентство (карточка CRM) ─────────────────────────────────
 model Advertiser {
-  id          String   @id @default(cuid())
-  nameRu      String
-  nameEn      String?
-  legalEntity String? // юрлицо целиком, напр. АО «ТБанк»
-  inn         String?
-  kpp         String?
-  ogrn        String?
-  type        String   @default("Рекламодатель") // Рекламодатель | Агентство (см. enums.ts)
-  status      String   @default("Активный")
-  archived    Boolean  @default(false) // в Архиве (v2, п.1.2)
+  id            String    @id @default(cuid())
+  nameRu        String
+  nameEn        String?
+  legalEntity   String? // юрлицо целиком, напр. АО «ТБанк»
+  inn           String?
+  kpp           String?
+  ogrn          String?
+  type          String    @default("Рекламодатель") // Рекламодатель | Агентство (см. enums.ts)
+  status        String    @default("Активный")
+  archived      Boolean   @default(false) // в Архиве (v2, п.1.2)
   // Личный кабинет: клиент принадлежит сотруднику; null = данные до разделения.
-  ownerId     String?
-  goals       String?
-  notes       String?
+  ownerId       String?
+  goals         String?
+  notes         String?
   // Реквизиты для карточки контрагента.
   address       String?
   bankAccount   String?
   bankName      String?
   bik           String?
   signatory     String? // подписант
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
@@ -128,18 +129,19 @@ model Advertiser {
   syncStatus    String    @default("disabled")
   asproSyncedAt DateTime?
 
-  owner           User?            @relation("AdvertiserOwner", fields: [ownerId], references: [id])
-  contacts        Contact[]
-  deals           Deal[]
-  documents       Document[]
-  tasks           Task[]
-  creatives       Creative[]
-  agencyClients   AgencyClient[] // если контрагент = Агентство
-  plannedPayments PlannedPayment[]
-  placements      Placement[]
-  dailyStatuses   DailyStatus[]
-  promoBatches    PromoBatch[]
+  owner            User?             @relation("AdvertiserOwner", fields: [ownerId], references: [id])
+  contacts         Contact[]
+  deals            Deal[]
+  documents        Document[]
+  tasks            Task[]
+  creatives        Creative[]
+  agencyClients    AgencyClient[] // если контрагент = Агентство
+  plannedPayments  PlannedPayment[]
+  placements       Placement[]
+  dailyStatuses    DailyStatus[]
+  promoBatches     PromoBatch[]
   decisionRequests DecisionRequest[]
+
   @@index([ownerId])
 }
 
@@ -193,20 +195,20 @@ model Contact {
 
 // ── Сделка / проект ──────────────────────────────────────────────────────────
 model Deal {
-  id                   String    @id @default(cuid())
+  id                   String            @id @default(cuid())
   advertiserId         String
   title                String
   dealType             String? // прямой | агентство | технический (v2, п.1.3)
   finalBrand           String? // конечный бренд (при агентстве/цепочке)
   contractConstruction String? // A..E (справочник конструкций договоров, v2 п.3.5)
-  stage                String    @default("Лид") // 9 стадий (v2, п.1.1)
+  stage                String            @default("Лид") // 9 стадий (v2, п.1.1)
   urgency              String? // Максимальная | Высокая | Средняя | Низкая | По запросу | Разово
   ownerId              String?
   assigneeId           String?
   amount               Float? // сумма из МП (текущая)
   contractTotal        Float? // сумма по договору за весь период сотрудничества
-  vatIncluded          Boolean   @default(true)
-  currency             String    @default("RUB")
+  vatIncluded          Boolean           @default(true)
+  currency             String            @default("RUB")
   periodText           String? // срок как ТЕКСТ, не жёсткие даты (правило блупринта)
   launchDate           DateTime? // дата запуска
   paymentTerms         String?
@@ -216,39 +218,39 @@ model Deal {
   // Блокер = флажок + комментарий. Сделка считается заблокированной ТОЛЬКО при
   // поднятом флажке: текст может остаться как история, но висеть в сводках не будет.
   blocker              String?
-  blockerActive        Boolean   @default(false)
+  blockerActive        Boolean           @default(false)
   situational          String? // «Ситуативные блокеры и срочные задачи» (v2, п.1.3) — НЕ в базу знаний
   nextStep             String?
   nextStepDate         DateTime?
   decisionPending      String? // непустое → попадает в блок «Решения ждут вас»
   notes                String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  advertiser  Advertiser   @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
-  owner       User?        @relation("DealOwner", fields: [ownerId], references: [id])
-  assignee    User?        @relation("DealAssignee", fields: [assigneeId], references: [id])
-  documents       Document[]
-  tasks           Task[]
-  creatives       Creative[]
-  mediaPlans      MediaPlan[]
-  invoices        Invoice[]
-  closingDocs     ClosingDoc[]
-  ordMarkings     OrdMarking[]
-  promoBatches    PromoBatch[]
-  plannedPayments PlannedPayment[]
-  placements      Placement[]
-  dailyStatuses   DailyStatus[]
-  decisionRequests DecisionRequest[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  advertiser           Advertiser        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  owner                User?             @relation("DealOwner", fields: [ownerId], references: [id])
+  assignee             User?             @relation("DealAssignee", fields: [assigneeId], references: [id])
+  documents            Document[]
+  tasks                Task[]
+  creatives            Creative[]
+  mediaPlans           MediaPlan[]
+  invoices             Invoice[]
+  closingDocs          ClosingDoc[]
+  ordMarkings          OrdMarking[]
+  promoBatches         PromoBatch[]
+  plannedPayments      PlannedPayment[]
+  placements           Placement[]
+  dailyStatuses        DailyStatus[]
+  decisionRequests     DecisionRequest[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
   // syncStatus     — disabled | pending | synced | failed.
   // asproSyncedAt  — когда ушло в Aspro в последний раз.
   // Видны сотруднику в карточке: понятно, что и когда ушло.
-  asproId       String?
-  syncEnabled   Boolean   @default(false)
-  syncStatus    String    @default("disabled")
-  asproSyncedAt DateTime?
+  asproId              String?
+  syncEnabled          Boolean           @default(false)
+  syncStatus           String            @default("disabled")
+  asproSyncedAt        DateTime?
 
   @@index([advertiserId])
   @@index([stage])
@@ -256,27 +258,27 @@ model Deal {
 
 // ── Логический документ (напр. «Договор Т-Банк») ─────────────────────────────
 model Document {
-  id               String   @id @default(cuid())
+  id               String            @id @default(cuid())
   dealId           String?
   advertiserId     String
   type             String // см. DocumentType в enums.ts
   title            String
   currentVersionId String? // id актуальной DocumentVersion
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  advertiser Advertiser        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
-  deal       Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  versions   DocumentVersion[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  advertiser       Advertiser        @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal             Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  versions         DocumentVersion[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
   // syncStatus     — disabled | pending | synced | failed.
   // asproSyncedAt  — когда ушло в Aspro в последний раз.
   // Видны сотруднику в карточке: понятно, что и когда ушло.
-  asproId       String?
-  syncEnabled   Boolean   @default(false)
-  syncStatus    String    @default("disabled")
-  asproSyncedAt DateTime?
+  asproId          String?
+  syncEnabled      Boolean           @default(false)
+  syncStatus       String            @default("disabled")
+  asproSyncedAt    DateTime?
 
   @@index([advertiserId])
   @@index([dealId])
@@ -306,28 +308,28 @@ model DocumentVersion {
 
 // ── Задача (юрист / дизайн / менеджер / бухгалтерия / ОРД) ───────────────────
 model Task {
-  id           String    @id @default(cuid())
-  dealId       String?
-  advertiserId String?
-  title        String
-  kind         String    @default("Менеджер") // Юрист | Дизайн | Менеджер | Бухгалтерия | ОРД | Прочее
-  assigneeId   String?
-  status       String    @default("Открыта") // Открыта | В работе | Ждёт | Готова
+  id            String    @id @default(cuid())
+  dealId        String?
+  advertiserId  String?
+  title         String
+  kind          String    @default("Менеджер") // Юрист | Дизайн | Менеджер | Бухгалтерия | ОРД | Прочее
+  assigneeId    String?
+  status        String    @default("Открыта") // Открыта | В работе | Ждёт | Готова
   // На чьей стороне сейчас согласование: «Мы» | «Клиент» (доска задач).
-  side         String    @default("Мы")
+  side          String    @default("Мы")
   // Чья задача (личный кабинет сотрудника); null = данные до разделения.
-  ownerId      String?
+  ownerId       String?
   // Кто поручил задачу (руководитель). null = обычная личная задача сотрудника.
-  assignedById String?
-  dueDate      DateTime?
-  notes        String?
+  assignedById  String?
+  dueDate       DateTime?
+  notes         String?
   // Приоритет задачи: по нему карточки сортируются и красится полоса слева.
-  priority     String   @default("Обычный") // Срочно | Высокий | Обычный | Низкий
+  priority      String    @default("Обычный") // Срочно | Высокий | Обычный | Низкий
   // Когда карточку последний раз двигали между колонками. Перетащенная задача
   // встаёт первой в новой колонке — иначе она теряется в середине списка.
-  movedAt      DateTime @default(now())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  movedAt       DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
@@ -344,6 +346,7 @@ model Task {
   assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
   owner      User?       @relation("TaskOwner", fields: [ownerId], references: [id])
   assignedBy User?       @relation("TaskAssignedBy", fields: [assignedById], references: [id])
+
   @@index([dealId])
   @@index([status])
   @@index([assignedById])
@@ -398,18 +401,20 @@ model Invoice {
   issuedAt       DateTime?
   appendixNo     String?
   createdAt      DateTime  @default(now())
-  deal     Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  // Нужен для выгрузки «что изменилось с такой-то даты» через API (п. 9.1).
+  updatedAt      DateTime  @updatedAt
+  deal           Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  payments       Payment[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
   // syncStatus     — disabled | pending | synced | failed.
   // asproSyncedAt  — когда ушло в Aspro в последний раз.
   // Видны сотруднику в карточке: понятно, что и когда ушло.
-  asproId       String?
-  syncEnabled   Boolean   @default(false)
-  syncStatus    String    @default("disabled")
-  asproSyncedAt DateTime?
+  asproId        String?
+  syncEnabled    Boolean   @default(false)
+  syncStatus     String    @default("disabled")
+  asproSyncedAt  DateTime?
 
   @@index([dealId])
 }
@@ -451,25 +456,25 @@ model ClosingDoc {
 
 // ── Маркировка ЕРИД / ОРД ────────────────────────────────────────────────────
 model OrdMarking {
-  id             String    @id @default(cuid())
-  dealId         String
-  erid           String?
-  role           String // Агентство | Клиент (и др., см. enums.ts)
-  finalClient    String? // конечный заказчик при агентстве
-  platform       String? // соцсети | моб.приложение | пуши
-  status         String    @default("Активна")
-  markedAt       DateTime?
-  placementStart DateTime? // дата размещения маркировки
-  placementEnd   DateTime?
-  expiresAt      DateTime? // посты живут до 1 мес
-  monthlyClosing Boolean   @default(true) // акты закрываются каждый месяц
-  urgent         Boolean   @default(false) // срочно снять креатив / сдать акт
+  id                 String    @id @default(cuid())
+  dealId             String
+  erid               String?
+  role               String // Агентство | Клиент (и др., см. enums.ts)
+  finalClient        String? // конечный заказчик при агентстве
+  platform           String? // соцсети | моб.приложение | пуши
+  status             String    @default("Активна")
+  markedAt           DateTime?
+  placementStart     DateTime? // дата размещения маркировки
+  placementEnd       DateTime?
+  expiresAt          DateTime? // посты живут до 1 мес
+  monthlyClosing     Boolean   @default(true) // акты закрываются каждый месяц
+  urgent             Boolean   @default(false) // срочно снять креатив / сдать акт
   // Файлы: креатив (картинка) и закрывающий акт (PDF) — метаданные в БД, файл в StorageProvider.
   creativeStorageKey String?
   creativeFileName   String?
   actStorageKey      String?
   actFileName        String?
-  createdAt      DateTime  @default(now())
+  createdAt          DateTime  @default(now())
 
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
@@ -478,21 +483,21 @@ model OrdMarking {
 
 // ── Партия промокодов ────────────────────────────────────────────────────────
 model PromoBatch {
-  id             String    @id @default(cuid())
-  advertiserId   String? // карточки промокодов по рекламодателю
-  dealId         String?
-  mechanic       String // Performance | Acquisition
-  nominal        Float?
-  qty            Int?
-  vatOnUsed      Boolean   @default(true) // +22% на использованные
-  delayHours     Int       @default(12) // отсрочка выдачи ≥ 12 ч
-  monetization   String    @default("Деньги") // Деньги | Бартер
-  validFrom      DateTime? // срок действия
-  validTo        DateTime?
+  id              String    @id @default(cuid())
+  advertiserId    String? // карточки промокодов по рекламодателю
+  dealId          String?
+  mechanic        String // Performance | Acquisition
+  nominal         Float?
+  qty             Int?
+  vatOnUsed       Boolean   @default(true) // +22% на использованные
+  delayHours      Int       @default(12) // отсрочка выдачи ≥ 12 ч
+  monetization    String    @default("Деньги") // Деньги | Бартер
+  validFrom       DateTime? // срок действия
+  validTo         DateTime?
   commercialTerms String? // коммерческие условия
-  settlement     String? // взаиморасчёт по промокодам
-  notes          String?
-  createdAt      DateTime  @default(now())
+  settlement      String? // взаиморасчёт по промокодам
+  notes           String?
+  createdAt       DateTime  @default(now())
 
   advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: Cascade)
@@ -540,15 +545,15 @@ model DeptMonthBudget {
 }
 
 model DeptIncome {
-  id        String   @id @default(cuid())
-  month     String // «YYYY-MM»
-  source    String // Реклама | Корпоративные турниры | …
+  id         String   @id @default(cuid())
+  month      String // «YYYY-MM»
+  source     String // Реклама | Корпоративные турниры | …
   clientName String? // от какого клиента ждём деньги
-  w1        Float    @default(0)
-  w2        Float    @default(0)
-  w3        Float    @default(0)
-  w4        Float    @default(0)
-  createdAt DateTime @default(now())
+  w1         Float    @default(0)
+  w2         Float    @default(0)
+  w3         Float    @default(0)
+  w4         Float    @default(0)
+  createdAt  DateTime @default(now())
 
   @@index([month])
 }
@@ -580,8 +585,8 @@ model DeptExpense {
 }
 
 model JournalEntry {
-  id               String   @id @default(cuid())
-  date             DateTime @default(now())
+  id               String    @id @default(cuid())
+  date             DateTime  @default(now())
   // Чей журнал (личный кабинет); null = данные до разделения.
   ownerId          String?
   source           String // EOD | Транскрипт | Чат
@@ -590,12 +595,12 @@ model JournalEntry {
   advertiserId     String?
   // ── Показатели встречи для таблицы учёта ──────────────────────────────────
   meetingDate      DateTime? // дата встречи
-  startTime        String?   // «HH:MM» начала
-  endTime          String?   // «HH:MM» окончания
-  durationHours    Float?    // продолжительность в часах, шаг 0,5
-  participants     String?   // участники встречи, через запятую
-  protocolUrl      String?   // ссылка на протокол/расшифровку
-  meetingUrl       String?   // ссылка на саму встречу (запись, Zoom/Meet)
+  startTime        String? // «HH:MM» начала
+  endTime          String? // «HH:MM» окончания
+  durationHours    Float? // продолжительность в часах, шаг 0,5
+  participants     String? // участники встречи, через запятую
+  protocolUrl      String? // ссылка на протокол/расшифровку
+  meetingUrl       String? // ссылка на саму встречу (запись, Zoom/Meet)
   // Выгрузка строки в Google-таблицу отчётности.
   exportedAt       DateTime?
   exportError      String?
@@ -604,20 +609,20 @@ model JournalEntry {
   routedTo         String? // Трекер | База | Архив
   linkedDealIds    String? // JSON-массив id (SQLite не поддерживает scalar-list)
   linkedArticleIds String? // JSON-массив id
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
 }
 
 // ── Плановый платёж по месяцам (финансовый календарь) ───────────────────────
 model PlannedPayment {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   advertiserId String
   dealId       String?
   periodMonth  String // «YYYY-MM» — месяц платежа
   amount       Float
-  status       String   @default("План") // План | Оплачено | Просрочено
+  status       String    @default("План") // План | Оплачено | Просрочено
   paidAt       DateTime?
   note         String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
   deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
@@ -629,7 +634,7 @@ model PlannedPayment {
 // ── Бронь размещения (календарь размещений, Gantt) ──────────────────────────
 // Строка = слот/формат (slot), ячейка = бренд на период (по неделям).
 model Placement {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   advertiserId String? // если бренд заведён как контрагент
   brandLabel   String? // свободное имя бренда (для разовых, без карточки)
   dealId       String?
@@ -637,9 +642,9 @@ model Placement {
   responsible  String? // ответственный менеджер
   startDate    DateTime
   endDate      DateTime
-  status       String    @default("Ожидание") // Ожидание | На подписании | Подписан | Завершено
+  status       String   @default("Ожидание") // Ожидание | На подписании | Подписан | Завершено
   notes        String?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
   advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
   deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: SetNull)
@@ -678,8 +683,8 @@ model DailyStatus {
 model ConsentRecord {
   id         String   @id @default(cuid())
   userId     String
-  docSlug    String   // polzovatelskoe | politika | soglasie
-  docVersion String   // отпечаток текста на момент принятия
+  docSlug    String // polzovatelskoe | politika | soglasie
+  docVersion String // отпечаток текста на момент принятия
   acceptedAt DateTime @default(now())
   ip         String?
 
@@ -701,21 +706,21 @@ model ConsentRecord {
 // userName хранится копией: журнал должен оставаться читаемым и после того,
 // как сотрудника удалили из сервиса.
 model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  userName   String?
+  id            String   @id @default(cuid())
+  userId        String?
+  userName      String?
   // Что произошло: login.ok | login.fail | advertiser.view | deal.update | …
-  action     String
-  entityType String?
-  entityId   String?
+  action        String
+  entityType    String?
+  entityId      String?
   // Названия изменённых полей через запятую — БЕЗ значений.
   changedFields String?
   // Адрес нужен для расследования инцидента (п. 4.9) и для сигналов о
   // подозрительной активности (п. 6.7). Сам по себе это ПДн — поэтому журнал
   // чистится по сроку хранения.
-  ip         String?
-  ok         Boolean  @default(true)
-  createdAt  DateTime @default(now())
+  ip            String?
+  ok            Boolean  @default(true)
+  createdAt     DateTime @default(now())
 
   @@index([createdAt])
   @@index([userId])
@@ -743,16 +748,16 @@ model Job {
 
 // ── Контрагент-заказчик турнира (своя база Артёма) ──────────────────────────
 model TournamentContractor {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String // компания/бренд-заказчик
   brand         String? // конкретный бренд, если отличается
   contactPerson String? // контактное лицо
   contact       String? // телефон / почта / телеграм
-  status        String   @default("Лид") // воронка (см. TOURNAMENT_CONTRACTOR_STATUSES)
+  status        String    @default("Лид") // воронка (см. TOURNAMENT_CONTRACTOR_STATUSES)
   notes         String?
   ownerId       String? // сотрудник-владелец (Артём); null — данные до разделения
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
@@ -766,6 +771,7 @@ model TournamentContractor {
 
   tournaments Tournament[]
   bookings    ArenaBooking[]
+
   @@index([ownerId])
   @@index([status])
 }
@@ -787,7 +793,7 @@ model Tournament {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  contractor  TournamentContractor?   @relation(fields: [contractorId], references: [id], onDelete: SetNull)
+  contractor  TournamentContractor?  @relation(fields: [contractorId], references: [id], onDelete: SetNull)
   budgetLines TournamentBudgetLine[]
   bookings    ArenaBooking[]
 
@@ -827,8 +833,8 @@ model ArenaBooking {
   notes        String?
   createdAt    DateTime @default(now())
 
-  tournament Tournament?            @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
-  contractor TournamentContractor?  @relation(fields: [contractorId], references: [id], onDelete: SetNull)
+  tournament Tournament?           @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  contractor TournamentContractor? @relation(fields: [contractorId], references: [id], onDelete: SetNull)
 
   @@index([tournamentId])
   @@index([startDate])
@@ -868,17 +874,17 @@ model ChannelMember {
 }
 
 model ChatMessage {
-  id        String   @id @default(cuid())
-  channelId String
-  authorId  String
-  body      String
-  pinned    Boolean  @default(false) // закреплённое сообщение (наверху канала)
+  id           String    @id @default(cuid())
+  channelId    String
+  authorId     String
+  body         String
+  pinned       Boolean   @default(false) // закреплённое сообщение (наверху канала)
   // Привязка к сущности сервиса (денормализовано, без жёсткой связи):
   contextType  String? // advertiser | deal
   contextId    String?
   contextLabel String? // имя клиента/сделки для отображения
-  createdAt DateTime  @default(now())
-  editedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  editedAt     DateTime?
 
   channel     Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
   author      User             @relation("ChatAuthor", fields: [authorId], references: [id])
@@ -937,18 +943,18 @@ model Lead {
 // выдать доступ, утвердить скидку). У руководителя запрос появляется в блоке
 // «Решения, которые ждут вас» на «Сегодня» — с указанием, от кого он пришёл.
 model DecisionRequest {
-  id          String  @id @default(cuid())
-  title       String // что нужно решить
-  details     String? // подробности от сотрудника
-  kind        String  @default("Согласование") // Согласование | Доступ | Деньги | Другое
-  status      String  @default("Открыт") // Открыт | Решён | Отклонён
-  answer      String? // решение руководителя
+  id             String  @id @default(cuid())
+  title          String // что нужно решить
+  details        String? // подробности от сотрудника
+  kind           String  @default("Согласование") // Согласование | Доступ | Деньги | Другое
+  status         String  @default("Открыт") // Открыт | Решён | Отклонён
+  answer         String? // решение руководителя
   // Ключ группы вложений (FileAsset.ownerType="decision", ownerId=этот ключ).
   // Заводится в браузере до отправки, поэтому файлы можно приложить сразу в форме.
   attachmentsKey String?
 
   requesterId String
-  requester   User    @relation("DecisionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requester   User   @relation("DecisionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
 
   advertiserId String?
   advertiser   Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: SetNull)
@@ -998,9 +1004,9 @@ model FileAsset {
   storageKey  String
 
   // Денормализация для сквозной видимости по клиенту и сделке.
-  advertiserId String?
-  dealId       String?
-  uploadedById String?
+  advertiserId   String?
+  dealId         String?
+  uploadedById   String?
   uploadedByName String?
 
   uploadedAt DateTime @default(now())
@@ -1015,18 +1021,18 @@ model FileAsset {
 // сейчас, что подписано, что оплачено, что горит. По возвращении — один клик,
 // и всё встаёт обратно к прежнему владельцу.
 model Handover {
-  id         String    @id @default(cuid())
+  id         String @id @default(cuid())
   fromUserId String
-  from       User      @relation("HandoverFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  from       User   @relation("HandoverFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUserId   String
-  to         User      @relation("HandoverTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  to         User   @relation("HandoverTo", fields: [toUserId], references: [id], onDelete: Cascade)
 
-  reason     String?   // отпуск, больничный, командировка
-  startsAt   DateTime  @default(now())
-  endsAt     DateTime? // когда планируем вернуть
-  note       String?   // что важно знать замещающему
-  summary    String?   // общее саммари по всем клиентам (текст)
-  status     String    @default("Активна") // Активна | Завершена
+  reason   String? // отпуск, больничный, командировка
+  startsAt DateTime  @default(now())
+  endsAt   DateTime? // когда планируем вернуть
+  note     String? // что важно знать замещающему
+  summary  String? // общее саммари по всем клиентам (текст)
+  status   String    @default("Активна") // Активна | Завершена
 
   createdAt  DateTime  @default(now())
   returnedAt DateTime?
@@ -1038,13 +1044,71 @@ model Handover {
 }
 
 model HandoverItem {
-  id           String  @id @default(cuid())
-  handoverId   String
-  handover     Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
-  advertiserId String
+  id              String   @id @default(cuid())
+  handoverId      String
+  handover        Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+  advertiserId    String
   // Кому клиент принадлежал ДО передачи — по этому полю возвращаем обратно.
   previousOwnerId String?
-  summary      String? // саммари по конкретному клиенту
+  summary         String? // саммари по конкретному клиенту
 
   @@index([handoverId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Служебный ключ для API (требование Влада 9.2).
+//
+// Ключ — для ПРОГРАММЫ, а не для человека: коннектор Aspro ходит за данными
+// сам, без сессии и cookie. Поэтому у ключа свой срок жизни, свой набор
+// разрешений и возможность отзыва, не трогая людей.
+//
+// Сам ключ в базе НЕ ХРАНИТСЯ — только его отпечаток (sha256), как у пароля.
+// Показывается он один раз при выпуске; потерян — выпускается новый, старый
+// отзывается. Это не придирка: ключ, лежащий в базе открытым текстом, при
+// утечке дампа отдаёт весь контур разом.
+//
+// prefix — первые символы ключа, по ним ключ находится при запросе и по ним же
+// его узнают в списке («colz_7f3a…»). Отпечаток по prefix не подобрать.
+// ─────────────────────────────────────────────────────────────────────────────
+model ApiKey {
+  id         String    @id @default(cuid())
+  /**
+   * Для кого ключ: «Коннектор Aspro», «Тестовый контур».
+   */
+  name       String
+  /**
+   * Видимая часть ключа — для поиска и для списка.
+   */
+  prefix     String    @unique
+  /**
+   * sha256 полного ключа. Сам ключ не хранится нигде.
+   */
+  keyHash    String
+  /**
+   * Что разрешено: JSON-массив сущностей («advertisers», «deals», …).
+   */
+  scopes     String
+  /**
+   * До какой даты действует. Бессрочных ключей не бывает.
+   */
+  expiresAt  DateTime
+  /**
+   * Когда отозван. Отозванный ключ остаётся в списке — для истории.
+   */
+  revokedAt  DateTime?
+  /**
+   * Когда им в последний раз пользовались — видно, живой ключ или забытый.
+   */
+  lastUsedAt DateTime?
+  /**
+   * Сколько запросов сделано — грубый счётчик для той же цели.
+   */
+  useCount   Int       @default(0)
+  note       String?
+
+  createdById String?
+  createdBy   User?    @relation("ApiKeyAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([revokedAt])
 }

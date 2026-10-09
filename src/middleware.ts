@@ -69,6 +69,13 @@ type Limit = { name: string; limit: number; windowMs: number; human: string };
 
 const LIMITS: { prefix: string; rule: Limit }[] = [
   {
+    // Внешней системе нужно больше, чем человеку: коннектор перебирает
+    // страницы пачками. Но предел всё равно есть — иначе один сломанный
+    // коннектор в цикле положит сервис.
+    prefix: "/api/v1/",
+    rule: { name: "apiv1", limit: 1200, windowMs: 3600_000, human: "обращений к API" },
+  },
+  {
     prefix: "/api/ai/",
     rule: { name: "ai", limit: 40, windowMs: 3600_000, human: "запросов к ИИ-напарнику" },
   },
@@ -172,8 +179,13 @@ export async function middleware(req: NextRequest) {
   }
   const who = userId ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "аноним";
 
+  // Публичный контур для внешних систем живёт по своим правилам: у него нет
+  // браузера и страницы, с которой «пришёл» запрос, зато есть служебный ключ.
+  // Проверку происхождения к нему не применяем — ключ сильнее.
+  const isPublicApi = pathname.startsWith("/api/v1/");
+
   // 1. Запрос с чужой страницы.
-  if (!SAFE_METHODS.has(req.method) && !sameSite(req)) {
+  if (!isPublicApi && !SAFE_METHODS.has(req.method) && !sameSite(req)) {
     return denyJson(
       "Запрос пришёл не со страницы сервиса и отклонён. Откройте сервис заново и повторите.",
       "bad_origin",

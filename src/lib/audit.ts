@@ -118,6 +118,11 @@ const ACTION_LABELS: Record<string, string> = {
   "transfer.telegram": "↗ Передача данных в Telegram",
   "transfer.sheet-out": "↗ Выгрузка в Google-таблицу",
   "transfer.sheet-in": "↙ Приём заявок из Google-таблицы",
+  "transfer.api": "↗ Выгрузка по служебному ключу",
+  "api.read": "Чтение через API служебным ключом",
+  "api.denied": "Отказ по API: ключ не подошёл",
+  "apikey.issue": "Выпущен служебный ключ",
+  "apikey.revoke": "Отозван служебный ключ",
   "advertiser.view": "Открыл карточку клиента",
   "advertiser.create": "Завёл клиента",
   "advertiser.update": "Изменил клиента",
@@ -154,6 +159,7 @@ const ENTITY_LABELS: Record<string, string> = {
   handover: "передача дел",
   security: "безопасность",
   transfer: "передача вовне",
+  api: "служебный доступ",
 };
 
 export function describeEntity(entityType: string | null): string {
