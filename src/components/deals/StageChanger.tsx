@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarClock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { apiFetch, ApiError } from "@/lib/client";
-import { DEAL_STAGES } from "@/lib/enums";
+import { DEAL_STAGES, STAGE_HINTS } from "@/lib/enums";
 import { stageStyle } from "@/lib/ui-tokens";
 import { celebrate } from "@/lib/celebrate";
 
@@ -106,48 +106,63 @@ export function StageChanger({
           стадия висела в ряду наравне с остальными, и было непонятно, забыли
           про неё или она не нужна. Отмеченные шаги показаны зачёркнуто. */}
       <div className="mb-4">
-        <div className="flex flex-wrap gap-1.5">
-          {DEAL_STAGES.map((s, i) => {
-            const isSkipped = skipped.includes(s);
-            const done = i <= currentIdx && !isSkipped;
-            const isCurrent = s === current;
+        {/* Линейка воронки: пять шагов подряд, стрелка между ними. Читается
+            слева направо как путь сделки, а не как набор кнопок. */}
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch">
+          {DEAL_STAGES.map((st, i) => {
+            const isSkipped = skipped.includes(st);
+            const done = i < currentIdx && !isSkipped;
+            const isCurrent = st === current;
             return (
-              <button
-                key={s}
-                onClick={() => change(s)}
-                disabled={saving}
-                title={isSkipped ? `${s} — к этой сделке не относится` : `Перевести на «${s}»`}
-                className={`min-w-[84px] flex-1 rounded-lg border px-2 py-1.5 text-left transition ${
-                  isCurrent
-                    ? "border-brand bg-brand/15"
-                    : done
-                      ? "border-brand/30 bg-brand/5 hover:border-brand/60"
-                      : isSkipped
-                        ? "border-dashed border-ink-800 bg-transparent"
-                        : "border-ink-800 bg-ink-900/40 hover:border-ink-600"
-                }`}
-              >
-                <span
-                  className={`block text-[10px] font-semibold ${
-                    isSkipped ? "text-ink-600" : done || isCurrent ? "text-brand" : "text-ink-500"
+              <div key={st} className="flex min-w-0 flex-1 items-center gap-1">
+                <button
+                  onClick={() => change(st)}
+                  disabled={saving}
+                  title={isSkipped ? `${st} — к этой сделке не относится` : `Перевести на «${st}»`}
+                  className={`min-w-0 flex-1 rounded-xl border px-3 py-2 text-left transition ${
+                    isCurrent
+                      ? "border-brand bg-brand/15 shadow-[0_0_0_1px_rgba(252,223,59,.35)]"
+                      : done
+                        ? "border-brand/35 bg-brand/5 hover:border-brand/60"
+                        : isSkipped
+                          ? "border-dashed border-ink-800 bg-transparent"
+                          : "border-ink-800 bg-ink-900/40 hover:border-ink-600"
                   }`}
                 >
-                  {i + 1}
-                </span>
-                <span
-                  className={`block truncate text-[11px] leading-tight ${
-                    isSkipped
-                      ? "text-ink-600 line-through"
-                      : isCurrent
-                        ? "font-semibold text-ink-50"
-                        : done
-                          ? "text-ink-200"
-                          : "text-ink-400"
-                  }`}
-                >
-                  {s}
-                </span>
-              </button>
+                  <span className="flex items-baseline gap-1.5">
+                    <span
+                      className={`text-[10px] font-bold ${
+                        isSkipped ? "text-ink-600" : done || isCurrent ? "text-brand" : "text-ink-500"
+                      }`}
+                    >
+                      {done ? "✓" : i + 1}
+                    </span>
+                    <span
+                      className={`truncate text-xs font-semibold leading-tight ${
+                        isSkipped
+                          ? "text-ink-600 line-through"
+                          : isCurrent
+                            ? "text-ink-50"
+                            : done
+                              ? "text-ink-200"
+                              : "text-ink-400"
+                      }`}
+                    >
+                      {st}
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-0.5 block truncate text-[10px] leading-tight ${
+                      isSkipped ? "text-ink-700 line-through" : "text-ink-500"
+                    }`}
+                  >
+                    {STAGE_HINTS[st]}
+                  </span>
+                </button>
+                {i < DEAL_STAGES.length - 1 && (
+                  <span className="hidden shrink-0 text-ink-700 sm:inline">›</span>
+                )}
+              </div>
             );
           })}
         </div>

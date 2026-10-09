@@ -19,7 +19,8 @@
     "ai:scan": "tsx scripts/ai-scan.ts",
     "retention": "tsx --conditions=react-server scripts/retention.ts",
     "security:check": "tsx scripts/security-check.ts",
-    "api:check": "tsx --conditions=react-server scripts/api-check.ts"
+    "api:check": "tsx --conditions=react-server scripts/api-check.ts",
+    "stages:migrate": "tsx scripts/migrate-stages.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

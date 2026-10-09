@@ -3,15 +3,13 @@
 
 import type { DealStage } from "./enums";
 
+// Пять шагов — пять цветов, от нейтрального к зелёному: по цвету видно, далеко
+// ли сделка продвинулась, даже не читая подпись.
 export const STAGE_STYLES: Record<string, string> = {
   Лид: "bg-ink-600/50 text-ink-100 ring-ink-500/50",
-  "КП / условия": "bg-sky-500/15 text-sky-300 ring-sky-500/30",
   Договор: "bg-indigo-500/15 text-indigo-300 ring-indigo-500/30",
-  "Приложение / спец.": "bg-violet-500/15 text-violet-300 ring-violet-500/30",
-  Предоплата: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
-  "Материалы + ОРД": "bg-orange-500/15 text-orange-300 ring-orange-500/30",
+  Оплата: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
   Размещение: "bg-brand/15 text-brand-200 ring-brand/30",
-  "УПД + отчёт": "bg-teal-500/15 text-teal-300 ring-teal-500/30",
   Закрытие: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
 };
 

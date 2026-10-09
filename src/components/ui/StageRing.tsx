@@ -6,7 +6,9 @@ import { DEAL_STAGES } from "@/lib/enums";
 const R = 20;
 const CIRC = 2 * Math.PI * R;
 
-// «Кинетика»: кольцо прогресса по 9 стадиям сделки — заполняется при появлении.
+// «Кинетика»: кольцо прогресса по стадиям сделки — заполняется при появлении.
+// Число шагов берём из списка, а не вписываем: воронку уже сокращали, и
+// прибитая цифра «9» пережила бы это сокращение незамеченной.
 export function StageRing({ stage, size = 48 }: { stage: string; size?: number }) {
   const idx = Math.max(0, DEAL_STAGES.indexOf(stage as (typeof DEAL_STAGES)[number]));
   const pct = (idx + 1) / DEAL_STAGES.length;
@@ -44,11 +46,11 @@ export function StageRing({ stage, size = 48 }: { stage: string; size?: number }
         y="27"
         textAnchor="middle"
         fill="#F1F1F1"
-        fontSize="11"
+        fontSize="10"
         fontWeight="700"
         fontFamily="var(--font-display)"
       >
-        {idx + 1}/9
+        {idx + 1}/{DEAL_STAGES.length}
       </text>
     </svg>
   );

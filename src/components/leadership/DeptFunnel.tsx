@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { formatMoney, formatDate } from "@/lib/format";
 import { NetHint, sumMoney, toGross } from "@/components/ui/Money";
+import { DEAL_STAGES } from "@/lib/enums";
 
 export type FunnelDeal = {
   id: string;
@@ -22,16 +23,14 @@ export type FunnelDeal = {
   blockerActive: boolean;
 };
 
-// Руководителю важны шесть крупных шагов, а не все девять стадий.
-// Детальная стадия видна внутри группы, когда её раскрыли.
-const GROUPS: { label: string; stages: string[] }[] = [
-  { label: "Лид", stages: ["Лид"] },
-  { label: "КП", stages: ["КП / условия"] },
-  { label: "Договор", stages: ["Договор"] },
-  { label: "Подписание", stages: ["Приложение / спец.", "Предоплата"] },
-  { label: "Размещение", stages: ["Материалы + ОРД", "Размещение"] },
-  { label: "Закрытие", stages: ["УПД + отчёт", "Закрытие"] },
-];
+// Раньше здесь было своё укрупнение: девять стадий сводились к шести шагам
+// для руководителя. После сокращения воронки до пяти шагов двойной список стал
+// лишним и опасным — его легко забыть обновить, и обзор отдела тихо разойдётся
+// с карточками сделок. Теперь воронка строится прямо по стадиям.
+const GROUPS: { label: string; stages: string[] }[] = DEAL_STAGES.map((s) => ({
+  label: s,
+  stages: [s],
+}));
 
 export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
   const [open, setOpen] = useState<string | null>(null);
