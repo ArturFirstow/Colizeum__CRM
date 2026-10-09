@@ -89,6 +89,14 @@ const advertisers: EntitySpec = {
     bankName: { type: "string", nullable: true, about: "Банк." },
     bankAccount: { type: "string", nullable: true, about: "Расчётный счёт." },
     bik: { type: "string", nullable: true, about: "БИК." },
+    asproUrl: {
+      type: "string",
+      nullable: true,
+      about:
+        "Ссылка на бизнес-процесс этой записи в Aspro — её ставит сотрудник руками, " +
+        "чтобы из карточки попадать в процесс одним нажатием. Не путать с asproId: " +
+        "тот нужен коннектору, эта — человеку.",
+    },
   },
   find: (args) => prisma.advertiser.findMany(args),
   count: (where) => prisma.advertiser.count({ where }),
@@ -110,6 +118,7 @@ const advertisers: EntitySpec = {
       bankName: x.bankName,
       bankAccount: x.bankAccount,
       bik: x.bik,
+      asproUrl: x.asproUrl,
       createdAt: iso(x.createdAt as Date),
       updatedAt: iso(x.updatedAt as Date),
     };
@@ -130,7 +139,7 @@ const deals: EntitySpec = {
     title: { type: "string", about: "Название сделки." },
     dealType: { type: "string", nullable: true, about: "Прямой клиент, агентство или технический." },
     finalBrand: { type: "string", nullable: true, about: "Конечный бренд, если работаем через агентство." },
-    stage: { type: "string", about: "Стадия: одна из девяти — от «Лид» до закрытия." },
+    stage: { type: "string", about: "Стадия: Лид, Договор, Оплата, Размещение или Закрытие." },
     urgency: { type: "string", nullable: true, about: "Срочность работы по сделке." },
     amountNet: {
       type: "number",
@@ -161,6 +170,14 @@ const deals: EntitySpec = {
       about: "Дата договора. От неё зависит ставка НДС: 2025 — 20 %, 2026 — 22 %.",
     },
     blockerActive: { type: "boolean", about: "Поднят ли флажок «работа заблокирована»." },
+    asproUrl: {
+      type: "string",
+      nullable: true,
+      about:
+        "Ссылка на бизнес-процесс этой записи в Aspro — её ставит сотрудник руками, " +
+        "чтобы из карточки попадать в процесс одним нажатием. Не путать с asproId: " +
+        "тот нужен коннектору, эта — человеку.",
+    },
   },
   find: (args) => prisma.deal.findMany(args),
   count: (where) => prisma.deal.count({ where }),
@@ -183,6 +200,7 @@ const deals: EntitySpec = {
       contractNumber: x.contractNumber,
       contractDate: iso(x.contractDate as Date | null),
       blockerActive: x.blockerActive,
+      asproUrl: x.asproUrl,
       createdAt: iso(x.createdAt as Date),
       updatedAt: iso(x.updatedAt as Date),
     };

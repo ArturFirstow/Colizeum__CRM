@@ -15,6 +15,16 @@ const patchSchema = z.object({
   status: z.string().optional(),
   urgent: z.boolean().optional(),
   monthlyClosing: z.boolean().optional(),
+  // Ссылка на процесс в Aspro (И-5): пустая строка снимает ссылку.
+  asproUrl: z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .refine((v) => !v || /^https?:\/\//i.test(v), {
+      message: "Ссылка должна начинаться с http:// или https://",
+    }),
 });
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {

@@ -28,6 +28,7 @@ type Advertiser = {
   bankAccount: string | null;
   bik: string | null;
   signatory: string | null;
+  asproUrl: string | null;
   archived: boolean;
   _count: { deals: number; documents: number; contacts: number };
 };

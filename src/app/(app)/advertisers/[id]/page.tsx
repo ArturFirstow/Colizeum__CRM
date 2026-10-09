@@ -7,6 +7,7 @@ import { PageHeader, TypeBadge, StageBadge, UrgencyBadge, Field, EmptyState } fr
 import { FileCell } from "@/components/ui/FileCell";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
+import { AsproLink } from "@/components/ui/AsproLink";
 import { AgencyClients } from "@/components/advertisers/AgencyClients";
 import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
 import { Creatives } from "@/components/advertisers/Creatives";
@@ -115,6 +116,8 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           <>
             {advertiser.archived && <span className="badge badge-muted">🗄 В архиве</span>}
             <TypeBadge type={advertiser.type} />
+            {/* Ссылка на процесс в Aspro — рядом с кнопками карточки (И-5). */}
+            <AsproLink url={advertiser.asproUrl} />
             <AiSummaryButton advertiserId={advertiser.id} />
             <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />

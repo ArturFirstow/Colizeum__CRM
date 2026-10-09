@@ -24,6 +24,7 @@ type Advertiser = {
   bankAccount: string | null;
   bik: string | null;
   signatory: string | null;
+  asproUrl: string | null;
 };
 
 export function EditAdvertiserButton({
@@ -53,6 +54,7 @@ export function EditAdvertiserButton({
     signatory: advertiser.signatory ?? "",
     goals: advertiser.goals ?? "",
     notes: advertiser.notes ?? "",
+    asproUrl: advertiser.asproUrl ?? "",
   });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
@@ -155,6 +157,18 @@ export function EditAdvertiserButton({
           <div>
             <label className="label">Цели / задачи</label>
             <textarea className="input" value={f.goals} onChange={(e) => set("goals", e.target.value)} />
+          </div>
+          {/* Ссылка на процесс в Aspro (просьба коллег И-5): связи между
+              сервисами пока нет, поэтому просто адрес — нажал и открылся. */}
+          <div>
+            <label className="label">Ссылка на процесс в Aspro</label>
+            <input
+              className="input"
+              type="url"
+              placeholder="https://…"
+              value={f.asproUrl}
+              onChange={(e) => set("asproUrl", e.target.value)}
+            />
           </div>
           <div>
             <label className="label">Заметки (внутренние, ⚠️ флаги)</label>

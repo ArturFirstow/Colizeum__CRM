@@ -15,6 +15,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { RequestButtons } from "@/components/deals/RequestButtons";
 import { PlacementButton } from "@/components/deals/PlacementButton";
+import { AsproLink } from "@/components/ui/AsproLink";
 import { formatMoney, formatDate } from "@/lib/format";
 import {
   CLOSING_KINDS,
@@ -90,6 +91,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             <UrgencyBadge urgency={deal.urgency} />
             {/* Порядок кнопок = порядок работы: сначала договор, потом макеты. */}
             <RequestButtons deal={deal} stage={deal.stage} />
+            <AsproLink url={deal.asproUrl} />
             <AiDraftDsButton dealId={deal.id} />
             <EditDealButton deal={deal} />
             <DeleteButton
@@ -539,6 +541,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   { name: "erid", label: "ЕРИД" },
                   { name: "finalClient", label: "Конечный заказчик" },
                   { name: "platform", label: "Площадка", placeholder: "соцсети / моб.приложение / пуши" },
+                  { name: "asproUrl", label: "Ссылка на процесс в Aspro", placeholder: "https://…" },
                   { name: "monthlyClosing", label: "Ежемесячное закрытие актов", type: "checkbox", default: true },
                 ]}
               />

@@ -19,6 +19,7 @@ export function NewOrdButton({ deals }: { deals: Deal[] }) {
     dealId: "",
     role: "Агентство",
     erid: "",
+    asproUrl: "",
     finalClient: "",
     platform: "",
     urgent: false,
@@ -40,6 +41,7 @@ export function NewOrdButton({ deals }: { deals: Deal[] }) {
           dealId: f.dealId,
           role: f.role,
           erid: f.erid || undefined,
+          asproUrl: f.asproUrl || undefined,
           finalClient: f.finalClient || undefined,
           platform: f.platform || undefined,
           urgent: f.urgent,
@@ -47,7 +49,7 @@ export function NewOrdButton({ deals }: { deals: Deal[] }) {
         }),
       });
       setOpen(false);
-      setF({ dealId: "", role: "Агентство", erid: "", finalClient: "", platform: "", urgent: false, monthlyClosing: true });
+      setF({ dealId: "", role: "Агентство", erid: "", asproUrl: "", finalClient: "", platform: "", urgent: false, monthlyClosing: true });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -101,6 +103,17 @@ export function NewOrdButton({ deals }: { deals: Deal[] }) {
               <input className="input" value={f.platform} onChange={(e) => set("platform", e.target.value)} placeholder="соцсети / моб.приложение" />
             </div>
           </div>
+          {/* Ссылка на процесс в Aspro (просьба коллег И-5). */}
+          <div>
+            <label className="label">Ссылка на процесс в Aspro</label>
+            <input
+              className="input"
+              type="url"
+              placeholder="https://…"
+              value={f.asproUrl}
+              onChange={(e) => set("asproUrl", e.target.value)}
+            />
+          </div>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-ink-200">
               <input type="checkbox" className="h-4 w-4 accent-brand" checked={f.monthlyClosing} onChange={(e) => set("monthlyClosing", e.target.checked)} />
@@ -136,6 +149,7 @@ type OrdRow = {
   monthlyClosing: boolean;
   creativeFileName: string | null;
   actFileName: string | null;
+  asproUrl: string | null;
 };
 
 // ЕРИД вводится прямо в строке реестра: вписал → Enter или клик мимо — сохранено.
@@ -182,6 +196,7 @@ export function EditOrdButton({ ord }: { ord: OrdRow }) {
     platform: ord.platform ?? "",
     monthlyClosing: ord.monthlyClosing,
     urgent: ord.urgent,
+    asproUrl: ord.asproUrl ?? "",
   });
 
   function set<K extends keyof typeof f>(k: K, v: (typeof f)[K]) {
@@ -239,6 +254,17 @@ export function EditOrdButton({ ord }: { ord: OrdRow }) {
               <label className="label">Площадка</label>
               <input className="input" value={f.platform} onChange={(e) => set("platform", e.target.value)} />
             </div>
+          </div>
+          {/* Ссылка на процесс в Aspro (просьба коллег И-5). */}
+          <div>
+            <label className="label">Ссылка на процесс в Aspro</label>
+            <input
+              className="input"
+              type="url"
+              placeholder="https://…"
+              value={f.asproUrl}
+              onChange={(e) => set("asproUrl", e.target.value)}
+            />
           </div>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-ink-200">

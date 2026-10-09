@@ -125,6 +125,11 @@ model Advertiser {
   // syncStatus     — disabled | pending | synced | failed.
   // asproSyncedAt  — когда ушло в Aspro в последний раз.
   // Видны сотруднику в карточке: понятно, что и когда ушло.
+  /// Ссылка на бизнес-процесс этой записи в Aspro.Cloud (просьба коллег И-5).
+  /// Пока связи между сервисами нет, это просто адрес: нажал — открылся Aspro
+  /// в новой вкладке. Хранится отдельно от asproId намеренно: id нужен будущему
+  /// коннектору, ссылка — человеку, и заполняют их разные руки.
+  asproUrl      String?
   asproId       String?
   syncEnabled   Boolean   @default(false)
   syncStatus    String    @default("disabled")
@@ -259,6 +264,11 @@ model Deal {
   // syncStatus     — disabled | pending | synced | failed.
   // asproSyncedAt  — когда ушло в Aspro в последний раз.
   // Видны сотруднику в карточке: понятно, что и когда ушло.
+  /// Ссылка на бизнес-процесс этой записи в Aspro.Cloud (просьба коллег И-5).
+  /// Пока связи между сервисами нет, это просто адрес: нажал — открылся Aspro
+  /// в новой вкладке. Хранится отдельно от asproId намеренно: id нужен будущему
+  /// коннектору, ссылка — человеку, и заполняют их разные руки.
+  asproUrl             String?
   asproId              String?
   syncEnabled          Boolean           @default(false)
   syncStatus           String            @default("disabled")
@@ -486,6 +496,8 @@ model OrdMarking {
   creativeFileName   String?
   actStorageKey      String?
   actFileName        String?
+  /// Ссылка на бизнес-процесс маркировки в Aspro.Cloud (просьба коллег И-5).
+  asproUrl           String?
   createdAt          DateTime  @default(now())
 
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)

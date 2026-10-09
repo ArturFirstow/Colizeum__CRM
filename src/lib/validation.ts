@@ -43,6 +43,13 @@ const clearableString = z
   .nullable()
   .optional();
 
+// Ссылка на бизнес-процесс в Aspro.Cloud (просьба коллег И-5). Пустое поле
+// ОЧИЩАЕТ ссылку — иначе ошибочно вставленный адрес нельзя было бы убрать.
+// Проверяем только начало: что это вообще адрес, а не перепутанное поле.
+const linkString = clearableString.refine((v) => !v || /^https?:\/\//i.test(v), {
+  message: "Ссылка должна начинаться с http:// или https://",
+});
+
 export const advertiserCreateSchema = z.object({
   nameRu: z.string().trim().min(1, "Укажите название"),
   nameEn: optionalString,
@@ -60,6 +67,7 @@ export const advertiserCreateSchema = z.object({
   bankAccount: optionalString,
   bik: optionalString,
   signatory: optionalString,
+  asproUrl: linkString,
 });
 export const advertiserUpdateSchema = advertiserCreateSchema.partial().extend({
   archived: z.boolean().optional(),
@@ -123,6 +131,7 @@ export const dealCreateSchema = z.object({
   nextStepDate: dealDate,
   decisionPending: clearableString,
   notes: clearableString,
+  asproUrl: linkString,
 });
 
 export const dealUpdateSchema = dealCreateSchema.partial().extend({
@@ -234,6 +243,7 @@ export const ordCreateSchema = z.object({
   platform: optionalString,
   status: optionalString,
   monthlyClosing: z.boolean().optional(),
+  asproUrl: linkString,
 });
 
 export const promoCreateSchema = z.object({

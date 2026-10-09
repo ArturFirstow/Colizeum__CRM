@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { NewOrdButton, OrdRowActions, EridInline, EditOrdButton } from "@/components/ord/OrdControls";
+import { AsproLink } from "@/components/ui/AsproLink";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,10 @@ export default async function OrdPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-ink-500">{m.deal.advertiser.nameRu}</div>
+                    <div className="flex items-center gap-2 text-xs text-ink-500">
+                      {m.deal.advertiser.nameRu}
+                      <AsproLink url={m.asproUrl} compact />
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className="badge badge-muted">{m.role}</span>

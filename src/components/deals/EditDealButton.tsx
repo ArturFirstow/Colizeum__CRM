@@ -26,6 +26,7 @@ type Deal = {
   nextStepDate: Date | null;
   decisionPending: string | null;
   notes: string | null;
+  asproUrl: string | null;
 };
 
 function toDateInput(d: Date | null): string {
@@ -55,6 +56,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
     nextStepDate: toDateInput(deal.nextStepDate),
     decisionPending: deal.decisionPending ?? "",
     notes: deal.notes ?? "",
+    asproUrl: deal.asproUrl ?? "",
   });
 
   function set<K extends keyof typeof f>(k: K, v: string) {
@@ -88,6 +90,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
           nextStepDate: f.nextStepDate,
           decisionPending: f.decisionPending,
           notes: f.notes,
+          asproUrl: f.asproUrl,
         }),
       });
       setOpen(false);
@@ -208,6 +211,17 @@ export function EditDealButton({ deal }: { deal: Deal }) {
               value={f.decisionPending}
               onChange={(e) => set("decisionPending", e.target.value)}
               placeholder="что нужно решить владельцу"
+            />
+          </div>
+          {/* Ссылка на процесс в Aspro (просьба коллег И-5). */}
+          <div>
+            <label className="label">Ссылка на процесс в Aspro</label>
+            <input
+              className="input"
+              type="url"
+              placeholder="https://…"
+              value={f.asproUrl}
+              onChange={(e) => set("asproUrl", e.target.value)}
             />
           </div>
           <div>
