@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/primitives";
 import { RetentionView } from "@/components/privacy/RetentionView";
-import { canSeeCompliance } from "@/lib/scope";
+import { canSeePrivacyTools } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // ПДн: это обязанность оператора, а не рядовая задача менеджера.
 export default async function RetentionPage() {
   const session = await requireSession();
-  if (!canSeeCompliance(session)) notFound();
+  if (!canSeePrivacyTools(session)) notFound();
 
   return (
     <div>

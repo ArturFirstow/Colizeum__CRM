@@ -31,9 +31,24 @@ export function canSeeClientData(session: SessionPayload): boolean {
   return !isSecurity(session);
 }
 
-/** Кому открыт журнал действий и запросы по персональным данным. */
+/**
+ * Кому открыт ЖУРНАЛ ДЕЙСТВИЙ: админ, руководитель отдела и безопасность.
+ * Руководитель здесь нужен — он смотрит, кто что делал с клиентами отдела.
+ */
 export function canSeeCompliance(session: SessionPayload): boolean {
   return session.role === "Owner" || session.role === "Director" || isSecurity(session);
+}
+
+/**
+ * Кому открыты ЗАПРОСЫ ПО ПДн и СРОКИ ХРАНЕНИЯ — только админ и безопасность.
+ *
+ * Это обязанность оператора персональных данных, а не руководителя отдела:
+ * удалять данные человека по его обращению и чистить просроченное — работа
+ * ответственного за ПДн. Меню этих пунктов руководителю и так не показывает,
+ * проверка здесь закрывает вход по прямой ссылке.
+ */
+export function canSeePrivacyTools(session: SessionPayload): boolean {
+  return session.role === "Owner" || isSecurity(session);
 }
 
 /** Турнирный специалист (Артём) — видит турнирный контур вместо рекламного. */

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { withSession, ok, fail } from "@/lib/api";
 import { retentionStatus, sweepRetention } from "@/lib/services/retention";
 import { writeAudit, clientIp } from "@/lib/audit";
-import { canSeeCompliance } from "@/lib/scope";
+import { canSeePrivacyTools } from "@/lib/scope";
 import { z } from "zod";
 
 // Сроки хранения (требование 4.7): таблица сроков с текущими цифрами и уборка
@@ -10,8 +10,8 @@ import { z } from "zod";
 
 export async function GET() {
   return withSession(async (session) => {
-    if (!canSeeCompliance(session)) {
-      return fail("forbidden", "Раздел доступен администратору, руководителю и безопасности", 403);
+    if (!canSeePrivacyTools(session)) {
+      return fail("forbidden", "Раздел доступен администратору и ответственному за безопасность", 403);
     }
     return ok({ rules: await retentionStatus() });
   });
@@ -25,8 +25,8 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   return withSession(async (session) => {
-    if (!canSeeCompliance(session)) {
-      return fail("forbidden", "Раздел доступен администратору, руководителю и безопасности", 403);
+    if (!canSeePrivacyTools(session)) {
+      return fail("forbidden", "Раздел доступен администратору и ответственному за безопасность", 403);
     }
     const { ruleId, includeUnconfirmed } = schema.parse(await req.json());
     const results = await sweepRetention({

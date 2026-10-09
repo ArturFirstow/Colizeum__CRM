@@ -2,15 +2,15 @@ import { NextRequest } from "next/server";
 import { withSession, ok, fail } from "@/lib/api";
 import { findPersonData, erasePersonData } from "@/lib/services/person-data";
 import { writeAudit, clientIp } from "@/lib/audit";
-import { canSeeCompliance } from "@/lib/scope";
+import { canSeePrivacyTools } from "@/lib/scope";
 import { z } from "zod";
 
 // Поиск данных человека по всем разделам (требования 4.7 и 5.8).
 // Доступ — только администратор: это обязанность оператора, не рядовая задача.
 export async function GET(req: NextRequest) {
   return withSession(async (session) => {
-    if (!canSeeCompliance(session)) {
-      return fail("forbidden", "Этот раздел доступен администратору, руководителю и безопасности", 403);
+    if (!canSeePrivacyTools(session)) {
+      return fail("forbidden", "Раздел доступен администратору и ответственному за безопасность", 403);
     }
     const q = req.nextUrl.searchParams.get("q") ?? "";
     const result = await findPersonData(q);
@@ -34,7 +34,7 @@ const eraseSchema = z.object({
 
 export async function POST(req: NextRequest) {
   return withSession(async (session) => {
-    if (!canSeeCompliance(session)) {
+    if (!canSeePrivacyTools(session)) {
       return fail("forbidden", "Удалять данные по запросу может администратор или безопасность", 403);
     }
     const { items, reason } = eraseSchema.parse(await req.json());
