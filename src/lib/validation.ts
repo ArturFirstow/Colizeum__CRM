@@ -127,6 +127,9 @@ export const dealCreateSchema = z.object({
 export const dealUpdateSchema = dealCreateSchema.partial().extend({
   // при смене стадии с предупреждениями клиент присылает confirm=true
   confirm: z.boolean().optional(),
+  // Стадии, которые к этой сделке не относятся. Приходят списком названий,
+  // в базе лежат строкой JSON — SQLite не умеет хранить списки.
+  skippedStages: z.array(z.string()).optional(),
 });
 
 export const taskCreateSchema = z.object({

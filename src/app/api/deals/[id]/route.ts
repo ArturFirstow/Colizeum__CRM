@@ -26,7 +26,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
     await guardDeal(session, id);
-    const { confirm, launchDate, nextStepDate, ...data } = dealUpdateSchema.parse(await req.json());
+    const { confirm, launchDate, nextStepDate, skippedStages, ...data } =
+      dealUpdateSchema.parse(await req.json());
 
     const existing = await prisma.deal.findUnique({ where: { id } });
     if (!existing) return fail("not_found", "Сделка не найдена", 404);
@@ -51,6 +52,11 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(data.blocker === null ? { blockerActive: false } : {}),
         ...(launchDate !== undefined ? { launchDate: launchDate ? new Date(launchDate) : null } : {}),
         ...(nextStepDate !== undefined ? { nextStepDate: nextStepDate ? new Date(nextStepDate) : null } : {}),
+        // Неактуальные стадии: пустой список означает «все стадии нужны»,
+        // поэтому пишем null, а не «[]» — так в базе не копится мусор.
+        ...(skippedStages !== undefined
+          ? { skippedStages: skippedStages.length ? JSON.stringify(skippedStages) : null }
+          : {}),
       },
     });
     // Блокер только что подняли — руководитель узнаёт сразу.

@@ -104,7 +104,11 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       {/* Стадия */}
       <section className="card mb-6 p-5">
         <div className="mb-3 text-xs font-medium uppercase tracking-wide text-ink-400">Стадия сделки</div>
-        <StageChanger dealId={deal.id} current={deal.stage} />
+        <StageChanger
+          dealId={deal.id}
+          current={deal.stage}
+          skipped={deal.skippedStages ? (JSON.parse(deal.skippedStages) as string[]) : []}
+        />
       </section>
 
       {/* Callouts */}
