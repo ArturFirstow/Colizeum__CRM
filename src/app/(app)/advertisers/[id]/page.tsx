@@ -129,7 +129,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
 
       {/* Фиксированный порядок блоков (v2, п.1.3): Информация и контекст → Документы → Креативы */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* 1. Сделки.
               Раньше блок назывался «Информация и контекст», и сделки в нём
               терялись: человек искал их глазами и не находил, хотя они были
@@ -310,7 +310,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
         </div>
 
         {/* Реквизиты + контакты */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-ink-50">Реквизиты</h2>

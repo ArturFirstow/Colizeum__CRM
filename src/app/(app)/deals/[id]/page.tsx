@@ -155,7 +155,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Основное */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* Документы */}
           <Section
             title="Документы"
@@ -370,7 +370,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Правая колонка */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <section className="card p-5">
             <h2 className="mb-4 text-lg font-bold text-ink-50">Карточка сделки</h2>
             <div className="space-y-3">
