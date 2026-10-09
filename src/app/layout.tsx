@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { RuValidation } from "@/components/ui/RuValidation";
 import { CookieNotice } from "@/components/ui/CookieNotice";
+import { StagingBanner } from "@/components/ui/StagingBanner";
 
 export const metadata: Metadata = {
   title: "Colizeum Agency",
@@ -28,6 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <RuValidation />
+        {/* Полоса тестового контура — выше всего остального, включая страницу
+            входа: перепутать контуры опаснее всего именно при входе. */}
+        <StagingBanner />
         {children}
         {/* Плашка про cookie — на всех страницах, включая вход. */}
         <CookieNotice />

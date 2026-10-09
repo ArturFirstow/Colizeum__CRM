@@ -13,6 +13,9 @@ next-env.d.ts
 
 # environment
 .env
+# ⚠️ Настройки тестового контура: там свой AUTH_SECRET и пароли демо-сотрудников.
+# Без этой строки staging-setup.sh положил бы секреты в репозиторий.
+.env.staging
 .env*.local
 
 # database (dev SQLite)
@@ -22,6 +25,7 @@ next-env.d.ts
 
 # local file storage (dev StorageProvider)
 /storage/
+/storage-staging/
 
 # logs
 npm-debug.log*
