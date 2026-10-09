@@ -51,6 +51,23 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
   // Единая лента событий по клиенту — собирается из всех разделов сразу.
   const timeline = await buildClientTimeline(advertiser.id);
 
+  // ── Задачи по этому клиенту (пункт коллег И-1) ─────────────────────────────
+  //
+  // Раньше карточка показывала сделки, документы, креативы и хронологию — а
+  // задач среди них не было. Приходилось держать в голове или идти на доску и
+  // искать глазами. Здесь показываем только НЕЗАКРЫТЫЕ: закрытые уже не
+  // требуют действий, а карточка нужна для «что сейчас по клиенту».
+  const openTasks = await prisma.task.findMany({
+    where: { advertiserId: advertiser.id, status: { not: "Готова" } },
+    include: { assignee: { select: { name: true } } },
+    orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+  });
+  const doneTasksCount = await prisma.task.count({
+    where: { advertiserId: advertiser.id, status: "Готова" },
+  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   // ── Файлы клиента, приложенные где угодно ──────────────────────────────────
   //
   // Раньше в блоке «Документы» показывались только документы с версиями
@@ -110,14 +127,21 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
       {/* Фиксированный порядок блоков (v2, п.1.3): Информация и контекст → Документы → Креативы */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* 1. Информация и контекст */}
+          {/* 1. Сделки.
+              Раньше блок назывался «Информация и контекст», и сделки в нём
+              терялись: человек искал их глазами и не находил, хотя они были
+              прямо тут (пункт коллег И-2). Теперь заголовок называет то, что
+              внутри, а цель сотрудничества стоит отдельной подписью сверху. */}
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-ink-50">Информация и контекст</h2>
-              <span className="badge badge-muted">{advertiser.deals.length} сделок</span>
+              <h2 className="text-lg font-bold text-ink-50">Сделки</h2>
+              <span className="badge badge-muted">{advertiser.deals.length}</span>
             </div>
             {advertiser.goals && (
-              <p className="mb-3 text-sm text-ink-300">{advertiser.goals}</p>
+              <p className="mb-4 rounded-xl border border-ink-800 bg-ink-900/40 px-4 py-2.5 text-sm text-ink-300">
+                <span className="mr-2 text-xs uppercase tracking-wide text-ink-500">Цель сотрудничества</span>
+                {advertiser.goals}
+              </p>
             )}
             {advertiser.deals.length === 0 ? (
               <EmptyState icon="⑂" title="Сделок пока нет" />
@@ -154,6 +178,58 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                     )}
                   </Link>
                 ))}
+              </div>
+            )}
+          </section>
+
+          {/* 1.5. Задачи по клиенту (пункт коллег И-1) */}
+          <section className="card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink-50">Задачи</h2>
+              <span className="flex items-center gap-2">
+                {doneTasksCount > 0 && (
+                  <span className="text-xs text-ink-500">выполнено: {doneTasksCount}</span>
+                )}
+                <Link href="/tasks" className="text-sm text-brand hover:underline">
+                  На доску →
+                </Link>
+              </span>
+            </div>
+            {openTasks.length === 0 ? (
+              <EmptyState
+                icon="✓"
+                title="Открытых задач нет"
+                hint={doneTasksCount > 0 ? "Всё, что было, уже закрыто." : "Задачи по клиенту заводятся на доске задач."}
+              />
+            ) : (
+              <div className="space-y-1.5">
+                {openTasks.map((t) => {
+                  const overdue = t.dueDate ? new Date(t.dueDate) < today : false;
+                  return (
+                    <div
+                      key={t.id}
+                      className={`flex min-w-0 items-center gap-3 rounded-xl border px-4 py-2.5 ${
+                        overdue ? "border-red-500/30 bg-red-500/5" : "border-ink-800 bg-ink-900/50"
+                      }`}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm text-ink-100">{t.title}</span>
+                        <span className="block truncate text-xs text-ink-500">
+                          {t.kind}
+                          {t.assignee ? ` · ${t.assignee.name}` : ""}
+                          {t.assignedById ? " · 🎯 поручение" : ""}
+                        </span>
+                      </span>
+                      {t.dueDate && (
+                        <span className={`shrink-0 text-xs ${overdue ? "text-red-300" : "text-ink-400"}`}>
+                          {overdue ? "просрочено " : "до "}
+                          {new Date(t.dueDate).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}
+                        </span>
+                      )}
+                      <span className="badge badge-muted shrink-0">{t.status}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
