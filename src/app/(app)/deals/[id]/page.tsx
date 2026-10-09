@@ -14,6 +14,7 @@ import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { RequestButtons } from "@/components/deals/RequestButtons";
+import { PlacementButton } from "@/components/deals/PlacementButton";
 import { formatMoney, formatDate } from "@/lib/format";
 import {
   CLOSING_KINDS,
@@ -41,6 +42,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       tasks: { orderBy: { createdAt: "desc" } },
       documents: { include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } } },
       plannedPayments: { orderBy: { periodMonth: "asc" } },
+      placements: { orderBy: { startDate: "asc" } },
     },
   });
   if (!deal) notFound();
@@ -431,6 +433,49 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
             {deal.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-ink-400">{deal.notes}</p>}
+          </section>
+
+          {/* Размещения. Бронь заводится отсюда, а живёт в общем календаре —
+              так сделка и сетка клубов больше не расходятся (просьба И-13). */}
+          <section className="card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink-50">Размещения</h2>
+              <PlacementButton
+                advertiserId={deal.advertiserId}
+                dealId={deal.id}
+                stage={deal.stage}
+                responsible={deal.assignee?.name ?? deal.owner?.name ?? null}
+              />
+            </div>
+            {deal.placements.length === 0 ? (
+              <p className="text-sm text-ink-400">
+                Броней нет. «+ Бронь» поставит слот в{" "}
+                <Link href="/placements" className="text-brand hover:underline">
+                  календарь размещений
+                </Link>
+                .
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {deal.placements.map((p) => (
+                  <Link
+                    key={p.id}
+                    href="/placements"
+                    className="block rounded-xl border border-ink-800 bg-ink-900/50 p-3 text-sm hover:border-ink-700"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 truncate text-ink-200">{p.slot}</span>
+                      <span className="badge badge-muted shrink-0">{p.status}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-ink-500">
+                      {formatDate(p.startDate)} — {formatDate(p.endDate)}
+                      {p.responsible ? ` · ${p.responsible}` : ""}
+                    </div>
+                    {p.notes && <div className="mt-1 text-xs text-ink-400">{p.notes}</div>}
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* ОРД */}
