@@ -152,6 +152,10 @@ model Creative {
   dealId       String?
   title        String
   size         String? // напр. 1080×1080, 1920×1080
+  // Ссылка на макет вместо файла: дизайнеры держат исходники в Google Drive и
+  // Figma, и копия в сервисе тут же устаревает. Ссылка всегда ведёт на
+  // актуальную версию (просьба коллег И-4).
+  linkUrl      String?
   status       String   @default("В работе") // В работе | На согласовании | Согласован | Отклонён
   notes        String?
   createdAt    DateTime @default(now())

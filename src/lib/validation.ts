@@ -67,12 +67,16 @@ export const advertiserUpdateSchema = advertiserCreateSchema.partial().extend({
 export const creativeCreateSchema = z.object({
   title: z.string().trim().min(1, "Название макета"),
   size: optionalString,
+  linkUrl: optionalString,
   status: z.enum(["В работе", "На согласовании", "Согласован", "Отклонён"]).optional(),
   dealId: optionalString,
   notes: optionalString,
 });
 export const creativeUpdateSchema = z.object({
   status: z.enum(["В работе", "На согласовании", "Согласован", "Отклонён"]).optional(),
+  // clearableString, а не optionalString: пустое поле должно СТИРАТЬ ссылку,
+  // иначе ошибочно вставленный адрес не убрать (та же ловушка была у блокера сделки).
+  linkUrl: clearableString,
 });
 
 export const agencyClientCreateSchema = z.object({

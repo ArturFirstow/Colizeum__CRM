@@ -19,6 +19,7 @@ type Creative = {
   id: string;
   title: string;
   size: string | null;
+  linkUrl: string | null;
   status: string;
   notes: string | null;
 };
@@ -29,6 +30,7 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [size, setSize] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function add(e: React.FormEvent) {
@@ -37,7 +39,7 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
     try {
       await apiFetch(`/api/advertisers/${advertiserId}/creatives`, {
         method: "POST",
-        body: JSON.stringify({ title, size: size || undefined }),
+        body: JSON.stringify({ title, size: size || undefined, linkUrl: linkUrl || undefined }),
       });
       setTitle("");
       setSize("");
@@ -78,6 +80,13 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
             value={size}
             onChange={(e) => setSize(e.target.value)}
           />
+          <input
+            className="input sm:w-56"
+            placeholder="Ссылка на макет"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            title="Google Drive, Figma, облако — всё, где лежит актуальный макет"
+          />
           <button type="submit" className="btn btn-primary" disabled={saving}>
             {saving ? "…" : "Добавить"}
           </button>
@@ -107,6 +116,9 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
                   {c.size ?? "размер не указан"}
                   {c.notes ? ` · ${c.notes}` : ""}
                 </div>
+                {/* Ссылка на макет: дизайнеры держат исходники в Drive и Figma,
+                    копия в сервисе устаревает в тот же день (просьба И-4). */}
+                <CreativeLink id={c.id} value={c.linkUrl} />
               </div>
               <select
                 className={`rounded-lg border px-2 py-1 text-xs font-medium ${STATUS_STYLE[c.status] ?? "border-ink-700 bg-ink-800 text-ink-200"}`}
@@ -125,5 +137,94 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
         </div>
       )}
     </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ссылка на макет (просьба коллег И-4).
+//
+// Почему ссылка, а не только файл: исходники живут в Google Drive и Figma, и
+// копия, загруженная в сервис, устаревает в тот же день, когда дизайнер
+// поправил макет. Ссылка всегда ведёт на действующую версию.
+//
+// Файлы при этом никуда не делись — они нужны там, где важно зафиксировать
+// именно ТУ картинку, которую согласовали (маркировка, акты).
+// ─────────────────────────────────────────────────────────────────────────────
+function CreativeLink({ id, value }: { id: string; value: string | null }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      await apiFetch(`/api/creatives/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ linkUrl: draft.trim() }),
+      });
+      setEditing(false);
+      router.refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Не удалось сохранить ссылку");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="mt-1.5 flex items-center gap-1.5">
+        <input
+          className="input h-7 flex-1 text-xs"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="https://… — Drive, Figma, облако"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save();
+            if (e.key === "Escape") setEditing(false);
+          }}
+        />
+        <button className="btn btn-primary btn-sm" onClick={save} disabled={saving}>
+          {saving ? "…" : "ОК"}
+        </button>
+        <button className="btn btn-ghost btn-sm" onClick={() => { setDraft(value ?? ""); setEditing(false); }}>
+          Отмена
+        </button>
+      </div>
+    );
+  }
+
+  if (!value) {
+    return (
+      <button
+        className="mt-1 text-xs text-ink-500 underline underline-offset-2 transition hover:text-brand"
+        onClick={() => setEditing(true)}
+      >
+        + ссылка на макет
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-1 flex min-w-0 items-center gap-2">
+      <a
+        href={value}
+        target="_blank"
+        rel="noreferrer"
+        className="min-w-0 truncate text-xs text-brand underline underline-offset-2"
+        title={value}
+      >
+        🔗 {value.replace(/^https?:\/\//, "")}
+      </a>
+      <button
+        className="shrink-0 text-xs text-ink-600 transition hover:text-ink-300"
+        onClick={() => setEditing(true)}
+        title="Изменить ссылку"
+      >
+        ✎
+      </button>
+    </div>
   );
 }
