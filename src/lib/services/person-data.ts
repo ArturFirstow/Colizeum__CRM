@@ -54,12 +54,17 @@ export async function findPersonData(query: string): Promise<PersonSearchResult>
   const q = query.trim();
   if (q.length < 3) return { query: q, groups: [], total: 0 };
 
-  const [contacts, people, leads, users, journal] = await Promise.all([
+  const [contacts, people, leads, users, journal, requests] = await Promise.all([
     prisma.contact.findMany({ include: { advertiser: { select: { nameRu: true } } } }),
     prisma.person.findMany(),
     prisma.lead.findMany(),
     prisma.user.findMany({ select: { id: true, name: true, email: true, telegramChatId: true, role: true } }),
     prisma.journalEntry.findMany({ where: { meetingWith: { not: null } }, select: { id: true, meetingWith: true, date: true } }),
+    // Запросы юристу и на размещение: в тексте стоит подписант со стороны
+    // клиента, то есть живой человек. Поэтому они тоже попадают в поиск.
+    prisma.requestRecord.findMany({
+      select: { id: true, kind: true, body: true, createdAt: true, advertiser: { select: { nameRu: true } } },
+    }),
   ]);
 
   const groups: PersonSearchResult["groups"] = [];
@@ -129,6 +134,17 @@ export async function findPersonData(query: string): Promise<PersonSearchResult>
     }));
   if (j.length) groups.push({ kind: "journal", label: "Записи встреч", records: j });
 
+  const r = requests
+    .filter((x) => hit([x.body], q))
+    .map<FoundRecord>((x) => ({
+      id: x.id,
+      where: `Запросы по клиенту «${x.advertiser.nameRu}»`,
+      title: `${x.kind}, ${x.createdAt.toLocaleDateString("ru-RU")}`,
+      fields: ["имя в тексте запроса"],
+      erase: "delete",
+    }));
+  if (r.length) groups.push({ kind: "request", label: "Запросы юристу и на размещение", records: r });
+
   return { query: q, groups, total: groups.reduce((s, g) => s + g.records.length, 0) };
 }
 
@@ -160,6 +176,12 @@ export async function erasePersonData(
           .update({ where: { id: it.id }, data: { name: MARK, contact: null, message: null, company: null } })
           .catch(() => {});
         anonymized++;
+        break;
+      case "request":
+        // Текст запроса — рабочий черновик письма, его можно удалить целиком:
+        // сама сделка и её документы от этого не страдают.
+        await prisma.requestRecord.delete({ where: { id: it.id } }).catch(() => {});
+        deleted++;
         break;
       case "journal":
         await prisma.journalEntry

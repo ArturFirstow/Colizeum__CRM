@@ -21,6 +21,7 @@ import {
   ARENA_BOOKING_STATUSES,
   LEAD_STATUSES,
   ABSENCE_KINDS,
+  REQUEST_KINDS,
 } from "./enums";
 
 /** Zod-схема «значение из фиксированного набора» (замена native enum для SQLite). */
@@ -529,4 +530,14 @@ export const handoverCreateSchema = z.object({
 
 export const handoverPreviewSchema = z.object({
   advertiserIds: z.array(z.string().min(1)).min(1, "Выберите хотя бы одного клиента"),
+});
+
+// Сохранённый запрос из конструктора (юристу / на размещение) — И-10.
+// Текст ограничен сверху: конструктор выдаёт 2–4 КБ, и это запас.
+export const requestRecordCreateSchema = z.object({
+  advertiserId: z.string().min(1),
+  dealId: optionalString,
+  kind: inSet(REQUEST_KINDS),
+  formats: optionalString,
+  body: z.string().trim().min(1, "Пустой текст сохранять нечего").max(40_000),
 });

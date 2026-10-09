@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Scale, Image as ImageIcon, Link2 } from "lucide-react";
+import { Copy, Check, Scale, Image as ImageIcon, Link2, Archive } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { AD_FORMATS } from "@/lib/enums";
+import { AD_FORMATS, REQUEST_KINDS } from "@/lib/enums";
+import { apiFetch } from "@/lib/client";
 import {
   buildLegalRequest,
   buildPlacementRequest,
@@ -114,8 +115,23 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 // Готовый текст: показываем и даём скопировать. Текст редактируемый — перед
 // отправкой почти всегда хочется что-то дописать своими словами.
-function ResultBox({ text, onChange }: { text: string; onChange: (v: string) => void }) {
+function ResultBox({
+  text,
+  onChange,
+  deal,
+  kind,
+  formats,
+}: {
+  text: string;
+  onChange: (v: string) => void;
+  deal: RequestDeal;
+  kind: (typeof REQUEST_KINDS)[number];
+  formats: string[];
+}) {
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function copy() {
     await navigator.clipboard.writeText(text);
@@ -123,19 +139,67 @@ function ResultBox({ text, onChange }: { text: string; onChange: (v: string) => 
     setTimeout(() => setCopied(false), 1500);
   }
 
+  // Сохранение в историю клиента (просьба коллег И-10). Запись хранит именно
+  // тот текст, который видно на экране: правки руками входят в неё тоже.
+  async function save() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await apiFetch("/api/requests", {
+        method: "POST",
+        body: JSON.stringify({
+          advertiserId: deal.advertiserId,
+          dealId: deal.id,
+          kind,
+          formats: formats.join("; ") || undefined,
+          body: text,
+        }),
+      });
+      setSaved(true);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Не удалось сохранить");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <label className="label mb-0">Готовый текст — можно поправить перед отправкой</label>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={copy}>
-          {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Скопировано" : "Копировать"}
-        </button>
+        <div className="flex items-center gap-1">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={copy}>
+            {copied ? <Check size={14} /> : <Copy size={14} />}{" "}
+            {copied ? "Скопировано" : "Копировать"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={save}
+            disabled={saving || saved}
+            title="Запись встанет в хронологию клиента и в карточку сделки"
+          >
+            {saved ? <Check size={14} /> : <Archive size={14} />}{" "}
+            {saved ? "В истории" : saving ? "Сохраняем…" : "Сохранить в историю"}
+          </button>
+        </div>
       </div>
       <textarea
         className="input min-h-[260px] font-mono text-xs leading-relaxed"
         value={text}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          // Текст изменился — значит сохранённая версия уже не та, что на
+          // экране: кнопку снова разблокируем.
+          setSaved(false);
+        }}
       />
+      {saveError && <p className="mt-1.5 text-xs text-red-300">{saveError}</p>}
+      {saved && (
+        <p className="mt-1.5 text-xs text-ink-500">
+          Запрос сохранён — виден в карточке сделки и в хронологии клиента.
+        </p>
+      )}
     </div>
   );
 }
@@ -397,7 +461,7 @@ function LegalForm({ deal, onClose }: { deal: RequestDeal; onClose: () => void }
           </Field>
         </div>
 
-        <ResultBox text={text} onChange={setEdited} />
+        <ResultBox text={text} onChange={setEdited} deal={deal} kind="Юристу" formats={formats} />
 
         <div className="flex justify-end">
           <button className="btn btn-ghost" onClick={onClose}>
@@ -542,7 +606,7 @@ function PlacementForm({
           </Field>
         </div>
 
-        <ResultBox text={text} onChange={setEdited} />
+        <ResultBox text={text} onChange={setEdited} deal={deal} kind="На размещение" formats={formats} />
 
         <div className="flex justify-end">
           <button className="btn btn-ghost" onClick={onClose}>

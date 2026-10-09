@@ -69,6 +69,7 @@ model User {
   coveringFor        Absence[]         @relation("AbsenceCover")
   handoversGiven     Handover[]        @relation("HandoverFrom")
   handoversTaken     Handover[]        @relation("HandoverTo")
+  sentRequests       RequestRecord[]   @relation("RequestAuthor")
 }
 
 // ── Отсутствие сотрудника (календарь отпусков в разделе «Передача дел») ──────
@@ -141,6 +142,7 @@ model Advertiser {
   dailyStatuses    DailyStatus[]
   promoBatches     PromoBatch[]
   decisionRequests DecisionRequest[]
+  sentRequests     RequestRecord[]
 
   @@index([ownerId])
 }
@@ -250,6 +252,7 @@ model Deal {
   placements           Placement[]
   dailyStatuses        DailyStatus[]
   decisionRequests     DecisionRequest[]
+  sentRequests         RequestRecord[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
   // asproId        — id этой же записи на стороне Aspro.Cloud.
   // syncEnabled    — «подлежит передаче»: уходят не все записи, а помеченные.
@@ -1120,4 +1123,37 @@ model ApiKey {
   createdAt   DateTime @default(now())
 
   @@index([revokedAt])
+}
+
+/// Отправленный запрос из конструктора — юристу на договор или на размещение
+/// макетов (просьба коллег И-10).
+///
+/// Конструкторы в карточке сделки собирают готовый текст, человек копирует его
+/// в письмо. До этого текст нигде не оставался: через месяц было не вспомнить,
+/// какие форматы и суммы уходили юристу и что именно просили разместить. Здесь
+/// сохраняется ровно то, что ушло — одной записью, которая встаёт в хронологию
+/// клиента.
+///
+/// Храним текст, а не набор полей: его правят руками перед отправкой, и
+/// ценность именно в отправленной версии.
+model RequestRecord {
+  id String @id @default(cuid())
+
+  advertiserId String
+  dealId       String?
+  /// «Юристу» | «На размещение» (REQUEST_KINDS в enums.ts).
+  kind         String
+  /// Рекламные форматы строкой — чтобы в списке было видно без раскрытия.
+  formats      String?
+  /// Текст запроса в том виде, в каком его отправили.
+  body         String
+  authorId     String?
+  createdAt    DateTime @default(now())
+
+  advertiser Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  author     User?      @relation("RequestAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([advertiserId])
+  @@index([dealId])
 }

@@ -238,6 +238,17 @@ export async function guardDecision(session: SessionPayload, id: string) {
   return d;
 }
 
+/** Сохранённый запрос из конструктора — через клиента, которому он отправлен. */
+export async function guardRequestRecord(session: SessionPayload, id: string) {
+  denySecurity(session);
+  const r = await prisma.requestRecord.findUnique({
+    where: { id },
+    select: { id: true, advertiserId: true, advertiser: { select: { ownerId: true } } },
+  });
+  if (!r || !canSeeOwned(session, r.advertiser.ownerId)) deny();
+  return r;
+}
+
 // ── Турнирное направление ────────────────────────────────────────────────────
 
 /** Турнир. Турнирный контур видят сам турнирщик и руководитель. */

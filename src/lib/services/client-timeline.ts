@@ -35,7 +35,8 @@ function push(
  * страница — сюда клиент попадает уже проверенным.
  */
 export async function buildClientTimeline(advertiserId: string): Promise<TimelineEvent[]> {
-  const [deals, statuses, tasks, journal, versions, files, payments, placements, ords] = await Promise.all([
+  const [deals, statuses, tasks, journal, versions, files, payments, placements, ords, requests] =
+    await Promise.all([
     prisma.deal.findMany({ where: { advertiserId } }),
     prisma.dailyStatus.findMany({ where: { advertiserId }, include: { deal: { select: { title: true } } } }),
     prisma.task.findMany({ where: { advertiserId }, include: { deal: { select: { title: true } } } }),
@@ -53,6 +54,10 @@ export async function buildClientTimeline(advertiserId: string): Promise<Timelin
     prisma.ordMarking.findMany({
       where: { deal: { advertiserId } },
       include: { deal: { select: { title: true } } },
+    }),
+    prisma.requestRecord.findMany({
+      where: { advertiserId },
+      include: { deal: { select: { title: true } }, author: { select: { name: true } } },
     }),
   ]);
 
@@ -244,6 +249,22 @@ export async function buildClientTimeline(advertiserId: string): Promise<Timelin
       detail: "пост живёт до месяца — снять креатив или продлить",
       dealTitle: o.deal?.title ?? null,
       href: "/ord",
+    });
+  }
+
+  // ── Запросы юристу и на размещение ──────────────────────────────────────────
+  for (const r of requests) {
+    push(out, {
+      id: `req-${r.id}`,
+      date: r.createdAt,
+      kind: "Запрос",
+      title: r.kind === "Юристу" ? "Запрос юристу на договор" : "Запрос на размещение макетов",
+      detail: [r.author?.name ? `отправил ${r.author.name}` : null, r.formats ? trim(r.formats, 120) : null]
+        .filter(Boolean)
+        .join(" · "),
+      dealTitle: r.deal?.title ?? null,
+      href: r.dealId ? `/deals/${r.dealId}` : null,
+      planned: false,
     });
   }
 

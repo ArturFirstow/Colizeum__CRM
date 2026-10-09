@@ -43,6 +43,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       documents: { include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } } },
       plannedPayments: { orderBy: { periodMonth: "asc" } },
       placements: { orderBy: { startDate: "asc" } },
+      sentRequests: {
+        orderBy: { createdAt: "desc" },
+        include: { author: { select: { name: true } } },
+      },
     },
   });
   if (!deal) notFound();
@@ -434,6 +438,50 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             </div>
             {deal.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-ink-400">{deal.notes}</p>}
           </section>
+
+          {/* Отправленные запросы. Конструктор выдаёт текст, человек копирует
+              его в письмо — и раньше от этого не оставалось следа (И-10).
+              Сохранённая версия лежит здесь и в хронологии клиента. */}
+          {deal.sentRequests.length > 0 && (
+            <section className="card p-5">
+              <h2 className="mb-1 text-lg font-bold text-ink-50">Отправленные запросы</h2>
+              <p className="mb-4 text-sm text-ink-400">
+                Что уходило юристу и на размещение — в том виде, в каком отправили.
+              </p>
+              <div className="space-y-2">
+                {deal.sentRequests.map((r) => (
+                  <details
+                    key={r.id}
+                    className="group rounded-xl border border-ink-800 bg-ink-900/50 p-3"
+                  >
+                    <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-sm">
+                      <span className="badge badge-muted">{r.kind}</span>
+                      <span className="text-ink-300">{formatDate(r.createdAt)}</span>
+                      {r.author?.name && (
+                        <span className="text-xs text-ink-500">{r.author.name}</span>
+                      )}
+                      <span className="ml-auto text-xs text-ink-500 group-open:hidden">
+                        показать текст
+                      </span>
+                    </summary>
+                    {r.formats && (
+                      <p className="mt-2 text-xs text-ink-400">Форматы: {r.formats}</p>
+                    )}
+                    <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-ink-950/60 p-3 font-mono text-xs leading-relaxed text-ink-300">
+                      {r.body}
+                    </pre>
+                    <div className="mt-2 flex justify-end">
+                      <DeleteButton
+                        endpoint={`/api/requests/${r.id}`}
+                        what="сохранённый запрос"
+                        variant="text"
+                      />
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Размещения. Бронь заводится отсюда, а живёт в общем календаре —
               так сделка и сетка клубов больше не расходятся (просьба И-13). */}

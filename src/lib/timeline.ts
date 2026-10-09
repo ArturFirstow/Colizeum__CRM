@@ -14,6 +14,7 @@ export const TIMELINE_KINDS = [
   "Деньги",
   "Размещение",
   "ОРД",
+  "Запрос",
 ] as const;
 
 export type TimelineKind = (typeof TIMELINE_KINDS)[number];
@@ -43,4 +44,5 @@ export const TIMELINE_ICONS: Record<TimelineKind, string> = {
   Деньги: "₽",
   Размещение: "▦",
   ОРД: "❖",
+  Запрос: "✉",
 };

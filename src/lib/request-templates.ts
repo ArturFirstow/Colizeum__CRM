@@ -16,6 +16,9 @@ import { AD_FORMATS, vatRateForDate, type AdFormat } from "@/lib/enums";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type RequestDeal = {
+  /** Нужны, чтобы отправленный запрос можно было сохранить в историю (И-10). */
+  id: string;
+  advertiserId: string;
   title: string;
   contractNumber?: string | null;
   contractDate?: Date | string | null;

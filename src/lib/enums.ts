@@ -358,3 +358,7 @@ export const AD_FORMATS: AdFormat[] = [
   },
   { label: "Брендинг турнирного календаря", needsOrd: false, note: "период — 1 месяц" },
 ];
+
+/** Какие бывают сохранённые запросы из конструкторов (И-10). */
+export const REQUEST_KINDS = ["Юристу", "На размещение"] as const;
+export type RequestKind = (typeof REQUEST_KINDS)[number];

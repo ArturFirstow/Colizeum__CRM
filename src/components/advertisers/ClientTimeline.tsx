@@ -24,6 +24,7 @@ const ACCENT: Record<TimelineKind, string> = {
   Деньги: "border-amber-400/60",
   Размещение: "border-cyan-400/50",
   ОРД: "border-fuchsia-400/50",
+  Запрос: "border-teal-400/50",
 };
 
 export function ClientTimeline({
