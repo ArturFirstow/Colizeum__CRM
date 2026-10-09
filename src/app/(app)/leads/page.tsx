@@ -28,6 +28,21 @@ export default async function LeadsPage() {
         subtitle="Обращения из формы на colizeum-agency.ru. Общий поток отдела: возьмите заявку в работу, чтобы её не вели двое."
         icon="⚑"
       />
+      {/* Требование 4.3: там, где лежат данные людей, должна быть видна
+          политика. Здесь данные не вводим, а принимаем со стороны — поэтому
+          сказано ещё и про основание (требование 4.12). */}
+      <p className="mb-4 text-xs leading-snug text-ink-500">
+        Здесь данные людей, приславших обращение по собственной инициативе через форму на сайте.
+        Обрабатываются по{" "}
+        <a
+          href="/legal/politika"
+          target="_blank"
+          className="underline underline-offset-2 transition hover:text-brand"
+        >
+          политике обработки персональных данных
+        </a>
+        . Не пересылайте их за пределы сервиса.
+      </p>
       <LeadsTable
         leads={leads.map((l) => ({
           id: l.id,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { PrivacyNote } from "@/components/ui/PrivacyNote";
 import { apiFetch } from "@/lib/client";
 
 export function AddContactButton({ advertiserId }: { advertiserId: string }) {
@@ -73,6 +74,7 @@ export function AddContactButton({ advertiserId }: { advertiserId: string }) {
             />
             Основной контакт
           </label>
+          <PrivacyNote what="Это данные контактного лица клиента" />
           <FormError message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>

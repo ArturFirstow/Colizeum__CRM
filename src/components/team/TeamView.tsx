@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { PrivacyNote } from "@/components/ui/PrivacyNote";
 import { apiFetch } from "@/lib/client";
 import { formatDate } from "@/lib/format";
 import { parseSheetUrl, validateSheetUrl } from "@/lib/sheet-url";
@@ -194,6 +195,7 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
               <option value="Security">Безопасность — журнал, запросы по ПДн, доступы; клиентов не видит</option>
             </select>
           </div>
+          <PrivacyNote what="Это служебные данные работника: имя, рабочая почта, роль" />
           <FormError message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>

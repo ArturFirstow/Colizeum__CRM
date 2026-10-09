@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { PrivacyNote } from "@/components/ui/PrivacyNote";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { Ring } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
@@ -212,6 +213,7 @@ function ContractorModal({
           <label className="label">Заметки</label>
           <textarea className="input min-h-[80px]" value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="условия, договорённости, детали" />
         </div>
+        <PrivacyNote what="Если указываете контактное лицо — это данные о человеке" />
         <FormError message={error} />
         <div className="flex items-center justify-between gap-2">
           {editing ? (

@@ -17,7 +17,8 @@
     "setup": "prisma generate && prisma db push && tsx prisma/seed.ts",
     "ai:check": "tsx scripts/ai-check.ts",
     "ai:scan": "tsx scripts/ai-scan.ts",
-    "retention": "tsx --conditions=react-server scripts/retention.ts"
+    "retention": "tsx --conditions=react-server scripts/retention.ts",
+    "security:check": "tsx scripts/security-check.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -31,7 +32,7 @@
     "jose": "6.2.3",
     "lucide-react": "^1.25.0",
     "marked": "^15.0.12",
-    "next": "15.5.20",
+    "next": "15.5.27",
     "qrcode": "^1.5.4",
     "react": "19.2.7",
     "react-dom": "19.2.7",
