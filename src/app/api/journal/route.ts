@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         clientName: advertiser?.nameRu ?? null,
         employeeName: session.name,
         summary: entry.parsedSummary,
-      });
+      }, session);
 
       await prisma.journalEntry.update({
         where: { id: entry.id },

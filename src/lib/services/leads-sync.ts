@@ -1,4 +1,5 @@
 import "server-only";
+import { logTransfer } from "@/lib/services/transfers";
 import { prisma } from "@/lib/prisma";
 import { parseLeadsCsv, parseSentAt } from "@/lib/leads-parse";
 import { PublicError } from "@/lib/errors";
@@ -90,6 +91,18 @@ export async function syncLeads(): Promise<LeadsSyncResult> {
       added++;
     }
   }
+
+  // Обратное направление обмена — тоже передача, и тоже записывается.
+  logTransfer("sheet-in", {
+    purpose: "Чтение обращений с формы сайта",
+    dataKinds: [
+      `обращений получено: ${raw.length}`,
+      "имя",
+      "компания",
+      "контакт",
+      "текст обращения",
+    ],
+  });
 
   return { added, updated, total: raw.length };
 }

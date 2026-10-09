@@ -1,4 +1,5 @@
 import "server-only";
+import { logTransfer, type TransferMeta } from "@/lib/services/transfers";
 import Anthropic from "@anthropic-ai/sdk";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,6 +99,14 @@ export function aiErrorMessage(e: unknown): string {
   return `Ошибка ИИ: ${raw}`;
 }
 
+// ── Запись передачи наружу ───────────────────────────────────────────────────
+//
+// Поле `transfer` у aiComplete и aiChat сделано ОБЯЗАТЕЛЬНЫМ намеренно
+// (требование 4.12). Любой новый вызов ИИ не соберётся, пока автор не напишет,
+// зачем он и какие категории данных уходят провайдеру. Если сделать поле
+// необязательным, однажды появится вызов без записи — и журнал передач станет
+// неполным, то есть бесполезным.
+
 // ── Нейтральные типы: одинаковые для всех провайдеров ────────────────────────
 export type AiTool = {
   name: string;
@@ -142,7 +151,14 @@ function anthropicClient() {
 }
 
 // ── Один вызов: инструкция + текст → ответ ───────────────────────────────────
-export async function aiComplete(opts: { system: string; user: string; maxTokens?: number }): Promise<string> {
+export async function aiComplete(opts: {
+  system: string;
+  user: string;
+  maxTokens?: number;
+  /** Чем это вызвано и что уходит наружу. Обязательно: см. комментарий выше. */
+  transfer: TransferMeta;
+}): Promise<string> {
+  logTransfer("ai", opts.transfer);
   if (isAnthropic()) {
     const res = await anthropicClient().messages.create({
       model: MODEL,
@@ -184,7 +200,10 @@ export async function aiChat(opts: {
   runTool: (name: string, input: Record<string, unknown>) => Promise<string>;
   maxTokens?: number;
   maxSteps?: number;
+  /** Чем это вызвано и что уходит наружу. Обязательно: см. комментарий выше. */
+  transfer: TransferMeta;
 }): Promise<AiChatResult> {
+  logTransfer("ai", opts.transfer);
   const maxSteps = opts.maxSteps ?? 8;
   return isAnthropic() ? anthropicChat(opts, maxSteps) : openAiChat(opts, maxSteps);
 }

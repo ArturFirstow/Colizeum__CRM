@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/primitives";
 import { describeAction, describeEntity, pruneAudit, AUDIT_KEEP_DAYS } from "@/lib/audit";
 import { canSeeCompliance } from "@/lib/scope";
 import { recentAlerts } from "@/lib/services/security-alerts";
+import { transferSummary } from "@/lib/services/transfers";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,9 @@ export default async function AuditPage({
   // Тревоги за две недели — наверх страницы. В общей таблице они теряются
   // среди тысяч обычных строк, а смотреть надо именно их.
   const alerts = await recentAlerts(new Date(Date.now() - 14 * 86400000), 20);
+
+  // Куда данные уходят наружу и сколько раз за месяц (требование 4.12).
+  const transfers = await transferSummary(new Date(Date.now() - 30 * 86400000));
 
   return (
     <div>
@@ -121,6 +125,59 @@ export default async function AuditPage({
             ))}
           </ul>
         )}
+      </section>
+
+      {/* Куда данные уходят за пределы сервиса. Первый вопрос любой проверки —
+          «что вы отдаёте наружу»; раньше отвечать на него было нечем. */}
+      <section className="card mb-5 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="font-semibold text-ink-50">Куда уходят данные</h2>
+          <span className="text-xs text-ink-500">обращений за последние 30 дней</span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {transfers.map((t) => (
+            <div key={t.target} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <b className="text-ink-100">{t.title}</b>
+                <span className="text-sm text-ink-300">
+                  {t.count === 0 ? (
+                    <span className="text-ink-500">не использовалось</span>
+                  ) : (
+                    <>
+                      {t.count} раз
+                      {t.lastAt && (
+                        <span className="ml-2 text-xs text-ink-500">
+                          последний — {t.lastAt.toLocaleString("ru-RU", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="mt-1 text-sm text-ink-400">{t.what}</div>
+              <div className="mt-1 text-xs text-ink-500">
+                {t.where}
+                {t.crossBorder && (
+                  <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-300">
+                    за пределы РФ
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-ink-500">{t.basis}</div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 border-t border-ink-800 pt-3 text-xs text-ink-500">
+          Каждая передача пишется строкой в журнале ниже — отдельным видом действия, их видно
+          в фильтрах. В запись попадают только <b>категории</b> данных, а не их содержимое:
+          «ушли имена контактных лиц и суммы сделок», но не сами имена и суммы. Иначе журнал
+          передач сам стал бы хранилищем персональных данных.
+        </p>
       </section>
 
       {/* Фильтр по виду действия */}

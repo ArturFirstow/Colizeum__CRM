@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (advertisers.length === 0) return fail("bad_request", "Среди выбранных нет ваших клиентов", 400);
 
     // Саммари: либо отредактированное сотрудником, либо собираем заново.
-    const summary = data.summary ?? (await buildHandoverSummary(advertisers.map((a) => a.id)));
+    const summary = data.summary ?? (await buildHandoverSummary(advertisers.map((a) => a.id), session));
 
     const handover = await prisma.handover.create({
       data: {

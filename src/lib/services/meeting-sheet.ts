@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import "server-only";
+import { logTransfer } from "@/lib/services/transfers";
 
 export type MeetingRow = {
   meetingDate: Date | null;
@@ -81,9 +82,18 @@ export function rowAsTsv(m: MeetingRow): string {
  */
 export async function pushMeetingToSheet(
   m: MeetingRow,
+  by?: { userId: string; name: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const url = process.env.MEETINGS_SHEET_WEBHOOK_URL;
   if (!url) return { ok: false, error: "Выгрузка в таблицу не настроена (MEETINGS_SHEET_WEBHOOK_URL)" };
+
+  // Данные уходят из сервиса наружу — записываем это (требование 4.12).
+  logTransfer("sheet-out", {
+    userId: by?.userId ?? null,
+    userName: by?.name ?? null,
+    purpose: "Строка отчёта о встрече в Google-таблицу",
+    dataKinds: ["дата и длительность встречи", "участники", "клиент", "итоги"],
+  });
 
   try {
     const res = await fetch(url, {

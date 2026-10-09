@@ -50,6 +50,12 @@ export async function POST(req: NextRequest) {
 
     try {
       const markdown = await aiComplete({
+        transfer: {
+          userId: session.userId,
+          userName: session.name,
+          purpose: "Пересказ истории работы с клиентом",
+          dataKinds: ["название клиента", "события по сделкам и документам", "участники встреч", "суммы и даты"],
+        },
         maxTokens: 2000,
         system:
           "Ты — ассистент менеджера рекламных проектов Colizeum Agency. " +

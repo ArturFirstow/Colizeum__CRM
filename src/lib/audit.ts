@@ -114,6 +114,10 @@ const ACTION_LABELS: Record<string, string> = {
   "privacy.search": "Поиск данных человека по запросу",
   "privacy.erase": "Удаление данных человека по запросу",
   "retention.sweep": "Уборка просроченного по сроку хранения",
+  "transfer.ai": "↗ Передача данных ИИ-помощнику",
+  "transfer.telegram": "↗ Передача данных в Telegram",
+  "transfer.sheet-out": "↗ Выгрузка в Google-таблицу",
+  "transfer.sheet-in": "↙ Приём заявок из Google-таблицы",
   "advertiser.view": "Открыл карточку клиента",
   "advertiser.create": "Завёл клиента",
   "advertiser.update": "Изменил клиента",
@@ -149,6 +153,7 @@ const ENTITY_LABELS: Record<string, string> = {
   lead: "заявка",
   handover: "передача дел",
   security: "безопасность",
+  transfer: "передача вовне",
 };
 
 export function describeEntity(entityType: string | null): string {

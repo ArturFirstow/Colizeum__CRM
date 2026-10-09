@@ -39,7 +39,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
       return ok({ ok: false, configured: false, tsv: rowAsTsv(row) });
     }
 
-    const res = await pushMeetingToSheet(row);
+    const res = await pushMeetingToSheet(row, session);
     await prisma.journalEntry.update({
       where: { id },
       data: { exportedAt: res.ok ? new Date() : null, exportError: res.ok ? null : res.error },

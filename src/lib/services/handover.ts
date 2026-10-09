@@ -103,7 +103,10 @@ export async function collectClientFacts(advertiserId: string): Promise<string> 
  * Саммари для замещающего. С ИИ — связный пересказ, без ИИ — те же факты
  * списком: передача не должна зависеть от того, оплачен ли ключ провайдера.
  */
-export async function buildHandoverSummary(advertiserIds: string[]): Promise<string> {
+export async function buildHandoverSummary(
+  advertiserIds: string[],
+  by: { userId: string; name: string },
+): Promise<string> {
   const blocks: string[] = [];
   for (const id of advertiserIds) {
     const facts = await collectClientFacts(id);
@@ -116,6 +119,12 @@ export async function buildHandoverSummary(advertiserIds: string[]): Promise<str
 
   try {
     const text = await aiComplete({
+      transfer: {
+        userId: by.userId,
+        userName: by.name,
+        purpose: "Саммари при передаче дел коллеге",
+        dataKinds: ["названия клиентов", "стадии и суммы сделок", "блокеры и сроки"],
+      },
       system: [
         "Ты передаёшь дела коллеге, который уходит в отпуск замещать другого менеджера.",
         "По каждому клиенту напиши короткую сводку по-русски, простым языком, в таком порядке:",

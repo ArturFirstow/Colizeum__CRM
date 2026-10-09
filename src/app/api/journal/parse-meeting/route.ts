@@ -5,7 +5,7 @@ import { aiComplete, aiConfigured, aiErrorMessage, AI_NO_KEY_MESSAGE } from "@/l
 // Разбор транскрипта: ИИ достаёт показатели встречи для таблицы учёта.
 // Возвращает только данные — сохраняет их пользователь, проверив глазами.
 export async function POST(req: NextRequest) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     if (!aiConfigured()) return fail("ai_not_configured", AI_NO_KEY_MESSAGE, 400);
 
     const { transcript } = (await req.json()) as { transcript?: string };
@@ -32,6 +32,12 @@ export async function POST(req: NextRequest) {
 
     try {
       const raw = await aiComplete({
+        transfer: {
+          userId: session.userId,
+          userName: session.name,
+          purpose: "Разбор транскрипта встречи",
+          dataKinds: ["расшифровка разговора", "имена участников", "название клиента", "договорённости"],
+        },
         system,
         user: transcript.slice(0, 40_000),
         maxTokens: 800,

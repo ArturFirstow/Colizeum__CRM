@@ -25,6 +25,12 @@ export async function POST(req: NextRequest) {
     try {
       const context = await buildAiContext(session);
       const result = await aiChat({
+        transfer: {
+          userId: session.userId,
+          userName: session.name,
+          purpose: "Разговор с напарником ИИ",
+          dataKinds: ["вопрос сотрудника", "то, что напарник сам вытянет инструментами: клиенты, сделки, задачи, файлы"],
+        },
         system: [
           "Ты — напарник менеджера в сервисе Colizeum Agency. Ты работаешь ВНУТРИ этого сервиса и",
           "имеешь доступ к его данным через инструменты. Ты не просто отвечаешь на вопросы — ты",

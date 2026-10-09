@@ -5,9 +5,9 @@ import { buildHandoverSummary } from "@/lib/services/handover";
 
 // Саммари ДО передачи: сотрудник читает, правит и только потом отправляет.
 export async function POST(req: NextRequest) {
-  return withSession(async () => {
+  return withSession(async (session) => {
     const { advertiserIds } = handoverPreviewSchema.parse(await req.json());
-    const summary = await buildHandoverSummary(advertiserIds);
+    const summary = await buildHandoverSummary(advertiserIds, session);
     return ok({ summary });
   });
 }

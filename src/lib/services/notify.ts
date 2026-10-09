@@ -11,6 +11,7 @@
 import "server-only";
 import dns from "node:dns";
 import { prisma } from "@/lib/prisma";
+import { logTransfer } from "@/lib/services/transfers";
 
 // На серверах без IPv6 Node сначала пробует IPv6-адрес Telegram и ждёт таймаута.
 // Просим сначала IPv4 — иначе отправка падает с ETIMEDOUT.
@@ -29,9 +30,15 @@ export function telegramConfigured(): boolean {
  * Отправка одному адресату. Ошибку не бросает и не логирует громко: уведомление
  * — вещь вспомогательная, из-за него не должно падать сохранение записи.
  */
-async function send(chatId: string, text: string): Promise<void> {
+async function send(chatId: string, text: string, purpose = "Уведомление сотруднику"): Promise<void> {
   const token = botToken();
   if (!token || !chatId) return;
+  // Сообщение уходит на серверы Telegram — это передача наружу (требование 4.12).
+  // Записываем только повод и категории, сам текст в журнал не кладём.
+  logTransfer("telegram", {
+    purpose,
+    dataKinds: ["имя отправителя", "название клиента или сделки", "короткий текст уведомления"],
+  });
   const body = JSON.stringify({
     chat_id: chatId,
     text,

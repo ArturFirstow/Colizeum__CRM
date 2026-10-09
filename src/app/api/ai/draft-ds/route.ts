@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
 
     try {
       const markdown = await aiComplete({
+        transfer: {
+          userId: session.userId,
+          userName: session.name,
+          purpose: "Черновик дополнительного соглашения",
+          dataKinds: ["реквизиты клиента", "подписант", "номер и сумма договора", "сроки размещения"],
+        },
       maxTokens: 3500,
       system:
         "Ты — юрист-ассистент Colizeum Agency. Составь ЧЕРНОВИК дополнительного соглашения (ДС) " +

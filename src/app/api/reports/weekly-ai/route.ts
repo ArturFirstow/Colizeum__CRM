@@ -58,6 +58,12 @@ export async function POST() {
 
     try {
       const markdown = await aiComplete({
+        transfer: {
+          userId: session.userId,
+          userName: session.name,
+          purpose: "Недельный отчёт по отделу",
+          dataKinds: ["названия клиентов", "стадии и суммы сделок", "задачи и блокеры"],
+        },
         system:
           "Ты — ассистент менеджера рекламных проектов Colizeum Agency. " +
           "По данным за неделю составь лаконичное недельное саммари НА РУССКОМ в Markdown. " +
