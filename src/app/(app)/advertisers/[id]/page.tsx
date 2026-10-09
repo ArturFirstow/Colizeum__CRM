@@ -51,6 +51,40 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
   // Единая лента событий по клиенту — собирается из всех разделов сразу.
   const timeline = await buildClientTimeline(advertiser.id);
 
+  // ── Файлы клиента, приложенные где угодно ──────────────────────────────────
+  //
+  // Раньше в блоке «Документы» показывались только документы с версиями
+  // (договор, спецификация), а файлы, приложенные из сделки или из «Документов»
+  // — счета, медиапланы, макеты, — не показывались вовсе. Человек грузил файл,
+  // потом открывал карточку и видел «Документов пока нет».
+  //
+  // Теперь оба вида рядом: слева документы, которые правят по версиям, справа
+  // просто приложенные файлы — с указанием, откуда именно их принесли.
+  const attachedFiles = await prisma.fileAsset.findMany({
+    where: { advertiserId: advertiser.id },
+    orderBy: { uploadedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      fileName: true,
+      kind: true,
+      sizeBytes: true,
+      ownerType: true,
+      dealId: true,
+      uploadedByName: true,
+      uploadedAt: true,
+    },
+  });
+  const dealTitles = new Map(advertiser.deals.map((d) => [d.id, d.title] as const));
+  /** Откуда файл принесли — чтобы было понятно, где его искать дальше. */
+  const fileSource = (f: (typeof attachedFiles)[number]): string => {
+    if (f.dealId) return `из сделки «${dealTitles.get(f.dealId) ?? "—"}»`;
+    if (f.ownerType === "knowledge") return "из базы знаний";
+    if (f.ownerType === "journal") return "из дневника";
+    if (f.ownerType === "inbox") return "из входящих";
+    return "из карточки клиента";
+  };
+
   return (
     <div>
       <Link href="/advertisers" className="mb-4 inline-flex text-sm text-ink-400 hover:text-brand">
@@ -137,19 +171,54 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                 Открыть в хранилище →
               </Link>
             </div>
-            {advertiser.documents.length === 0 ? (
+            {advertiser.documents.length === 0 && attachedFiles.length === 0 ? (
               <EmptyState icon="❐" title="Документов пока нет" hint="Загрузите первый документ во вкладке «Документы»." />
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {advertiser.documents.map((doc) => (
-                  <div key={doc.id} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <span className="badge badge-brand">{doc.type}</span>
-                      <span className="text-xs text-ink-500">v{doc.versions[0]?.versionNo ?? 0}</span>
-                    </div>
-                    <div className="mt-2 truncate text-sm font-medium text-ink-100">{doc.title}</div>
+              <div className="space-y-4">
+                {advertiser.documents.length > 0 && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {advertiser.documents.map((doc) => (
+                      <div key={doc.id} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <span className="badge badge-brand">{doc.type}</span>
+                          <span className="text-xs text-ink-500">v{doc.versions[0]?.versionNo ?? 0}</span>
+                        </div>
+                        <div className="mt-2 truncate text-sm font-medium text-ink-100">{doc.title}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {attachedFiles.length > 0 && (
+                  <div>
+                    <div className="mb-2 text-xs uppercase tracking-wide text-ink-500">
+                      Прикреплённые файлы — {attachedFiles.length}
+                    </div>
+                    <div className="space-y-1.5">
+                      {attachedFiles.map((f) => (
+                        <a
+                          key={f.id}
+                          href={`/api/files/${f.id}`}
+                          className="flex min-w-0 items-center gap-3 rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-2.5 transition hover:border-ink-600"
+                        >
+                          <span className="shrink-0 text-ink-500">❏</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm text-ink-100">
+                              {f.title || f.fileName}
+                            </span>
+                            <span className="block truncate text-xs text-ink-500">
+                              {f.kind} · {fileSource(f)}
+                              {f.uploadedByName ? ` · ${f.uploadedByName}` : ""}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs text-ink-500">
+                            {Math.max(1, Math.round(f.sizeBytes / 1024))} КБ
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>

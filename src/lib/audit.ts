@@ -133,6 +133,7 @@ const ACTION_LABELS: Record<string, string> = {
   "deal.update": "Изменил сделку",
   "deal.delete": "Удалил сделку",
   "document.upload": "Загрузил документ",
+  "ord.file.delete": "Удалил файл маркировки ОРД",
   "file.upload": "Загрузил файл",
   "file.download": "Скачал файл",
   "export.clients": "Выгрузил клиентов в Excel",

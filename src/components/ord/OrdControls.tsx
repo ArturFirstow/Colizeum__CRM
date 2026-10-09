@@ -281,6 +281,22 @@ export function OrdRowActions({ ord }: { ord: OrdRow }) {
     }
   }
 
+  // Убрать ошибочно загруженный файл. Подтверждение обязательно: вернуть
+  // файл будет нельзя, а сама запись ОРД с ЕРИД и датами остаётся на месте.
+  async function removeFile(kind: "creative" | "act", fileName: string) {
+    const what = kind === "creative" ? "креатив" : "акт";
+    if (!confirm(`Удалить ${what} «${fileName}»?\n\nСама запись маркировки останется, удалится только файл.`)) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/api/ord/${ord.id}/files?kind=${kind}`, { method: "DELETE" });
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Не удалось удалить файл");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function upload(kind: "creative" | "act", file: File) {
     setBusy(true);
     try {
@@ -314,9 +330,19 @@ export function OrdRowActions({ ord }: { ord: OrdRow }) {
       {/* Креатив (картинка) */}
       <input ref={creativeRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload("creative", e.target.files[0])} />
       {ord.creativeFileName ? (
-        <a href={`/api/ord/${ord.id}/file/creative`} title={`Креатив: ${ord.creativeFileName}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-ink-700 bg-ink-800/60 text-sm hover:bg-ink-700">
-          🖼
-        </a>
+        <span className="inline-flex items-center rounded-lg border border-ink-700 bg-ink-800/60">
+          <a href={`/api/ord/${ord.id}/file/creative`} title={`Креатив: ${ord.creativeFileName}`} className="inline-flex h-8 w-8 items-center justify-center text-sm hover:bg-ink-700">
+            🖼
+          </a>
+          <button
+            onClick={() => removeFile("creative", ord.creativeFileName!)}
+            disabled={busy}
+            title="Удалить креатив — запись маркировки останется"
+            className="inline-flex h-8 w-5 items-center justify-center border-l border-ink-700 text-xs text-ink-500 transition hover:bg-ink-700 hover:text-red-300"
+          >
+            ✕
+          </button>
+        </span>
       ) : (
         <button onClick={() => creativeRef.current?.click()} disabled={busy} title="Загрузить креатив" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-ink-700 text-ink-500 hover:text-ink-200">
           🖼
@@ -326,9 +352,19 @@ export function OrdRowActions({ ord }: { ord: OrdRow }) {
       {/* Акт (PDF) */}
       <input ref={actRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && upload("act", e.target.files[0])} />
       {ord.actFileName ? (
-        <a href={`/api/ord/${ord.id}/file/act`} title={`Акт: ${ord.actFileName}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-ink-700 bg-ink-800/60 text-sm hover:bg-ink-700">
-          📄
-        </a>
+        <span className="inline-flex items-center rounded-lg border border-ink-700 bg-ink-800/60">
+          <a href={`/api/ord/${ord.id}/file/act`} title={`Акт: ${ord.actFileName}`} className="inline-flex h-8 w-8 items-center justify-center text-sm hover:bg-ink-700">
+            📄
+          </a>
+          <button
+            onClick={() => removeFile("act", ord.actFileName!)}
+            disabled={busy}
+            title="Удалить акт — запись маркировки останется"
+            className="inline-flex h-8 w-5 items-center justify-center border-l border-ink-700 text-xs text-ink-500 transition hover:bg-ink-700 hover:text-red-300"
+          >
+            ✕
+          </button>
+        </span>
       ) : (
         <button onClick={() => actRef.current?.click()} disabled={busy} title="Загрузить PDF акта" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-ink-700 text-ink-500 hover:text-ink-200">
           📄
