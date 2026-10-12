@@ -115,7 +115,19 @@ if [ -z "$BACKUP_PASSPHRASE" ]; then
 fi
 
 # Оставляем последние 14 копий каждого вида (и открытые, и зашифрованные).
-ls -1t "$BACKUP_DIR"/db_*.db "$BACKUP_DIR"/db_*.db.enc 2>/dev/null | tail -n +15 | xargs -r rm -f
-ls -1t "$BACKUP_DIR"/storage_*.tar.gz "$BACKUP_DIR"/storage_*.tar.gz.enc 2>/dev/null | tail -n +15 | xargs -r rm -f
-ls -1t "$BACKUP_DIR"/db_*.db-wal "$BACKUP_DIR"/db_*.db-wal.enc 2>/dev/null | tail -n +15 | xargs -r rm -f
-ls -1t "$BACKUP_DIR"/db_*.db-shm "$BACKUP_DIR"/db_*.db-shm.enc 2>/dev/null | tail -n +15 | xargs -r rm -f
+#
+# ⚠️ `|| true` здесь обязателен, и это не перестраховка. Когда файлов такого
+# вида ещё нет (например, `-shm` не появляется, если установлен sqlite3), `ls`
+# завершается с ошибкой, а `set -e` + `pipefail` роняют ВЕСЬ скрипт на этой
+# строке — с ненулевым кодом возврата. Копия при этом уже сделана, но тот, кто
+# запустил скрипт, получает «провал»: обновление сервера из-за этого молча
+# останавливалось сразу после резервной копии (поймано на боевом сервере
+# 12 октября). Тот же капкан уже ловили на `grep` пароля в `.env`.
+ls -1t "$BACKUP_DIR"/db_*.db "$BACKUP_DIR"/db_*.db.enc 2>/dev/null | tail -n +15 | xargs -r rm -f || true
+ls -1t "$BACKUP_DIR"/storage_*.tar.gz "$BACKUP_DIR"/storage_*.tar.gz.enc 2>/dev/null | tail -n +15 | xargs -r rm -f || true
+ls -1t "$BACKUP_DIR"/db_*.db-wal "$BACKUP_DIR"/db_*.db-wal.enc 2>/dev/null | tail -n +15 | xargs -r rm -f || true
+ls -1t "$BACKUP_DIR"/db_*.db-shm "$BACKUP_DIR"/db_*.db-shm.enc 2>/dev/null | tail -n +15 | xargs -r rm -f || true
+
+# Копия сделана — говорим об этом явно. Код возврата скрипта не должен зависеть
+# от того, нашлось ли что чистить.
+exit 0
