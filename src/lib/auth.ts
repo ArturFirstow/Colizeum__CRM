@@ -8,6 +8,7 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import type { Role, UserTrack } from "@/lib/enums";
@@ -51,6 +52,17 @@ export type SessionPayload = {
   name: string;
   role: Role;
   track: UserTrack;
+  /**
+   * Чьи записи этот человек вправе видеть: он сам, его руководитель проекта и
+   * его проектные менеджеры. Заполняется НЕ из cookie, а из базы при каждом
+   * обращении (`requireSession`), поэтому смена связки действует сразу, без
+   * перевхода.
+   *
+   * Зачем так: видимость по всему сервису считают три функции в `scope.ts`, и
+   * им на вход приходит сессия. Положив команду сюда, мы расширили доступ во
+   * всех разделах разом — вместо правки полусотни запросов по отдельности.
+   */
+  teamIds?: string[];
 };
 
 async function signSession(payload: SessionPayload): Promise<string> {
@@ -164,11 +176,35 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 }
 
+/**
+ * Кого ещё видит сотрудник: себя, своего руководителя проекта и своих
+ * проектных менеджеров.
+ *
+ * Структура отдела: руководитель проекта ведёт клиентов, проектный менеджер
+ * закреплён за ним и тянет операционку по тем же клиентам. Чтобы менеджер мог
+ * работать, он должен видеть карточки руководителя — но ТОЛЬКО своего: клиенты
+ * соседней пары ему по-прежнему не видны.
+ *
+ * Запрос лёгкий (два поля по индексу) и кэшируется на время обработки запроса.
+ */
+const teamOf = cache(async (userId: string): Promise<string[]> => {
+  const { prisma } = await import("@/lib/prisma");
+  const me = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { leadId: true, projectManagers: { select: { id: true } } },
+  });
+  if (!me) return [userId];
+  const ids = new Set<string>([userId]);
+  if (me.leadId) ids.add(me.leadId);
+  for (const m of me.projectManagers) ids.add(m.id);
+  return [...ids];
+});
+
 /** Для API/страниц, где сессия обязательна. Бросает, если гость. */
 export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) throw new UnauthorizedError();
-  return session;
+  return { ...session, teamIds: await teamOf(session.userId) };
 }
 
 export class UnauthorizedError extends Error {

@@ -15,6 +15,7 @@ type Member = {
   avatarUrl?: string | null;
   email: string;
   role: string;
+  leadId: string | null;
   sheetUrl: string | null;
   totpEnabledAt?: string | Date | null;
   consents?: { docSlug: string; docVersion: string; acceptedAt: string | Date }[];
@@ -208,7 +209,14 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
         </form>
       </Modal>
 
-      {edit && <EditMemberModal member={edit} onClose={() => setEdit(null)} onSaved={() => router.refresh()} />}
+      {edit && (
+        <EditMemberModal
+          member={edit}
+          colleagues={members}
+          onClose={() => setEdit(null)}
+          onSaved={() => router.refresh()}
+        />
+      )}
       {sheetEdit && (
         <SheetUrlModal member={sheetEdit} onClose={() => setSheetEdit(null)} onSaved={() => router.refresh()} />
       )}
@@ -293,16 +301,19 @@ function SheetUrlModal({
 
 function EditMemberModal({
   member,
+  colleagues,
   onClose,
   onSaved,
 }: {
   member: Member;
+  colleagues: Member[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [name, setName] = useState(member.name);
   const [role, setRole] = useState(member.role);
   const [telegramChatId, setTelegramChatId] = useState(member.telegramChatId ?? "");
+  const [leadId, setLeadId] = useState(member.leadId ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.avatarUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
@@ -330,7 +341,7 @@ function EditMemberModal({
     setError(null);
     setSaving(true);
     try {
-      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId, avatarUrl }) });
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId, avatarUrl, leadId }) });
       onSaved();
       onClose();
     } catch (err) {
@@ -355,6 +366,26 @@ function EditMemberModal({
               <option value="Security">Безопасность — журнал, запросы по ПДн, доступы; клиентов не видит</option>
             <option value="Owner">Админ — управление доступами</option>
           </select>
+        </div>
+        {/* Закрепление за руководителем проекта — основа рабочего листа.
+            Менеджер видит клиентов своего руководителя и ведёт по ним
+            операционку; клиенты соседней пары ему не видны. */}
+        <div>
+          <label className="label">Руководитель проекта</label>
+          <select className="input" value={leadId} onChange={(e) => setLeadId(e.target.value)}>
+            <option value="">— самостоятельный сотрудник —</option>
+            {colleagues
+              .filter((c) => c.id !== member.id)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+          </select>
+          <p className="mt-1 text-xs text-ink-500">
+            Для проектного менеджера: за кем он закреплён. Он увидит клиентов этого руководителя и
+            общий рабочий лист. Пусто — сотрудник ведёт только своих клиентов.
+          </p>
         </div>
         <div>
           <label className="label">Фото</label>

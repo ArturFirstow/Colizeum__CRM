@@ -29,6 +29,7 @@ const PASSWORD = process.env.CHECK_PASSWORD;
 const PAGES = [
   "/dashboard",
   "/tasks",
+  "/worksheet",
   "/deals",
   "/advertisers",
   "/documents",

@@ -28,14 +28,44 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       (data.name !== undefined ||
         data.role !== undefined ||
         data.telegramChatId !== undefined ||
-        data.avatarUrl !== undefined)
+        data.avatarUrl !== undefined ||
+        data.leadId !== undefined)
     ) {
-      return fail("forbidden", "Имя, роль, Telegram и фото меняет администратор", 403);
+      return fail("forbidden", "Имя, роль, Telegram, фото и закрепление меняет администратор", 403);
+    }
+
+    // Закрепление за руководителем проекта открывает доступ к его клиентам,
+    // поэтому две проверки до записи: сам себе руководителем быть не может и
+    // цепочка «А закреплён за Б, Б за А» не допускается — иначе видимость
+    // пошла бы по кругу.
+    if (data.leadId) {
+      if (data.leadId === id) {
+        return fail("validation", "Сотрудник не может быть закреплён сам за собой", 422);
+      }
+      const lead = await prisma.user.findUnique({
+        where: { id: data.leadId },
+        select: { id: true, leadId: true },
+      });
+      if (!lead) return fail("not_found", "Руководитель проекта не найден", 404);
+      if (lead.leadId === id) {
+        return fail(
+          "validation",
+          "Эти двое не могут быть закреплены друг за другом — выберите одного руководителем",
+          422,
+        );
+      }
     }
 
     const before = await prisma.user.findUnique({
       where: { id },
-      select: { name: true, role: true, telegramChatId: true, avatarUrl: true, sheetUrl: true },
+      select: {
+        name: true,
+        role: true,
+        telegramChatId: true,
+        avatarUrl: true,
+        sheetUrl: true,
+        leadId: true,
+      },
     });
     if (!before) return fail("not_found", "Сотрудник не найден", 404);
 
@@ -46,6 +76,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(isAdmin && data.role !== undefined ? { role: data.role } : {}),
         ...(isAdmin && data.telegramChatId !== undefined ? { telegramChatId: data.telegramChatId } : {}),
         ...(isAdmin && data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+        // Пустая строка = «снять закрепление».
+        ...(isAdmin && data.leadId !== undefined ? { leadId: data.leadId || null } : {}),
         // Пустая строка = «убрать таблицу», поэтому пишем null, а не "".
         ...(data.sheetUrl !== undefined ? { sheetUrl: data.sheetUrl || null } : {}),
       },
@@ -57,6 +89,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         sheetUrl: true,
         telegramChatId: true,
         avatarUrl: true,
+        leadId: true,
       },
     });
 

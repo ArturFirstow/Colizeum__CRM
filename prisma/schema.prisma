@@ -50,6 +50,17 @@ model User {
   // Фото сотрудника. Храним ссылку на файл в общем хранилище (/api/files/<id>),
   // чтобы не заводить отдельный механизм картинок.
   avatarUrl         String?
+  /// Руководитель проекта, за которым закреплён этот сотрудник (рабочий лист).
+  ///
+  /// Структура отдела: руководитель проекта ведёт клиентов, а проектный
+  /// менеджер закрыт за ним и тянет операционку по тем же клиентам. Поле
+  /// стоит у МЕНЕДЖЕРА и указывает на его руководителя — так у одного
+  /// руководителя может быть несколько менеджеров, а у менеджера всегда
+  /// понятно, чьи задачи он ведёт.
+  ///
+  /// ⚠️ От этого поля зависит видимость: менеджер видит клиентов своего
+  /// руководителя (src/lib/auth.ts → teamIds). Меняется только админом.
+  leadId            String?
   createdAt         DateTime  @default(now())
 
   ownedDeals         Deal[]            @relation("DealOwner")
@@ -70,6 +81,12 @@ model User {
   handoversGiven     Handover[]        @relation("HandoverFrom")
   handoversTaken     Handover[]        @relation("HandoverTo")
   sentRequests       RequestRecord[]   @relation("RequestAuthor")
+  lead               User?             @relation("ProjectLead", fields: [leadId], references: [id], onDelete: SetNull)
+  projectManagers    User[]            @relation("ProjectLead")
+  taskComments       TaskComment[]     @relation("TaskCommentAuthor")
+  worksheetNotes     WorksheetNote[]   @relation("WorksheetAuthor")
+
+  @@index([leadId])
 }
 
 // ── Отсутствие сотрудника (календарь отпусков в разделе «Передача дел») ──────
@@ -148,6 +165,7 @@ model Advertiser {
   promoBatches     PromoBatch[]
   decisionRequests DecisionRequest[]
   sentRequests     RequestRecord[]
+  worksheetNotes   WorksheetNote[]
 
   @@index([ownerId])
 }
@@ -347,6 +365,14 @@ model Task {
   notes         String?
   // Приоритет задачи: по нему карточки сортируются и красится полоса слева.
   priority      String    @default("Обычный") // Срочно | Высокий | Обычный | Низкий
+  /// Подзаголовок внутри клиента в рабочем листе: «Документы», «Креативы»,
+  /// «Промокоды». В задачнике, который вели в Google-документе, пункты были
+  /// сгруппированы именно так — без этого лист превращается в сплошной список.
+  /// Пусто — задача попадает в блок «Прочее».
+  groupLabel    String?
+  /// Ссылка на эту же задачу в Aspro.Cloud. В прежнем задачнике такие ссылки
+  /// вставляли прямо в текст пункта — здесь у них своё поле.
+  asproUrl      String?
   // Когда карточку последний раз двигали между колонками. Перетащенная задача
   // встаёт первой в новой колонке — иначе она теряется в середине списка.
   movedAt       DateTime  @default(now())
@@ -369,9 +395,13 @@ model Task {
   owner      User?       @relation("TaskOwner", fields: [ownerId], references: [id])
   assignedBy User?       @relation("TaskAssignedBy", fields: [assignedById], references: [id])
 
+  comments TaskComment[]
+
   @@index([dealId])
   @@index([status])
   @@index([assignedById])
+  @@index([advertiserId])
+  @@index([dueDate])
 }
 
 // ── Медиаплан сделки ─────────────────────────────────────────────────────────
@@ -431,7 +461,7 @@ model Invoice {
   // схемы останавливается с «it is not possible to execute this step», а Prisma
   // предлагает единственный выход: `--force-reset`, то есть стереть базу целиком.
   // С default существующие счета просто получают дату обновления схемы.
-  updatedAt      DateTime  @updatedAt @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
   deal           Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
   payments       Payment[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
@@ -1175,4 +1205,50 @@ model RequestRecord {
 
   @@index([advertiserId])
   @@index([dealId])
+}
+
+/// Комментарий к задаче — переписка руководителя проекта и менеджера.
+///
+/// Заменяет приписки в Google-документе («ГОТОВО», «ЖДЁМ ОТВЕТ КЛИЕНТА»,
+/// «НАСТЯ СМОТРИТ»), которые дописывались прямо в текст пункта: кто и когда
+/// написал, было не восстановить, а при правке текст затирался.
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String?
+  text      String
+  createdAt DateTime @default(now())
+
+  task   Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User? @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([taskId])
+}
+
+/// Контекст по клиенту на неделю в рабочем листе: «где мы сейчас, на что
+/// смотреть». Пишет руководитель проекта, читает менеджер.
+///
+/// Почему отдельно от задач: в прежнем задачнике у каждого клиента был абзац
+/// обстановки («финальная стадия согласования, по Приложению №4 вопросы»), и
+/// без него список пунктов читается как набор строк без смысла.
+///
+/// advertiserId пустой — это общая заметка недели (вопросы, общий статус),
+/// которая в документе шла шапкой перед разбором по клиентам.
+model WorksheetNote {
+  id           String   @id @default(cuid())
+  /// Понедельник недели, к которой относится заметка (дата без времени).
+  weekStart    DateTime
+  /// Чей лист: руководитель проекта, который ведёт этих клиентов.
+  ownerId      String
+  advertiserId String?
+  text         String
+  authorId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  advertiser Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  author     User?       @relation("WorksheetAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([weekStart, ownerId])
+  @@index([advertiserId])
 }

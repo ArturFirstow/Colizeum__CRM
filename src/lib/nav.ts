@@ -36,6 +36,10 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
     items: [
       { href: "/dashboard", label: "Сегодня", icon: "◆", hint: "Что важно сегодня" },
       { href: "/tasks", label: "Задачи", icon: "✓", hint: "Доска задач" },
+      // Рабочий лист стоит рядом с задачами и ПОСЛЕ них: доска отвечает на
+      // «что я делаю», лист — на «что мы с руководителем проекта договорились
+      // сделать по клиентам на этой неделе».
+      { href: "/worksheet", label: "Рабочий лист", icon: "▤", hint: "Дела по клиентам на неделю", track: "Ads" },
       { href: "/deals", label: "Сделки", icon: "⑂", hint: "Воронка от лида до закрытия", track: "Ads" },
       { href: "/messenger", label: "Мессенджер", icon: "✉", hint: "Чат отдела и личные сообщения" },
       { href: "/assistant", label: "Напарник ИИ", icon: "✦", hint: "Спросить про клиентов и сделки" },

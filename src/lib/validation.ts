@@ -153,8 +153,27 @@ export const taskCreateSchema = z.object({
   priority: z.enum(["Срочно", "Высокий", "Обычный", "Низкий"]).optional(),
   dueDate: z.string().datetime().optional().or(z.literal("").transform(() => undefined)),
   notes: clearableString,
+  // Подзаголовок внутри клиента в рабочем листе («Документы», «Креативы»).
+  groupLabel: clearableString,
+  // Ссылка на эту же задачу в Aspro.
+  asproUrl: linkString,
 });
 export const taskUpdateSchema = taskCreateSchema.partial();
+
+// ── Рабочий лист: руководитель проекта ↔ проектный менеджер ──────────────────
+
+// Комментарий к задаче. Предел в 4000 символов — это переписка, а не документ.
+export const taskCommentSchema = z.object({
+  text: z.string().trim().min(1, "Пустой комментарий").max(4000),
+});
+
+// Контекст по клиенту на неделю. Пустой текст СТИРАЕТ заметку: иначе ошибочно
+// написанный абзац нельзя было бы убрать.
+export const worksheetNoteSchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Неделя в виде ГГГГ-ММ-ДД"),
+  advertiserId: optionalString,
+  text: z.string().max(10_000),
+});
 
 // Поручение от руководителя конкретному сотруднику.
 export const leadershipTaskSchema = z.object({
@@ -279,6 +298,10 @@ export const userCreateSchema = z.object({
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
   role: z.enum(["Owner", "Manager", "Director", "Security"]).optional(),
+  // Руководитель проекта, за которым закреплён сотрудник (рабочий лист).
+  // Пустая строка снимает закрепление. От этого поля зависит видимость —
+  // менять может только администратор.
+  leadId: z.string().trim().nullable().optional(),
   telegramChatId: clearableString,
   avatarUrl: clearableString,
   sheetUrl: z
