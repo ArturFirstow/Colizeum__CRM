@@ -41,3 +41,6 @@ yarn-error.log*
 
 # Служебный кэш TypeScript — пересоздаётся при каждой сборке.
 tsconfig.tsbuildinfo
+
+# версия перед последним обновлением (для ./scripts/rollback.sh)
+.deploy-prev

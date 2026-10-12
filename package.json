@@ -20,7 +20,10 @@
     "retention": "tsx --conditions=react-server scripts/retention.ts",
     "security:check": "tsx scripts/security-check.ts",
     "api:check": "tsx --conditions=react-server scripts/api-check.ts",
-    "stages:migrate": "tsx scripts/migrate-stages.ts"
+    "stages:migrate": "tsx scripts/migrate-stages.ts",
+    "release:notes": "bash scripts/release-notes.sh",
+    "deploy:check": "bash scripts/deploy.sh --dry",
+    "mobile:check": "node scripts/mobile-check.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
