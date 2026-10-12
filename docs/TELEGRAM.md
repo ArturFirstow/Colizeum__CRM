@@ -105,6 +105,7 @@ pm2 restart colizeum --update-env
 
 | Что проверить | Как |
 |---|---|
+| Папка проекта найдена | `find / -xdev -maxdepth 6 -name schema.prisma 2>/dev/null \| head` — если `cd /var/www/colizeum` отвечает «No such file or directory», путь на вашем сервере другой |
 | Токен прописан | `grep TELEGRAM /var/www/colizeum/.env` |
 | Сервис перезапущен после правки `.env` | `pm2 restart colizeum --update-env` |
 | Сотрудник написал боту `/start` | без этого Telegram блокирует отправку |
