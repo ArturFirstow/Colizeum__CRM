@@ -1,7 +1,9 @@
 const pptx = require("pptxgenjs");
 const path = require("node:path");
 
-const SHOTS = path.join(__dirname, "shots");
+// Скриншоты лежат в docs/screens — там же, откуда их берут остальные
+// генераторы. Раньше здесь была папка scripts/shots, её больше нет.
+const SHOTS = path.join(__dirname, "..", "docs", "screens");
 const shot = (n) => path.join(SHOTS, n + ".jpg");
 
 // ── Палитра брендбука COLIZEUM: графит + жёлтый ──────────────────────────────

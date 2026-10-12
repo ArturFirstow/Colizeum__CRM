@@ -1,7 +1,8 @@
 import base64, os, html
 
 S = os.path.dirname(os.path.abspath(__file__))
-SHOTS = os.path.join(S, "shots")
+# Скриншоты лежат в docs/screens (раньше была папка scripts/shots, её нет).
+SHOTS = os.path.join(S, "..", "docs", "screens")
 
 def img(name):
     path = os.path.join(SHOTS, name + ".jpg")

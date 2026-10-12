@@ -23,7 +23,9 @@
     "stages:migrate": "tsx scripts/migrate-stages.ts",
     "release:notes": "bash scripts/release-notes.sh",
     "deploy:check": "bash scripts/deploy.sh --dry",
-    "mobile:check": "node scripts/mobile-check.mjs"
+    "mobile:check": "node scripts/mobile-check.mjs",
+    "docs:screens": "node scripts/screens.mjs",
+    "docs:training": "node scripts/gen-training.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
