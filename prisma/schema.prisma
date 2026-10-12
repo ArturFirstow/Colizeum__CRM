@@ -424,7 +424,14 @@ model Invoice {
   appendixNo     String?
   createdAt      DateTime  @default(now())
   // Нужен для выгрузки «что изменилось с такой-то даты» через API (п. 9.1).
-  updatedAt      DateTime  @updatedAt
+  //
+  // ⚠️ `@default(now())` здесь обязателен, и вот почему. Поле добавлено позже
+  // остальных, когда в боевой базе уже лежали счета. Обязательный столбец без
+  // значения по умолчанию в непустую таблицу SQLite добавить нельзя — обновление
+  // схемы останавливается с «it is not possible to execute this step», а Prisma
+  // предлагает единственный выход: `--force-reset`, то есть стереть базу целиком.
+  // С default существующие счета просто получают дату обновления схемы.
+  updatedAt      DateTime  @updatedAt @default(now())
   deal           Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
   payments       Payment[]
   // ── Синхронизация с Aspro.Cloud (ТЗ Влада, п. 9.4) ────────────────────────
