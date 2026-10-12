@@ -17,7 +17,7 @@ import { LEGAL_DOCS } from "@/lib/legal";
 export function Sidebar({
   user,
 }: {
-  user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null; totpEnabled?: boolean };
+  user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null; totpEnabled?: boolean; position?: string | null };
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -101,7 +101,10 @@ export function Sidebar({
           id: user.id,
           name: user.name,
           email: user.email,
-          roleLabel: ROLE_LABELS[user.role as Role] ?? user.role,
+          // Под именем показываем ДОЛЖНОСТЬ, если она задана: человеку важнее
+          // «Руководитель проекта», чем техническая роль «Админ». Роли без
+          // должности подписываются по-старому.
+          roleLabel: user.position ?? ROLE_LABELS[user.role as Role] ?? user.role,
           avatarUrl: user.avatarUrl,
           totpEnabled: user.totpEnabled,
         }}

@@ -107,25 +107,25 @@ async function main() {
 
   // Артур — ведущий специалист + админ (техническая роль); своих клиентов видит только он.
   const owner = await prisma.user.create({
-    data: { email: "a.firstov@colizeum.ru", name: "Артур Фирстов", role: "Owner", passwordHash: pw("SEED_PW_FIRSTOV", "9tbgk9uI5UyPTf") },
+    data: { email: "a.firstov@colizeum.ru", name: "Артур Фирстов", role: "Owner", position: "Руководитель проекта", passwordHash: pw("SEED_PW_FIRSTOV", "9tbgk9uI5UyPTf") },
   });
   // Екатерина — проектный менеджер, закреплена за Артуром: ведёт операционку по
   // его клиентам. Из этой связки (leadId) строится рабочий лист и видимость —
   // клиенты Марины ей не видны.
   const manager = await prisma.user.create({
-    data: { email: "e.turinova@colizeum.ru", name: "Екатерина Туринова", role: "Manager", leadId: owner.id, passwordHash: pw("SEED_PW_TURINOVA", "hpXlTz4vRiLh21") },
+    data: { email: "e.turinova@colizeum.ru", name: "Екатерина Туринова", role: "Manager", position: "Проектный менеджер", leadId: owner.id, passwordHash: pw("SEED_PW_TURINOVA", "hpXlTz4vRiLh21") },
   });
   // Марина — ведущий специалист.
   await prisma.user.create({
-    data: { email: "m.yanyuk@colizeum.ru", name: "Марина Янюк", role: "Manager", passwordHash: pw("SEED_PW_YANYUK", "kPAUHwBh5njNU0") },
+    data: { email: "m.yanyuk@colizeum.ru", name: "Марина Янюк", role: "Manager", position: "Руководитель проекта", passwordHash: pw("SEED_PW_YANYUK", "kPAUHwBh5njNU0") },
   });
   // Артём — специалист по корпоративным турнирам (свой кабинет, track = Tournaments).
   const turnir = await prisma.user.create({
-    data: { email: "a.chepelyuk@colizeum.ru", name: "Артём Чепелюк", role: "Manager", track: "Tournaments", passwordHash: pw("SEED_PW_CHEPELYUK", "ABa0bF1jnWuHxV") },
+    data: { email: "a.chepelyuk@colizeum.ru", name: "Артём Чепелюк", role: "Manager", position: "Специалист", track: "Tournaments", passwordHash: pw("SEED_PW_CHEPELYUK", "ABa0bF1jnWuHxV") },
   });
   // Александр Иванушкин — директор Colizeum Agency (сводки по отделу + бюджет).
   await prisma.user.create({
-    data: { email: "a.ivanushkin@colizeum.ru", name: "Александр Иванушкин", role: "Director", passwordHash: pw("SEED_PW_IVANUSHKIN", "Bfa5nqZqcwGgvY") },
+    data: { email: "a.ivanushkin@colizeum.ru", name: "Александр Иванушкин", role: "Director", position: "Руководитель отдела", passwordHash: pw("SEED_PW_IVANUSHKIN", "Bfa5nqZqcwGgvY") },
   });
 
   // ── Директория людей (v2, п.3.13) ──────────────────────────────────────────

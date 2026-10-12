@@ -7,6 +7,7 @@ import { PrivacyNote } from "@/components/ui/PrivacyNote";
 import { apiFetch } from "@/lib/client";
 import { formatDate } from "@/lib/format";
 import { parseSheetUrl, validateSheetUrl } from "@/lib/sheet-url";
+import { POSITIONS } from "@/lib/enums";
 
 type Member = {
   id: string;
@@ -15,6 +16,7 @@ type Member = {
   avatarUrl?: string | null;
   email: string;
   role: string;
+  position: string | null;
   leadId: string | null;
   sheetUrl: string | null;
   totpEnabledAt?: string | Date | null;
@@ -57,8 +59,69 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
     }
   }
 
+  // Структура отдела: руководитель отдела → руководители проектов (с их
+  // менеджерами) → остальные. Строится из должностей и закреплений, поэтому
+  // всегда совпадает с тем, что реально настроено в доступах.
+  const head = members.filter((m) => m.position === "Руководитель отдела");
+  const leads = members.filter((m) => m.position === "Руководитель проекта");
+  const placed = new Set([
+    ...head.map((m) => m.id),
+    ...leads.map((m) => m.id),
+    ...members.filter((m) => m.leadId).map((m) => m.id),
+  ]);
+  const rest = members.filter((m) => !placed.has(m.id));
+
   return (
     <div>
+      {(head.length > 0 || leads.length > 0) && (
+        <section className="card mb-5 p-5">
+          <h2 className="mb-1 font-semibold text-ink-50">Структура отдела</h2>
+          <p className="mb-4 text-sm text-ink-400">
+            Кто кому передаёт работу. Задаётся полями «Должность» и «Руководитель проекта» в
+            карточке сотрудника.
+          </p>
+          <div className="space-y-3 text-sm">
+            {head.map((h) => (
+              <div key={h.id}>
+                <span className="text-ink-100">{h.name}</span>{" "}
+                <span className="text-ink-500">— руководитель отдела</span>
+              </div>
+            ))}
+            {leads.map((l) => {
+              const mine = members.filter((m) => m.leadId === l.id);
+              return (
+                <div key={l.id} className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
+                  <div className="text-ink-100">
+                    {l.name} <span className="text-ink-500">— руководитель проекта</span>
+                  </div>
+                  {mine.length === 0 ? (
+                    <div className="mt-1 text-xs text-ink-500">
+                      проектный менеджер не закреплён — рабочий лист ведётся в одиночку
+                    </div>
+                  ) : (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {mine.map((m) => (
+                        <li key={m.id} className="text-xs text-ink-300">
+                          └ {m.name}{" "}
+                          <span className="text-ink-500">
+                            — {m.position ?? "проектный менеджер"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+            {rest.length > 0 && (
+              <div className="text-xs text-ink-500">
+                Вне структуры проектов: {rest.map((m) => m.name).join(", ")}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Выданные доступы: показываем один раз, чтобы переслать сотруднику */}
       {created && (
         <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
@@ -119,7 +182,15 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="font-semibold text-ink-50">{m.name}</div>
+                {/* Должность — сразу под именем: в структуре отдела человека
+                    ищут глазами по «кто он», а не по адресу почты. */}
+                {m.position && <div className="mt-0.5 text-sm text-brand">{m.position}</div>}
                 <div className="mt-0.5 text-sm text-ink-400">{m.email}</div>
+                {m.leadId && (
+                  <div className="mt-0.5 text-xs text-ink-500">
+                    закреплён за: {members.find((x) => x.id === m.leadId)?.name ?? "—"}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 <span className={`badge ${m.role === "Owner" || m.role === "Director" || m.role === "Security" ? "badge-brand" : "badge-muted"}`}>
@@ -314,6 +385,7 @@ function EditMemberModal({
   const [role, setRole] = useState(member.role);
   const [telegramChatId, setTelegramChatId] = useState(member.telegramChatId ?? "");
   const [leadId, setLeadId] = useState(member.leadId ?? "");
+  const [position, setPosition] = useState(member.position ?? "");
   const [avatarUrl, setAvatarUrl] = useState(member.avatarUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
@@ -341,7 +413,7 @@ function EditMemberModal({
     setError(null);
     setSaving(true);
     try {
-      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId, avatarUrl, leadId }) });
+      await apiFetch(`/api/users/${member.id}`, { method: "PATCH", body: JSON.stringify({ name, role, telegramChatId, avatarUrl, leadId, position }) });
       onSaved();
       onClose();
     } catch (err) {
@@ -366,6 +438,23 @@ function EditMemberModal({
               <option value="Security">Безопасность — журнал, запросы по ПДн, доступы; клиентов не видит</option>
             <option value="Owner">Админ — управление доступами</option>
           </select>
+        </div>
+        {/* Должность — как человек называется в отделе. Отдельно от роли:
+            роль отвечает за права, должность за структуру. */}
+        <div>
+          <label className="label">Должность</label>
+          <select className="input" value={position} onChange={(e) => setPosition(e.target.value)}>
+            <option value="">— не указана —</option>
+            {POSITIONS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-ink-500">
+            Подпись в структуре отдела: руководитель отдела → руководители проектов → проектные
+            менеджеры. На права доступа не влияет — права задаёт поле «Роль».
+          </p>
         </div>
         {/* Закрепление за руководителем проекта — основа рабочего листа.
             Менеджер видит клиентов своего руководителя и ведёт по ним

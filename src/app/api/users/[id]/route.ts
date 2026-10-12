@@ -29,7 +29,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         data.role !== undefined ||
         data.telegramChatId !== undefined ||
         data.avatarUrl !== undefined ||
-        data.leadId !== undefined)
+        data.leadId !== undefined ||
+        data.position !== undefined)
     ) {
       return fail("forbidden", "Имя, роль, Telegram, фото и закрепление меняет администратор", 403);
     }
@@ -65,6 +66,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         avatarUrl: true,
         sheetUrl: true,
         leadId: true,
+        position: true,
       },
     });
     if (!before) return fail("not_found", "Сотрудник не найден", 404);
@@ -78,6 +80,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...(isAdmin && data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
         // Пустая строка = «снять закрепление».
         ...(isAdmin && data.leadId !== undefined ? { leadId: data.leadId || null } : {}),
+        ...(isAdmin && data.position !== undefined ? { position: data.position || null } : {}),
         // Пустая строка = «убрать таблицу», поэтому пишем null, а не "".
         ...(data.sheetUrl !== undefined ? { sheetUrl: data.sheetUrl || null } : {}),
       },
@@ -90,6 +93,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         telegramChatId: true,
         avatarUrl: true,
         leadId: true,
+        position: true,
       },
     });
 

@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Фото для меню профиля: в сессии его нет, берём из базы.
   const me = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { avatarUrl: true, totpEnabledAt: true },
+    select: { avatarUrl: true, totpEnabledAt: true, position: true },
   });
 
   const user = {
@@ -25,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     track: session.track,
     avatarUrl: me?.avatarUrl,
     totpEnabled: Boolean(me?.totpEnabledAt),
+    position: me?.position ?? null,
   };
 
   // Второй фактор обязателен для админа и безопасности (требование 5.1):

@@ -22,6 +22,7 @@ import {
   LEAD_STATUSES,
   ABSENCE_KINDS,
   REQUEST_KINDS,
+  POSITIONS,
 } from "./enums";
 
 /** Zod-схема «значение из фиксированного набора» (замена native enum для SQLite). */
@@ -298,6 +299,16 @@ export const userCreateSchema = z.object({
 export const userUpdateSchema = z.object({
   name: z.string().trim().min(1, "Укажите имя").optional(),
   role: z.enum(["Owner", "Manager", "Director", "Security"]).optional(),
+  // Должность в отделе — подпись, а не права (POSITIONS в enums.ts).
+  // Пустая строка снимает должность.
+  position: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || (POSITIONS as readonly string[]).includes(v), {
+      message: "Неизвестная должность",
+    })
+    .nullable()
+    .optional(),
   // Руководитель проекта, за которым закреплён сотрудник (рабочий лист).
   // Пустая строка снимает закрепление. От этого поля зависит видимость —
   // менять может только администратор.

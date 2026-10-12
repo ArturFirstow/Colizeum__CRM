@@ -15,6 +15,7 @@ export default async function TeamPage() {
       name: true,
       email: true,
       role: true,
+      position: true,
       leadId: true,
       sheetUrl: true,
       telegramChatId: true,
