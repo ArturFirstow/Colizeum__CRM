@@ -44,3 +44,7 @@ tsconfig.tsbuildinfo
 
 # версия перед последним обновлением (для ./scripts/rollback.sh)
 .deploy-prev
+
+# кеш Python (появляется, когда скрипт из scripts/ подключают как модуль)
+__pycache__/
+*.pyc
