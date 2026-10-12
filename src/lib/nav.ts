@@ -85,3 +85,20 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
 ];
 
 export const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items);
+
+
+/**
+ * Разделы, доступные роли «Безопасность».
+ *
+ * Настоящее ограничение стоит в `src/middleware.ts` — там же этот список
+ * продублирован для адресов API. Здесь он нужен меню: показывать пункты,
+ * которые всё равно не откроются, нельзя — человек жмёт «Клиенты», его
+ * выбрасывает в журнал, и это выглядит поломкой, а не правами доступа.
+ */
+export const SECURITY_NAV = [
+  "/leadership/audit",
+  "/leadership/privacy",
+  "/leadership/retention",
+  "/team",
+  "/incident",
+];

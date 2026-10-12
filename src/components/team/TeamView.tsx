@@ -63,10 +63,14 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
   // менеджерами) → остальные. Строится из должностей и закреплений, поэтому
   // всегда совпадает с тем, что реально настроено в доступах.
   const head = members.filter((m) => m.position === "Руководитель отдела");
-  const leads = members.filter((m) => m.position === "Руководитель проекта");
+  const leads = members.filter((m) => m.position === "Руководитель проектов");
+  // Турнирное направление подчиняется руководителю отдела напрямую: проектных
+  // менеджеров под ним нет, поэтому показываем отдельной строкой, а не блоком.
+  const direct = members.filter((m) => m.position === "Руководитель корпоративных турниров");
   const placed = new Set([
     ...head.map((m) => m.id),
     ...leads.map((m) => m.id),
+    ...direct.map((m) => m.id),
     ...members.filter((m) => m.leadId).map((m) => m.id),
   ]);
   const rest = members.filter((m) => !placed.has(m.id));
@@ -87,12 +91,17 @@ export function TeamView({ members, isAdmin, meId }: { members: Member[]; isAdmi
                 <span className="text-ink-500">— руководитель отдела</span>
               </div>
             ))}
+            {direct.map((d) => (
+              <div key={d.id} className="text-ink-100">
+                {d.name} <span className="text-ink-500">— {d.position?.toLowerCase()}</span>
+              </div>
+            ))}
             {leads.map((l) => {
               const mine = members.filter((m) => m.leadId === l.id);
               return (
                 <div key={l.id} className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
                   <div className="text-ink-100">
-                    {l.name} <span className="text-ink-500">— руководитель проекта</span>
+                    {l.name} <span className="text-ink-500">— руководитель проектов</span>
                   </div>
                   {mine.length === 0 ? (
                     <div className="mt-1 text-xs text-ink-500">

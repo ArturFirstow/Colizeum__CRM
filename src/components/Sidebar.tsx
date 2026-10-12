@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
-import { NAV_GROUPS } from "@/lib/nav";
+import { NAV_GROUPS, SECURITY_NAV } from "@/lib/nav";
 import { ChatBadge } from "@/components/ui/ChatBadge";
 import { ROLE_LABELS, type Role } from "@/lib/enums";
 import { initials } from "@/lib/format";
@@ -46,6 +46,7 @@ export function Sidebar({
   // Руководитель видит оба контура (реклама + турниры); специалист — только свой
   // (пункты с track показываются лишь сотрудникам этого направления).
   const isDirector = user.role === "Director";
+  const isSecurity = user.role === "Security";
   const groups = NAV_GROUPS
     .filter((g) => !g.leadershipOnly || isDirector)
     .map((g) => ({
@@ -55,7 +56,12 @@ export function Sidebar({
           (!it.track || isDirector || it.track === user.track) &&
           // roles сильнее track: журнал действий и запросы по ПДн не зависят
           // от направления работы, только от роли.
-          (!it.roles || it.roles.includes(user.role as "Owner" | "Director" | "Manager" | "Security")),
+          (!it.roles || it.roles.includes(user.role as "Owner" | "Director" | "Manager" | "Security")) &&
+          // Роль «Безопасность» работает по белому списку (см. src/middleware.ts):
+          // всё остальное её и так не пустит. Раньше меню показывало ей клиентов,
+          // сделки и оплаты — клик по ним выбрасывал обратно в журнал, и выглядело
+          // это как поломка, а не как ограничение прав.
+          (!isSecurity || SECURITY_NAV.some((h) => it.href === h || it.href.startsWith(h + "/"))),
       ),
     }))
     .filter((g) => g.items.length > 0);
