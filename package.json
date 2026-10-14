@@ -24,6 +24,7 @@
     "release:notes": "bash scripts/release-notes.sh",
     "deploy:check": "bash scripts/deploy.sh --dry",
     "mobile:check": "node scripts/mobile-check.mjs",
+    "leads:key": "tsx scripts/webhook-key.ts",
     "docs:screens": "node scripts/screens.mjs",
     "docs:training": "node scripts/gen-training.js"
   },

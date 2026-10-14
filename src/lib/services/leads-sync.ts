@@ -16,6 +16,22 @@ import { PublicError } from "@/lib/errors";
 const SHEET_ID = process.env.LEADS_SHEET_ID ?? "1ZKMx1VmTIvY-AyZPMuMLlgeyvLWNQvpCyywaInRbu3o";
 const SHEET_GID = process.env.LEADS_SHEET_GID ?? "0";
 
+/**
+ * Выключатель чтения таблицы: `LEADS_SHEET_SYNC=off` в `.env`.
+ *
+ * Нужен после подключения вебхука — тогда заявки приходят с сайта напрямую, а
+ * таблица остаётся архивом. Если оба пути работают разом, одно обращение
+ * ложится в сервис дважды: с номером отправки от вебхука и с `requestid` из
+ * таблицы. Защита от дублей в `leads-webhook.ts` это ловит, но держать два
+ * источника одних и тех же данных всё равно незачем.
+ *
+ * ⚠️ По умолчанию чтение ВКЛЮЧЕНО: выключать источник заявок молчаливым
+ * обновлением кода нельзя.
+ */
+export function sheetSyncEnabled(): boolean {
+  return (process.env.LEADS_SHEET_SYNC ?? "on").trim().toLowerCase() !== "off";
+}
+
 /** Через сколько считаем данные устаревшими и тянем таблицу заново. */
 export const LEADS_STALE_MS = 3 * 60 * 1000;
 
@@ -109,6 +125,7 @@ export async function syncLeads(): Promise<LeadsSyncResult> {
 
 /** Синхронизация «по необходимости»: молча пропускаем, если данные свежие. */
 export async function syncLeadsIfStale(): Promise<{ error?: string }> {
+  if (!sheetSyncEnabled()) return {};
   const last = await prisma.lead.aggregate({ _max: { syncedAt: true } });
   const lastAt = last._max.syncedAt?.getTime() ?? 0;
   if (Date.now() - lastAt < LEADS_STALE_MS) return {};

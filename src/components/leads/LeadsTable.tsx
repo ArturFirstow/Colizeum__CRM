@@ -30,12 +30,18 @@ export function LeadsTable({
   users,
   me,
   sheetUrl,
+  sheetSync,
+  liveWebhook,
   syncError,
 }: {
   leads: Lead[];
   users: { id: string; name: string }[];
   me: { id: string; name: string };
   sheetUrl: string;
+  /** Читаем ли ещё Google-таблицу формы (строка LEADS_SHEET_SYNC в настройках). */
+  sheetSync: boolean;
+  /** Настроен ли приём заявок с сайта напрямую (вебхук). */
+  liveWebhook: boolean;
   syncError: string | null;
 }) {
   const router = useRouter();
@@ -123,12 +129,18 @@ export function LeadsTable({
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={sync} disabled={syncing} title="Подтянуть новые заявки из Google-таблицы">
-          <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Обновить
-        </button>
-        <a className="btn btn-ghost btn-sm" href={sheetUrl} target="_blank" rel="noreferrer" title="Открыть исходную Google-таблицу">
-          <ExternalLink size={14} /> Таблица
-        </a>
+        {/* Когда заявки приходят с сайта напрямую, тянуть таблицу нечего —
+            кнопки только путали бы: нажал «Обновить», ничего не изменилось. */}
+        {sheetSync && (
+          <>
+            <button className="btn btn-ghost btn-sm" onClick={sync} disabled={syncing} title="Подтянуть новые заявки из Google-таблицы">
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Обновить
+            </button>
+            <a className="btn btn-ghost btn-sm" href={sheetUrl} target="_blank" rel="noreferrer" title="Открыть исходную Google-таблицу">
+              <ExternalLink size={14} /> Таблица
+            </a>
+          </>
+        )}
       </div>
 
       {error && (
@@ -148,7 +160,9 @@ export function LeadsTable({
           title={leads.length === 0 ? "Заявок пока нет" : "Ничего не найдено"}
           hint={
             leads.length === 0
-              ? "Заявки приходят из формы на colizeum-agency.ru. Нажмите «Обновить», чтобы подтянуть их из Google-таблицы."
+              ? sheetSync
+                ? "Заявки приходят из формы на colizeum-agency.ru. Нажмите «Обновить», чтобы подтянуть их из Google-таблицы."
+                : "Заявки приходят из формы на colizeum-agency.ru сами, сразу после отправки. Ждём первую."
               : "Измените фильтр или поисковый запрос."
           }
         />
@@ -272,8 +286,17 @@ export function LeadsTable({
       )}
 
       <p className="mt-3 text-xs text-ink-500">
-        Заявки подтягиваются из Google-таблицы формы автоматически при открытии страницы (не чаще раза в 3 минуты) и по кнопке «Обновить».
-        Статус, ответственный и комментарии хранятся в CRM — таблица их не перетирает.
+        {sheetSync
+          ? "Заявки подтягиваются из Google-таблицы формы автоматически при открытии страницы (не чаще раза в 3 минуты) и по кнопке «Обновить»."
+          : "Сайт передаёт заявку сразу после отправки формы — обновлять страницу вручную не нужно, таблица посередине больше не участвует."}{" "}
+        Статус, ответственный и комментарии хранятся в CRM — источник их не перетирает.
+        {!sheetSync && !liveWebhook && (
+          <span className="text-amber-300">
+            {" "}
+            ⚠️ Но и приём с сайта сейчас не настроен: на сервере не задан ключ вебхука, новые заявки
+            не придут. Скажите администратору.
+          </span>
+        )}
       </p>
     </div>
   );

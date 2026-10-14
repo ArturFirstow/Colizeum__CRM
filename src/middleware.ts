@@ -76,6 +76,13 @@ const LIMITS: { prefix: string; rule: Limit }[] = [
     rule: { name: "apiv1", limit: 1200, windowMs: 3600_000, human: "обращений к API" },
   },
   {
+    // Заявки с сайта приходят сами и не ждут человека. Предел высокий, но он
+    // есть: форму на сайте может начать долбить скрипт, и тогда предел — это
+    // разница между «часть заявок не дошла» и «сервис лёг».
+    prefix: "/api/webhooks/",
+    rule: { name: "webhook", limit: 600, windowMs: 3600_000, human: "обращений с сайта" },
+  },
+  {
     prefix: "/api/ai/",
     rule: { name: "ai", limit: 40, windowMs: 3600_000, human: "запросов к ИИ-напарнику" },
   },
@@ -182,7 +189,11 @@ export async function middleware(req: NextRequest) {
   // Публичный контур для внешних систем живёт по своим правилам: у него нет
   // браузера и страницы, с которой «пришёл» запрос, зато есть служебный ключ.
   // Проверку происхождения к нему не применяем — ключ сильнее.
-  const isPublicApi = pathname.startsWith("/api/v1/");
+  //
+  // Сюда же вебхуки: заявку присылает сервер Тильды, а не браузер сотрудника,
+  // и заголовка «с какой страницы» у неё нет в принципе. Ключ проверяет сам
+  // обработчик (`/api/webhooks/tilda`), и без него запрос не проходит.
+  const isPublicApi = pathname.startsWith("/api/v1/") || pathname.startsWith("/api/webhooks/");
 
   // 1. Запрос с чужой страницы.
   if (!isPublicApi && !SAFE_METHODS.has(req.method) && !sameSite(req)) {

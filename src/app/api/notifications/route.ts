@@ -14,7 +14,7 @@ import { recentAlerts } from "@/lib/services/security-alerts";
 
 export type NotificationItem = {
   id: string;
-  kind: "decision" | "answer" | "task" | "blocker" | "chat" | "security";
+  kind: "decision" | "answer" | "task" | "blocker" | "chat" | "security" | "lead";
   title: string;
   body: string;
   href: string;
@@ -80,6 +80,30 @@ export async function GET(req: NextRequest) {
           body: `${d.advertiser.nameRu} — ${d.blocker ?? "причина не указана"}`,
           href: `/deals/${d.id}`,
           at: d.updatedAt.toISOString(),
+        });
+      }
+    }
+
+    // Всем, кто ведёт клиентов: новые заявки с сайта. Раньше заявки лежали в
+    // Google-таблице и попадались на глаза, только когда кто-то открывал
+    // раздел; теперь сайт присылает их сразу, и об этом стоит сказать.
+    // ⚠️ Роль «Безопасность» клиентов не видит — ей заявки не показываем.
+    if (session.role !== "Security") {
+      const newLeads = await prisma.lead.findMany({
+        where: { createdAt: { gt: since }, status: "Новая", assignedToId: null },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      });
+      for (const l of newLeads) {
+        items.push({
+          id: `lead:${l.id}`,
+          kind: "lead",
+          title: "Новая заявка с сайта",
+          body: [l.company || l.name || "Кто-то с сайта", l.message?.slice(0, 80)]
+            .filter(Boolean)
+            .join(" — "),
+          href: "/leads",
+          at: l.createdAt.toISOString(),
         });
       }
     }

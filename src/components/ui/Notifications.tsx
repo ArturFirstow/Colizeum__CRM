@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { HelpCircle, CheckCircle2, Target, Ban, MessageSquare, ShieldAlert, X } from "lucide-react";
+import { HelpCircle, CheckCircle2, Target, Ban, MessageSquare, ShieldAlert, Flag, X } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Всплывающие уведомления в правом нижнем углу.
@@ -15,7 +15,7 @@ import { HelpCircle, CheckCircle2, Target, Ban, MessageSquare, ShieldAlert, X } 
 
 type Item = {
   id: string;
-  kind: "decision" | "answer" | "task" | "blocker" | "chat" | "security";
+  kind: "decision" | "answer" | "task" | "blocker" | "chat" | "security" | "lead";
   title: string;
   body: string;
   href: string;
@@ -32,6 +32,7 @@ const ICON = {
   blocker: Ban,
   chat: MessageSquare,
   security: ShieldAlert,
+  lead: Flag,
 } as const;
 
 const TONE: Record<Item["kind"], string> = {
@@ -41,6 +42,7 @@ const TONE: Record<Item["kind"], string> = {
   blocker: "!border-red-500/40",
   chat: "!border-ink-600",
   security: "!border-red-500/60",
+  lead: "!border-brand/50",
 };
 
 const ICON_TONE: Record<Item["kind"], string> = {
@@ -50,6 +52,7 @@ const ICON_TONE: Record<Item["kind"], string> = {
   blocker: "bg-red-500/15 text-red-300",
   chat: "bg-ink-700 text-ink-100",
   security: "bg-red-500/20 text-red-300",
+  lead: "bg-brand/15 text-brand",
 };
 
 export function Notifications() {

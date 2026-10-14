@@ -204,3 +204,37 @@ export async function notifyChatDm(opts: {
   ];
   await notifyUser(opts.toUserId, withLink(lines.join("\n"), "/messenger", "Открыть мессенджер"));
 }
+
+/**
+ * Новая заявка с сайта. Заявки общие для отдела, поэтому зовём всех, кто ведёт
+ * клиентов, — кто первый взял, тот и ведёт.
+ *
+ * ⚠️ В сообщение НЕ кладём ни имя обратившегося, ни его телефон и почту: это
+ * персональные данные постороннего человека, а Telegram — канал за пределами
+ * сервиса. В сообщении только факт, компания (если её указали) и ссылка;
+ * контакт сотрудник открывает уже в сервисе.
+ *
+ * ⚠️ Роль «Безопасность» намеренно не уведомляем: клиентов она не видит, и
+ * обращения с сайта к её работе не относятся.
+ */
+export async function notifyNewLead(opts: {
+  company?: string | null;
+  hasMessage?: boolean;
+}): Promise<void> {
+  if (!telegramConfigured()) return;
+  const people = await prisma.user.findMany({
+    where: { role: { in: ["Owner", "Director", "Manager"] }, telegramChatId: { not: null } },
+    select: { telegramChatId: true },
+  });
+  if (people.length === 0) return;
+  const lines = [
+    "⚑ <b>Новая заявка с сайта</b>",
+    "",
+    opts.company ? `Компания: ${opts.company}` : "Компанию не указали",
+    opts.hasMessage ? "С комментарием" : "Без комментария",
+    "",
+    "Контакты — в сервисе. Возьмите заявку в работу, чтобы её не вели двое.",
+  ];
+  const body = withLink(lines.join("\n"), "/leads", "Открыть входящие с сайта");
+  await Promise.all(people.map((p) => send(p.telegramChatId!, body)));
+}

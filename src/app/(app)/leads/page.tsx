@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/primitives";
 import { LeadsTable } from "@/components/leads/LeadsTable";
-import { syncLeadsIfStale, leadsSheetHumanUrl } from "@/lib/services/leads-sync";
+import { syncLeadsIfStale, leadsSheetHumanUrl, sheetSyncEnabled } from "@/lib/services/leads-sync";
+import { webhookConfigured } from "@/lib/services/leads-webhook";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,8 @@ export default async function LeadsPage() {
         users={users}
         me={{ id: session.userId, name: session.name }}
         sheetUrl={leadsSheetHumanUrl()}
+        sheetSync={sheetSyncEnabled()}
+        liveWebhook={webhookConfigured()}
         syncError={syncError ?? null}
       />
     </div>
