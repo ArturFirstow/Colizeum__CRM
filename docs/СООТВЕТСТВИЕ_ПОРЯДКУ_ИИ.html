@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Сервис и Порядок работы с ИИ — что сходится, что нет</title>
+<style>
+  :root { --bg:#171714; --card:#232320; --card2:#1D1D1A; --line:#35342E; --text:#F2EFE7;
+           --dim:#BEB9AC; --muted:#8B867A; --acc:#FCDF3B;
+           --ok:#5BD39A; --part:#E8C87C; --no:#F07A6E; --human:#8FB8F0; --na:#8B867A; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--text);
+          font:15.5px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+  .wrap { max-width:1000px; margin:0 auto; padding:0 20px 80px }
+  header { padding:56px 0 20px }
+  .logo { display:inline-flex; align-items:center; gap:11px; margin-bottom:22px }
+  .mark { width:32px; height:32px; background:var(--acc); color:#17170F; font-weight:800;
+           display:flex; align-items:center; justify-content:center; border-radius:4px }
+  .logo b { letter-spacing:2px; font-size:13px }
+  h1 { font-size:36px; line-height:1.15; margin:0 0 12px; letter-spacing:-.5px }
+  .lead { color:var(--dim); max-width:50em; margin:0 0 6px }
+  .meta { color:var(--muted); font-size:13px; margin-top:16px }
+  .counters { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:26px 0 8px }
+  .cnt { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px }
+  .cnt b { display:block; font-size:28px; line-height:1 }
+  .cnt span { color:var(--muted); font-size:12.5px }
+  .cnt.ok b { color:var(--ok) } .cnt.part b { color:var(--part) } .cnt.no b { color:var(--no) }
+  .cnt.human b { color:var(--human) } .cnt.na b { color:var(--na) }
+  h2 { font-size:23px; margin:52px 0 6px; letter-spacing:-.3px }
+  .sn { display:block; font-size:12px; letter-spacing:1.6px; text-transform:uppercase; color:var(--acc); margin-bottom:5px }
+  .chips { margin:0 0 18px; display:flex; flex-wrap:wrap; gap:7px }
+  .chip { font-size:11.5px; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--dim) }
+  .chip.ok { color:var(--ok); border-color:rgba(91,211,154,.4) }
+  .chip.part { color:var(--part); border-color:rgba(232,200,124,.4) }
+  .chip.no { color:var(--no); border-color:rgba(240,122,110,.45) }
+  .chip.human { color:var(--human); border-color:rgba(143,184,240,.4) }
+  .item { background:var(--card2); border:1px solid var(--line); border-left-width:4px;
+           border-radius:12px; padding:16px 18px; margin:10px 0 }
+  .item.ok { border-left-color:var(--ok) } .item.part { border-left-color:var(--part) }
+  .item.no { border-left-color:var(--no) } .item.human { border-left-color:var(--human) }
+  .item.na { border-left-color:var(--na) }
+  .head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap }
+  .code { font:600 12.5px/1.4 ui-monospace,Menlo,Consolas,monospace; color:var(--muted);
+           background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:2px 7px }
+  h4 { margin:0; font-size:17px; flex:1 1 320px }
+  .badge { font-size:11.5px; padding:3px 10px; border-radius:999px; white-space:nowrap }
+  .badge.ok { background:rgba(91,211,154,.15); color:var(--ok) }
+  .badge.part { background:rgba(232,200,124,.15); color:var(--part) }
+  .badge.no { background:rgba(240,122,110,.17); color:var(--no) }
+  .badge.human { background:rgba(143,184,240,.15); color:var(--human) }
+  .badge.na { background:rgba(139,134,122,.18); color:var(--na) }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px }
+  .col h5 { margin:0 0 5px; font-size:11.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted) }
+  .col ul { margin:0; padding-left:18px; color:var(--dim); font-size:14.2px }
+  .col li { margin:4px 0 }
+  .col.todo ul { color:#E6D2B8 }
+  .who { margin-top:12px; padding-top:9px; border-top:1px solid var(--line);
+          color:var(--muted); font-size:12.5px }
+  code { font:12.8px/1.4 ui-monospace,Menlo,Consolas,monospace; background:#101010;
+          border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:#E8E4D8 }
+  .hl { background:var(--card); border:1px solid var(--line); border-left-width:4px;
+         border-radius:12px; padding:16px 18px; margin:10px 0 }
+  .hl.no { border-left-color:var(--no) }
+  .hl h3 { margin:8px 0 6px; font-size:19px }
+  .hl p { margin:0; color:var(--dim); font-size:14.5px }
+  footer { margin-top:56px; padding-top:18px; border-top:1px solid var(--line);
+            color:var(--muted); font-size:13px }
+  @media (max-width:760px) { .cols { grid-template-columns:1fr } h1 { font-size:27px } }
+  @media print { body { background:#fff; color:#111 } .item,.hl,.cnt { break-inside:avoid } }
+</style></head><body><div class="wrap">
+
+<header>
+  <div class="logo"><span class="mark">ХО</span><b>COLIZEUM AGENCY</b></div>
+  <h1>Сервис против Порядка работы с ИИ</h1>
+  <p class="lead">Самопроверка внутреннего сервиса отдела маркетинга по «Порядку работы с
+  ИИ-инструментами и вайбкод-решениями» и Приложению 1 «Чек-лист ИТ». Пункты идут сверху вниз
+  в том же порядке и с той же нумерацией, что в Порядке.</p>
+  <p class="lead">У каждого пункта: что в сервисе есть на самом деле — с файлом, который это
+  делает, — и что осталось сделать. Там, где вопрос правовой, статус «решение человека»:
+  основания обработки, сроки хранения и уведомления выдумывать нельзя.</p>
+  <div class="counters"><div class="cnt ok"><b>15</b><span>Соответствует</span></div><div class="cnt part"><b>27</b><span>Частично</span></div><div class="cnt no"><b>27</b><span>Не соответствует</span></div><div class="cnt human"><b>4</b><span>Решение человека</span></div><div class="cnt na"><b>3</b><span>Не применимо</span></div></div>
+  <p class="lead" style="margin-top:14px"><b>Как читать красные цифры.</b> Почти все они —
+  не про код, а про непройденные шаги Порядка: сервис не заведён в Реестр, проверки ИТ не было,
+  ответственные и договоры не оформлены. Такие пункты закрываются бумагами и назначениями,
+  а не разработкой. Чисто технических расхождения два: передача реальных данных в зарубежный
+  ИИ (пункты 3.3 и ИТ-28) и отсутствие очистки разметки перед выводом на страницу (ИТ-18).
+  Первое чинится строкой настроек, второе — правкой одного файла.</p>
+  <p class="meta">Всего пунктов: 76. Проверка от 21.10.2026,
+  версия кода ec65348. Документ пересобирается командой
+  <code>python3 scripts/gen-ai-policy.py</code> — статусы правятся в скрипте, не в этом файле.</p>
+</header>
+
+<section>
+  <h2><span class="sn">Коротко</span>Три вывода, ради которых это читают</h2>
+  <div class="hl no"><span class="badge no">Не соответствует</span><h3>Реальные данные уходят в зарубежный ИИ</h3><p>Порядок запрещает это без исключений (раздел 3, ИТ-28). Сейчас в настройках сервера стоит внешний провайдер, и в семи сценариях ему уходят имена контактных лиц, расшифровки встреч, реквизиты и суммы. Чинится в одну строку настроек: переключить на российский ИИ (<code>AI_PROVIDER="yandex"</code>) или убрать ключ <code>AI_API_KEY</code> — тогда ИИ-кнопки просто перестают работать, остальной сервис живёт как жил.</p></div><div class="hl no"><span class="badge no">Не соответствует</span><h3>Сервис не заведён в Реестр и не проходил проверку ИТ</h3><p>По разделу 5 рабочий сервис подаётся в Реестр до пилота и запуска, а допуск даёт проверка ИТ. Ни того, ни другого не было: сервис работает на личном сервере автора. По разделу 7 это случай «решение уже работает без согласования» — надо сообщить руководителю и ИТ, передать фактические условия в Реестр и не расширять использование.</p></div><div class="hl no"><span class="badge no">Не соответствует</span><h3>Найдена техническая дыра: чужой текст попадает на страницу как HTML</h3><p>Ответы ИИ, статьи базы знаний и записи дневника выводятся как готовая разметка (<code>dangerouslySetInnerHTML</code>), а очистки этой разметки нет (<code>src/lib/markdown.ts</code>). При этом политика страниц разрешает встроенные скрипты. Значит, текст, пришедший со стороны — например, из заявки с сайта, которую перескажет напарник, — теоретически может выполниться в браузере сотрудника. Это пункт ИТ-18, чинится добавлением очистки разметки.</p></div>
+  <article class="item part">
+    <div class="head"><span class="code">→</span><h4>Что сделать в первую очередь</h4></div>
+    <div class="cols">
+      <div class="col"><h5>Сегодня, своими силами</h5><ul>
+        <li>Переключить ИИ на российского провайдера или убрать ключ — одна строка в настройках сервера, перезапуск.</li>
+        <li>Добавить очистку разметки перед выводом (<code>src/lib/markdown.ts</code>) и выкатить.</li>
+        <li>Сообщить руководителю и ИТ, что сервис работает без оформленного допуска, и передать условия в Реестр через форму.</li>
+      </ul></div>
+      <div class="col todo"><h5>Дальше, вместе с компанией</h5><ul>
+        <li>Назначить владельца и технического ответственного, определить оператора ПДн.</li>
+        <li>Пройти проверку ИТ по Приложению 1 и оформить решение о режиме работы.</li>
+        <li>Перенести сервис, домен, репозиторий и ключи с личных аккаунтов на компанию.</li>
+        <li>Завести копии в отдельное хранилище и проверить восстановление.</li>
+      </ul></div>
+    </div>
+    <div class="who">Первые три пункта не ждут согласований: они уменьшают риск прямо сейчас.</div>
+  </article>
+</section>
+
+<section><h2><span class="sn">Раздел 1</span>С чего начать и что можно делать самостоятельно</h2><div class="chips"><span class="chip ok">Соответствует: 2</span> <span class="chip part">Частично: 1</span> <span class="chip no">Не соответствует: 2</span></div>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">1.1</span>
+        <h4>Пробовать ИИ на вымышленных примерах, без ПДн и секретов</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>В постоянных правилах проекта (<code>CLAUDE.md</code>, раздел «Правила безопасности») первым пунктом записано: реальные ПДн в разговор с ИИ не попадают, пример берётся вымышленный.</li><li>Второй пункт там же — секреты (пароли, токены, содержимое <code>.env</code>) в разговор не попадают.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Правило действует для разработки. Для сотрудников его же надо положить в обучение — в <code>docs/ОБУЧЕНИЕ.html</code> есть раздел про безопасность, пункт про ИИ туда стоит дописать.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">1.2</span>
+        <h4>Прототипы и формулы — на копиях с вымышленными данными</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Демонстрационный набор данных заводится сидом (<code>prisma/seed.ts</code>) — люди в нём вымышленные.</li><li>Правило 6 в <code>CLAUDE.md</code>: проверка на боевых данных не делается; на реальной базе разрешён только <code>prisma db push</code>.</li><li>Тестовый контур поднимается отдельным скриптом и ОТКАЗЫВАЕТСЯ работать, если тестовая база совпала с боевой (<code>deploy/staging-setup.sh</code>).</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">1.3</span>
+        <h4>Проверять факты, расчёты и код на известных и граничных примерах</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Под ответом напарника показано, в какие данные он заглядывал, а если никуда не заглядывал — выводится жёлтое предупреждение «Ответил без обращения к данным сервиса» (<code>src/lib/ai-tools.ts</code>).</li><li>Температура модели снижена до 0.2 — при значении по умолчанию напарник выдумывал клиентов и суммы.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Набора проверочных примеров («обычный / ошибочный / граничный») для ИИ-функций нет. Для пилота его просит пункт ИТ-29.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса + ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">1.4</span>
+        <h4>До платного теста согласовать расходы с руководителем</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Частота обращений к ИИ ограничена: 40 запросов в час на сотрудника (<code>src/middleware.ts</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Денежный лимит и месячный контроль фактических расходов не заведены.</li><li>Ключ ИИ и оплата — на личном аккаунте автора; расходы компании не предъявлялись.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель отдела</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">1.5</span>
+        <h4>Один признак пользы для пилота</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col todo"><h5>Что осталось</h5><ul><li>Признак пользы не сформулирован. Для пилота годится измеримое: «сводка по клиенту за месяц готовится за 2 минуты вместо 30 при той же точности».</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель отдела</div>
+    </article></section><section><h2><span class="sn">Раздел 2</span>Как определить класс и согласовать решение</h2><div class="chips"><span class="chip no">Не соответствует: 2</span> <span class="chip human">Решение человека: 1</span> <span class="chip na">Не применимо: 1</span></div>
+    <article class="item human">
+      <div class="head">
+        <span class="code">2.1</span>
+        <h4>Класс решения</h4>
+        <span class="badge human">Решение человека</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Фактически это класс 3: сервисом пользуется рекламный отдел, турнирное направление и руководство; есть рабочие подключения (Google-таблицы, Telegram, приём заявок с сайта) и автоматические действия (сам заводит задачи, сам принимает заявки).</li><li>Класс 4 не затрагивается: платежей, проведения документов и изменения прав в учётных системах сервис не делает.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Класс утверждает компания. Если решение признают классом 3, согласование идёт через операционного директора и ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: Операционный директор + ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">2.2</span>
+        <h4>Проверка ИТ при рабочих подключениях и автоматических действиях</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Подключения и автодействия описаны и собраны в одном месте: журнал передач данных (<code>src/lib/services/transfers.ts</code>) перечисляет пять каналов — ИИ, Telegram, выгрузка встреч в Google-таблицу, приём заявок с сайта, выдача по служебному ключу.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Проверка ИТ не проводилась ни по одному каналу.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item na">
+      <div class="head">
+        <span class="code">2.3</span>
+        <h4>Маршруты подключений (Aspro, 1С, DataLens, CLS)</h4>
+        <span class="badge na">Не применимо</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Подключений к Aspro по API, к 1С, DataLens и CLS нет. В карточках клиента, сделки и маркировки стоит только обычная ссылка на процесс в Aspro — человек нажимает и переходит (<code>src/components/ui/AsproLink.tsx</code>).</li><li>Поля под будущую синхронизацию (<code>asproId</code>, <code>syncEnabled</code>) заведены, но ничего не передают.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Когда дойдёт до настоящего подключения к Aspro — согласовать с руководителем CRM-направления, как требует Порядок.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель CRM-направления</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">2.4</span>
+        <h4>Задача в Aspro с описанием решения</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Всё, что просит Порядок в этой задаче (что упрощаем, кто пользуется, какие данные, к чему подключается, где работает, сколько стоит), уже описано в <code>CLAUDE.md</code> и в этом документе — остаётся перенести.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Задача в Aspro не заведена.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article></section><section><h2><span class="sn">Раздел 3</span>Данные и размещение</h2><div class="chips"><span class="chip ok">Соответствует: 3</span> <span class="chip part">Частично: 3</span> <span class="chip no">Не соответствует: 2</span> <span class="chip human">Решение человека: 1</span></div>
+    <article class="item part">
+      <div class="head">
+        <span class="code">3.1</span>
+        <h4>Передавать только необходимое</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Каждый сотрудник видит только своих клиентов и клиентов своей пары «руководитель проекта — менеджер» (<code>src/lib/scope.ts</code>, <code>src/lib/guard.ts</code>).</li><li>В журнал действий пишутся названия изменённых полей, но НЕ их значения (<code>src/lib/audit.ts</code>) — журнал не стал вторым хранилищем ПДн.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>В ИИ уходит больше необходимого: напарник вытягивает карточки целиком. Состав передаваемого надо сузить до нужного под задачу.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса + ответственный за ПДн</div>
+    </article>
+    <article class="item human">
+      <div class="head">
+        <span class="code">3.2</span>
+        <h4>Оператор, цель, основание, категории, сроки — до нового сценария с ПДн</h4>
+        <span class="badge human">Решение человека</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Черновик описания есть: политика обработки ПДн в сервисе (<code>src/lib/legal.ts</code>) называет три категории субъектов — работники, контактные лица контрагентов, обратившиеся через форму сайта.</li><li>Отдельным разделом 5 политики честно описана трансграничная передача — её не прятали.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Оператор (какое юрлицо), правовые основания по каждой цели, сроки хранения и необходимость уведомления РКН не подтверждены. Тексты — рабочая адаптация, не заключение юриста.</li></ul></div></div>
+      <div class="who">Кто решает: Юрист + ответственный за ПДн</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">3.3</span>
+        <h4>ПОЛНЫЙ ЗАПРЕТ передачи реальных ПДн в зарубежные ИИ</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сервис умеет работать с российским ИИ: в <code>src/lib/ai.ts</code> поддержан YandexGPT, провайдер меняется одной строкой <code>AI_PROVIDER</code>.</li><li>Каждое обращение к ИИ обязано объявить, что уходит провайдеру — без этого вызов не соберётся (поле <code>transfer</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Сейчас в настройках стоит зарубежный провайдер. Семь сценариев передают реальные данные людей: разбор транскрипта встречи (имена участников, расшифровка разговора), саммари клиента (имена контактных лиц), черновик ДС (реквизиты и подписант), пересказ истории клиента, разговор с напарником, недельный отчёт, саммари при передаче дел.</li><li>Требуется немедленно: либо <code>AI_PROVIDER="yandex"</code> (или другой российский), либо убрать <code>AI_API_KEY</code> — ИИ-кнопки отключатся, остальной сервис продолжит работать.</li><li>Исключений Порядок не предусматривает: согласование руководителя, ИТ или комитета такую передачу не разрешает.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса немедленно; подтверждают ИТ и ответственный за ПДн</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">3.4</span>
+        <h4>Размещение на серверах компании в РФ</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сервер физически в РФ (российский хостинг), домен и HTTPS настроены (<code>docs/ДЕПЛОЙ.md</code>).</li><li>Сервис собран так, чтобы переехать целиком: база, файлы и настройки лежат рядом, перенос описан по шагам.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Сервер личный, не компании. По Порядку собственные рабочие сервисы размещаются на серверах компании; иное — только на согласованном ИТ российском хостинге.</li><li>Применимость реестра провайдеров хостинга проверяет ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ + операционный директор</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">3.5</span>
+        <h4>Весь путь данных: БД, копии, журналы, подрядчики</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Пять каналов передачи наружу перечислены с указанием, что уходит, кому, на каком основании и пересекают ли данные границу — блок «Куда уходят данные» наверху журнала действий.</li><li>Счётчик обращений по каждому каналу за 30 дней считается сам.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Страны, получатели, условия хранения и обучения модели у провайдеров не проверялись.</li><li>Резервные копии лежат на том же сервере — отдельного хранилища нет (см. ИТ-23).</li></ul></div></div>
+      <div class="who">Кто решает: ИТ + ответственный за ПДн</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">3.6</span>
+        <h4>Обезличивание и уровень защищённости ИСПДн</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Отказные заявки с сайта обезличиваются, а не удаляются (<code>src/lib/services/retention.ts</code>) — статистика обращений при этом не рассыпается.</li><li>Есть поиск и удаление всех данных о человеке по его запросу (<code>src/lib/services/person-data.ts</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Уровень защищённости ИСПДн, актуальные угрозы и обязательные меры не определялись — это работа специалиста ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">3.7</span>
+        <h4>Рабочие данные — не по общедоступной ссылке</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Весь сервис закрыт входом; без сессии ни одна страница с данными не открывается (<code>src/middleware.ts</code>, <code>src/lib/auth.ts</code>).</li><li>Файлы отдаются через обработчик с проверкой прав, а не прямой ссылкой на диск (<code>src/app/api/files</code>).</li><li>Открыты без входа только правовые документы — в них данных нет.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Google-таблица с заявками сайта открыта «по ссылке — Читатель». После перехода на приём заявок напрямую (вебхук) её надо закрыть.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">3.8</span>
+        <h4>Пароли, ключи и токены — не в чатах, коде и открытых документах</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Все ключи живут в <code>.env</code>, файл в <code>.gitignore</code>.</li><li>Поиск по истории репозитория (160 коммитов) типовых ключей не нашёл.</li><li>Служебные ключи API хранятся в базе только отпечатком sha256, сам ключ показывается один раз (<code>src/lib/services/api-keys.ts</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Хранение и порядок замены секретов согласовать с ИТ при переезде.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">3.9</span>
+        <h4>Источники данных с понятным происхождением</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Данные приходят из трёх мест: сотрудники вводят руками, форма на сайте компании, рабочие Google-таблицы отдела. Посторонних баз и выгрузок нет.</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article></section><section><h2><span class="sn">Раздел 4</span>Если создаёшь сервис или агента</h2><div class="chips"><span class="chip ok">Соответствует: 4</span> <span class="chip part">Частично: 1</span> <span class="chip no">Не соответствует: 3</span> <span class="chip na">Не применимо: 1</span></div>
+    <article class="item part">
+      <div class="head">
+        <span class="code">4.1</span>
+        <h4>Простая схема до разработки: что делает, откуда данные, к чему подключается</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Устройство сервиса описано подробно: <code>CLAUDE.md</code> (для разработки), <code>docs/РУКОВОДСТВО.md</code> и <code>docs/ОБУЧЕНИЕ.html</code> (для людей), <code>docs/API.md</code> (для внешних систем).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Одностраничной схемы потоков данных в том виде, как её просит ИТ, нет — её нужно собрать (пункт ИТ-01).</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">4.2</span>
+        <h4>Не создавать параллельную CRM без согласования</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сервис решает то, чего в Aspro нет: календарь размещений по клубам, маркировка ОРД, рабочий лист руководителя и менеджера, документы с версиями.</li><li>Задел под связку с Aspro заложен: поля синхронизации в шести таблицах, ссылка «Aspro ↗» в карточках.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Формально это отдельная система с карточками клиентов и сделок, и согласования на неё не было. Решение — за компанией: признать как есть, встроить в Aspro или ограничить.</li></ul></div></div>
+      <div class="who">Кто решает: Операционный директор + руководитель CRM-направления</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">4.3</span>
+        <h4>Разделены тестовая и рабочая среды, настройки и доступы</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Тестовый контур: свой процесс на порту 3001, своя база, своя папка файлов, свой секрет сессии (<code>deploy/staging-setup.sh</code>).</li><li>На тестовом контуре через всю страницу идёт жёлтая полоса — разделение, которого не видно, не работает (<code>src/components/ui/StagingBanner.tsx</code>).</li><li>Копия боевой базы в тест не заливается намеренно: это те же ПДн с другим кругом доступа.</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">4.4</span>
+        <h4>Код, промпты и настройки — в хранилище компании, не на личном аккаунте</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Код, промпты напарника (<code>src/lib/ai-manual.ts</code>, <code>src/lib/ai-service-map.ts</code>) и все настройки лежат в репозитории вместе с сервисом.</li><li>Права оформлены документом <code>docs/ПРАВА_НА_РАЗРАБОТКУ.md</code> + <code>LICENSE</code>: код за автором, компании отзывная лицензия, данные компании остаются компании.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Репозиторий, домен, сервер и оплата ИИ — на личных аккаунтах автора. До передачи компании это ключевая зависимость от одного человека.</li></ul></div></div>
+      <div class="who">Кто решает: Операционный директор + ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">4.5</span>
+        <h4>Для агента перечислено: что читает, что меняет, кому пишет, что подтверждает человек</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Инструменты напарника перечислены в одном файле (<code>src/lib/ai-tools.ts</code>): читающие — клиенты, карточка клиента, база знаний, входящие файлы; пишущие — завести задачу, записать статус дня, добавить запись в дневник, разложить файл, задать вопрос руководителю.</li><li>Напарник работает строго в области видимости сотрудника: чужих клиентов не покажет.</li><li>Сам никому ничего не отправляет: писем и сообщений наружу у него нет.</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">4.6</span>
+        <h4>Значимые действия подтверждает человек</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Платежей, проведения документов и изменения прав доступа сервис не делает в принципе.</li><li>ИИ готовит только черновики: саммари, драфт ДС, разбор транскрипта — отправляет и сохраняет человек.</li><li>Смена стадии сделки с нарушением правила требует явного подтверждения «Знаю, принимаю» либо заводит задачу (<code>src/lib/services/deal-stage.ts</code>).</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article>
+    <article class="item na">
+      <div class="head">
+        <span class="code">4.7</span>
+        <h4>Помощник поддержки: разрешённые темы, передача человеку</h4>
+        <span class="badge na">Не применимо</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Помощника, который отвечает клиентам, нет. Напарник внутренний — отвечает только вошедшему сотруднику.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Если появится ответ клиентам — применять пункт ИТ-30 полностью.</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">4.8</span>
+        <h4>Ограничение в промпте не ограничивает доступ</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Права напарника ограничены не словами, а кодом: инструменты ходят в базу через ту же область видимости, что и страницы сотрудника; чужая запись отдаёт «не найдено» (<code>src/lib/guard.ts</code>).</li><li>Проверено живьём: четыре прямых запроса к API от имени чужого сотрудника вернули «не найдено».</li></ul></div></div>
+      <div class="who">Кто решает: —</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">4.9</span>
+        <h4>Вредные команды из писем, файлов и сайтов</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Напарник действительно читает тексты со стороны: заявки с сайта и файлы, которые сотрудник кинул во «Входящие».</li><li>Пишущие инструменты ограничены скоупом сотрудника и не умеют отправлять данные наружу.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Защиты от подложных команд внутри такого текста нет, и проверка на этот случай не проводилась.</li><li>Сюда же техническая дыра ИТ-18: ответ напарника выводится как готовая разметка без очистки — чужой текст может попасть на страницу сотрудника исполняемым.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса + ИТ</div>
+    </article></section><section><h2><span class="sn">Раздел 5</span>Что сделать перед рабочим запуском</h2><div class="chips"><span class="chip no">Не соответствует: 4</span></div>
+    <article class="item no">
+      <div class="head">
+        <span class="code">5.1</span>
+        <h4>Шаг 1 — запись в Реестре ИИ-решений</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Материал для записи готов: что делает, какие данные, кто пользуется, где размещено, что подключено — всё в этом документе и в <code>CLAUDE.md</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Заявка через форму добавления в Реестр не подавалась. По разделу 7 Порядка это случай «работает без оформленного допуска»: сообщить руководителю и ИТ, передать фактические условия, использование не расширять.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса → помощник операционного директора</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">5.2</span>
+        <h4>Шаг 2 — проверка ИТ (схема, данные, доступы, действия, размещение)</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Всё, что проверяет ИТ, собрано и открыто: права и изоляция, журнал действий, журнал передач, ограничения частоты, проверка загружаемых файлов, заголовки безопасности, резервные копии, мониторинг.</li><li>Приложение 1 этого документа — предварительный самоконтроль по тем же 36 пунктам.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Проверка ИТ не проводилась; заключений нет. Результаты по форме Порядка ведутся в Реестре, вкладка «Проверки ИТ».</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">5.3</span>
+        <h4>Шаг 3 — пилот с границами</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Фактически сервис уже используют сотрудники отдела — то есть идёт эксплуатация, а не пилот.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Границы пилота (данные, пользователи, действия, срок, критерий пользы, лимит расходов, критерий остановки) не согласованы.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель отдела + ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">5.4</span>
+        <h4>Шаг 4 — решение о запуске</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Инструкции и поддержка подготовлены: <code>docs/ДЕПЛОЙ.md</code>, <code>docs/ОБУЧЕНИЕ.html</code>, <code>docs/БЕЗОПАСНОСТЬ.md</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Письменного решения о запуске с условиями и сроком нет.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель отдела; для сети — операционный директор</div>
+    </article></section><section><h2><span class="sn">Раздел 6</span>Передача и поддержка</h2><div class="chips"><span class="chip ok">Соответствует: 1</span> <span class="chip part">Частично: 4</span> <span class="chip no">Не соответствует: 2</span></div>
+    <article class="item part">
+      <div class="head">
+        <span class="code">6.1</span>
+        <h4>Владелец решения и технический ответственный</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Владелец понятен — автор сервиса. Под переезд на серверы компании уже назначены люди: по ИБ — Влад, по технической части — Илья.</li><li>Под ИБ в самом сервисе заведена роль «Безопасность»: видит журнал, доступы и запросы по ПДн, не видит клиентов, суммы и бюджет.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Технический ответственный официально не назначен; поддержка ИТ автоматически не возникает.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель отдела + ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">6.2</span>
+        <h4>Короткая инструкция: где код, как войти, запустить и отключить</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li><code>docs/ДЕПЛОЙ.md</code> — установка и обновление по шагам, писалась для непрограммиста.</li><li>Один путь обновления <code>scripts/deploy.sh</code> с проверками и откатом <code>scripts/rollback.sh</code>.</li><li>Отчёт о состоянии сервера — <code>deploy/healthcheck.sh</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Отдельной строки «как выключить сервис» в инструкции нет — дописать (<code>pm2 stop colizeum</code>).</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">6.3</span>
+        <h4>Передать компании учётные записи, доступы и настройки</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Права на использование и доработку кода оформлены (<code>LICENSE</code>, <code>docs/ПРАВА_НА_РАЗРАБОТКУ.md</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Сервер, домен, репозиторий, ключ ИИ и бот Telegram — на личных аккаунтах автора. Передача не выполнялась.</li></ul></div></div>
+      <div class="who">Кто решает: Операционный директор + ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">6.4</span>
+        <h4>Проверка передачи: другой специалист запускает по инструкции</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col todo"><h5>Что осталось</h5><ul><li>Такая проверка не проводилась. Это же нужно для ИТ-32.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">6.5</span>
+        <h4>Корпоративный минимум: копии ежедневно, восстановление ежеквартально, обновления ежемесячно</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Копии базы и файлов шифруются (<code>deploy/backup.sh</code>, AES-256 с паролем из <code>.env</code>), запуск по расписанию описан в шапке скрипта.</li><li>Проверка обновлений и уязвимостей — <code>npm run security:check</code>, результат дописывается в <code>docs/ЖУРНАЛ_ОБНОВЛЕНИЙ.md</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Копии лежат на том же сервере — отдельного хранилища нет.</li><li>Проверка восстановления ни разу не делалась.</li><li>Ежемесячность обновлений не закреплена за исполнителем; девять «высоких» уязвимостей требуют мажорных переходов и ждут решения.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный + ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">6.6</span>
+        <h4>Запасной способ работы, мониторинг, журнал не меньше года</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сторож снаружи раз в 5 минут: приложение, процесс, домен, диск, сертификат, свежесть копий + сообщение о восстановлении (<code>deploy/monitor.sh</code>).</li><li>Журнал действий хранится 550 дней — больше года (<code>src/lib/audit.ts</code>).</li><li>Запасной способ работы на время сбоя фактически есть: Aspro и таблицы, из которых отдел пришёл.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Получение тестового сигнала мониторинга не подтверждено; адресат «технический директор» в настройках не прописан.</li><li>Запасной способ не записан словами в инструкции.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">6.7</span>
+        <h4>После запуска: польза и расходы, доступы, пересмотр при изменениях</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Пересмотр при изменении кода поддержан инструментами: <code>npm run release:notes</code> (что приедет), <code>npm run deploy:check</code> (готовность сервера).</li><li>Отзыв доступов делается админом в разделе «Команда» и попадает в журнал действий; смена роли поднимает тревогу ответственному за ИБ.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Месячный контроль расходов, ежеквартальная проверка восстановления и порядок «новые данные/отделы/подключения — согласовать до включения» не закреплены за людьми и сроками.</li></ul></div></div>
+      <div class="who">Кто решает: Владелец решения + технический ответственный</div>
+    </article></section><section><h2><span class="sn">Раздел 7</span>Если возник сбой или решение уже работает без согласования</h2><div class="chips"><span class="chip part">Частично: 1</span> <span class="chip no">Не соответствует: 1</span></div>
+    <article class="item part">
+      <div class="head">
+        <span class="code">7.1</span>
+        <h4>Порядок действий при утечке или опасном действии ИИ</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Инструкция на первые минуты — страница «Данные могли утечь — что делать» (<code>src/lib/incident.ts</code>), ссылка красной строкой в меню у всех ролей.</li><li>Кому сообщать — живой список из «Команды» (админ + ответственный за ИБ), имён в тексте нет специально.</li><li>Семь событий сервис сам шлёт ответственному за ИБ: подбор пароля, вход с незнакомого адреса, ночной вход, отключение второго фактора, смена роли, сброс пароля админом, выгрузка клиентов всего отдела (<code>src/lib/services/security-alerts.ts</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>В инструкции нет двух вещей из Порядка: сообщение в Telegram техническому директору при срочном критическом инциденте и задача на ИТ в Aspro.</li><li>Сроки уведомления РКН (24 часа / 72 часа) в инструкции не названы — их формулирует ответственный за ПДн.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса (текст) + ответственный за ПДн</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">7.2</span>
+        <h4>Решение уже работает без оформленного допуска</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Фактические условия работы описаны полно и честно — этого достаточно, чтобы передать их в Реестр без дополнительной подготовки.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Сообщить руководителю и ИТ, передать условия через форму Реестра, использование не расширять до решения.</li><li>До решения: либо отключить передачу в зарубежный ИИ (пункт 3.3), либо остановить ИИ-функции.</li></ul></div></div>
+      <div class="who">Кто решает: Автор сервиса → руководитель + ИТ</div>
+    </article></section><section><h2><span class="sn">Приложение 1</span>Чек-лист ИТ, ИТ-01…ИТ-36</h2><div class="chips"><span class="chip ok">Соответствует: 5</span> <span class="chip part">Частично: 17</span> <span class="chip no">Не соответствует: 11</span> <span class="chip human">Решение человека: 2</span> <span class="chip na">Не применимо: 1</span></div>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-01</span>
+        <h4>Схема и настройки решения</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Описаны код, модель и рабочие настройки: <code>CLAUDE.md</code>, <code>docs/API.md</code>, <code>.env.example</code> с пояснением каждой строки.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Единой схемы потоков, хранилищ, интеграций и действий на одной странице нет.</li></ul></div></div>
+      <div class="who">Кто решает: Владелец; ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-02</span>
+        <h4>Назначения и оператор</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Роль ответственного за ИБ в сервисе заведена и работает (роль «Безопасность»).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Владелец, технический ответственный и замена официально не назначены; оператор ПДн (юрлицо) не определён.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; ИТ; ПДн</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-03</span>
+        <h4>Состав данных и категории субъектов</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Состав известен и собран в одном месте — поиск по человеку обходит все таблицы с его данными (<code>src/lib/services/person-data.ts</code>): контактные лица клиентов (имя, телефон, почта, должность), сотрудники, обратившиеся через форму сайта, участники встреч в дневнике, подписанты в отправленных запросах.</li><li>Специальных категорий и биометрии в сервисе нет; данных несовершеннолетних нет.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Перечень полей и категорий не подтверждён ответственным за ПДн.</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; ИТ; владелец</div>
+    </article>
+    <article class="item human">
+      <div class="head">
+        <span class="code">ИТ-04</span>
+        <h4>Цель, основание и источники</h4>
+        <span class="badge human">Решение человека</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Цели и источники описаны в политике (<code>src/lib/legal.ts</code>), под формами сбора стоит ссылка на политику (<code>src/components/ui/PrivacyNote.tsx</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Правовое основание по каждой цели и передаче не подтверждено.</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; операционный директор</div>
+    </article>
+    <article class="item human">
+      <div class="head">
+        <span class="code">ИТ-05</span>
+        <h4>Уведомление Роскомнадзора</h4>
+        <span class="badge human">Решение человека</span>
+      </div>
+      <div class="cols"><div class="col todo"><h5>Что осталось</h5><ul><li>Покрытие сценария действующим уведомлением не проверялось. Выдумывать вывод здесь нельзя.</li></ul></div></div>
+      <div class="who">Кто решает: Ответственный за ПДн</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-06</span>
+        <h4>Политика, согласия и их учёт</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>При первом входе — экран с тремя ПУСТЫМИ галочками, кнопка не нажимается, пока не отмечены все (<code>src/components/legal/ConsentGate.tsx</code>).</li><li>Сохраняются дата, время и версия каждого принятого документа; версия — отпечаток текста, поправили документ — сервис просит принять заново (<code>ConsentRecord</code>).</li><li>Рассылок клиентам сервис не делает.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Тексты трёх документов — рабочая адаптация, юристом не подтверждены.</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; операционный директор</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-07</span>
+        <h4>Подрядчики и поручение обработки</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col todo"><h5>Что осталось</h5><ul><li>Договоров поручения обработки нет ни с ИИ-провайдером, ни с хостингом, ни по Telegram и Google-таблицам.</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; операционный директор; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-08</span>
+        <h4>Локализация и получатели</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сервер и база — в РФ; база, файлы и копии лежат на одной машине.</li><li>Внешние получатели перечислены в журнале передач: ИИ-провайдер, Telegram, Google-таблицы, держатель служебного ключа.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Хостинг личный, не компании; применимость реестра провайдеров РКН не проверялась.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; ПДн</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-09</span>
+        <h4>Трансграничная передача</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Передача не скрывается: отдельный раздел 5 политики и метка «за пределы РФ» у каждого канала в журнале передач.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Страны, получатели, основания и меры защиты не определены; уведомление не оформлялось.</li><li>Самая острая часть — передача в зарубежный ИИ, которую Порядок запрещает полностью (см. 3.3 и ИТ-28).</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; операционный директор; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-10</span>
+        <h4>Хранение, обращения и удаление</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Экран сроков хранения с четырьмя наборами данных и счётчиком просроченных записей (<code>/leadership/retention</code>).</li><li>Запросы человека о его данных: найти всё и удалить — <code>/leadership/privacy</code>. Контакты удаляются, заявки и дневник обезличиваются, журнал остаётся, и это объясняется на экране.</li><li>Уборка по расписанию — <code>npm run retention</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Три срока из четырёх помечены как ПРЕДЛОЖЕНИЕ и автоматически не исполняются — цифры должен подтвердить ответственный за ПДн.</li><li>Удаление из резервных копий и индексов не продумано.</li></ul></div></div>
+      <div class="who">Кто решает: ПДн; технический ответственный</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-11</span>
+        <h4>ИСПДн, угрозы и меры защиты</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col todo"><h5>Что осталось</h5><ul><li>Уровень защищённости, актуальные угрозы и обязательные меры не определялись; средства защиты выбирает ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">ИТ-12</span>
+        <h4>Разделение сред и тестовые данные</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Тестовый контур отдельным процессом, базой и папкой файлов; скрипт отказывается работать, если базы совпали.</li><li>Демо-данные вымышленные; копия боевой базы в тест не заливается.</li><li>Правило «на боевых данных не проверяем» записано в постоянных инструкциях проекта.</li></ul></div></div>
+      <div class="who">Кто решает: Разработчик; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-13</span>
+        <h4>Корпоративные и именные аккаунты</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Доступы именные, личный логин на домене компании у каждого; создаёт и отзывает админ в разделе «Команда».</li><li>Смена роли и сброс пароля админом поднимают тревогу ответственному за ИБ.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Оплата, администрирование и восстановление сервисов (сервер, домен, ИИ, бот) — на личном аккаунте автора.</li><li>Порядок «лишние права отзываются в день перевода или увольнения» не закреплён.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">ИТ-14</span>
+        <h4>Вход, MFA и защита от перебора</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Без входа данные недоступны.</li><li>Пароль от 12 символов при создании и смене (<code>src/lib/validation.ts</code>), хранится хэшем bcrypt.</li><li>Блокировка после 7 неудачных попыток на 15 минут по паре «почта + адрес» (<code>src/lib/rate-limit.ts</code>) — в требуемом диапазоне 5–10.</li><li>Второй фактор (TOTP) с восемью запасными кодами; вход двухшаговый (<code>src/lib/totp.ts</code>). Ролям с доступом к управлению и журналу сервис сам показывает напоминание включить.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Обязательность второго фактора для администраторов включена подсказкой, а не запретом входа без него — ужесточение по решению ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">ИТ-15</span>
+        <h4>Серверные права и изоляция</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Права проверяются на сервере, а не в интерфейсе: чужая запись отдаёт «не найдено» даже по прямой ссылке (<code>src/lib/guard.ts</code>).</li><li>Негативная проверка пройдена живьём: список, прямая ссылка и четыре прямых запроса к API по чужим записям вернули «не найдено».</li><li>Роль «Безопасность» закрыта белым списком разделов в <code>src/middleware.ts</code>: клиентов, сделок и денег не видит.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Изоляция клубов и франчайзи не применима — их в сервисе нет.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-16</span>
+        <h4>HTTPS и шифрование</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Только HTTPS, сертификат от certbot, продление автоматическое; сторож предупреждает за N дней до истечения.</li><li>Резервные копии шифруются AES-256 с паролем, который хранится отдельно от сервера.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Сама база не шифрована. Специальных категорий и паспортных данных в ней нет, но применимость требования определяет ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">ИТ-17</span>
+        <h4>Секреты</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Ключи только в <code>.env</code>, файл не попадает в репозиторий; поиск по истории коммитов типовых ключей не нашёл.</li><li>В сообщениях об ошибках наружу уходит общая фраза и короткий код, подробности — в журнал сервера (<code>src/lib/errors.ts</code>): пути и куски запросов в браузер больше не попадают.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Порядок замены секретов при увольнении и переезде согласовать с ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; разработчик</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-18</span>
+        <h4>Типовые атаки и загрузки</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Ввод проверяется на сервере схемами Zod по всем обработчикам (<code>src/lib/validation.ts</code>).</li><li>Запросы к базе идут через Prisma — подстановка SQL исключена.</li><li>Защита от запросов с чужой страницы и ограничение частоты — в одном месте (<code>src/middleware.ts</code>).</li><li>Загрузки: белый список расширений и 50 МБ (<code>src/lib/upload-rules.ts</code>).</li><li>Ошибки безопасные — внутренности наружу не уходят.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>НАЙДЕНА ДЫРА: разметка выводится на страницу без очистки. <code>src/lib/markdown.ts</code> отдаёт результат как есть, и он подставляется через <code>dangerouslySetInnerHTML</code> в ответах напарника, статьях базы знаний, дневнике и ИИ-кнопках. Политика страниц при этом разрешает встроенные скрипты (<code>script-src 'unsafe-inline'</code>).</li><li>Путь атаки: текст со стороны (заявка с сайта, присланный файл) → напарник его пересказывает → разметка выполняется в браузере сотрудника.</li><li>Чинится добавлением очистки HTML перед выводом; проверку провести после правки.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; разработчик</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-19</span>
+        <h4>Сеть и администрирование</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Установочный скрипт включает файрвол и открывает только SSH и порты сайта (<code>deploy/setup-server.sh</code>: <code>ufw allow OpenSSH</code>, <code>Nginx Full</code>).</li><li>База — файл на диске, наружу не слушает; админ-панелей и служебных портов нет.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Действующий сервер поднимали руками в домашнюю папку root — состояние файрвола и доступа по ключам надо проверить на месте.</li><li>Антивирус и автоматические обновления ОС не настроены.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-20</span>
+        <h4>Журнал действий</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Пишутся вход, просмотр, изменение, удаление и выгрузка: кто, когда, действие, объект (<code>src/lib/audit.ts</code>, страница <code>/leadership/audit</code>).</li><li>Содержимого ПДн в журнале нет — только названия изменённых полей; поля «было/стало» убраны из схемы намеренно.</li><li>Срок хранения 550 дней — больше требуемого года.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Журнал лежит в той же базе, что и данные: защиты от изменения администратором нет. Вынос в отдельное хранилище — решение ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; ПДн</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-21</span>
+        <h4>Код, документация и права</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Код, промпты и настройки в одном репозитории; документация для людей и для разработки на месте.</li><li>Права использования и доработки оформлены: <code>LICENSE</code> + <code>docs/ПРАВА_НА_РАЗРАБОТКУ.md</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Независимости от личного аккаунта автора нет (репозиторий, сервер, ключи).</li></ul></div></div>
+      <div class="who">Кто решает: Владелец; ИТ; операционный директор</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-22</span>
+        <h4>Обновления и уязвимости</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Проверка одной командой с записью результата: <code>npm run security:check</code> → <code>docs/ЖУРНАЛ_ОБНОВЛЕНИЙ.md</code>.</li><li>Первый прогон нашёл критическую уязвимость в Next.js — обновлено сразу.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Исполнитель и ежемесячный ритм не закреплены.</li><li>Девять «высоких» требуют мажорных переходов (Tailwind, Prisma, Next) — вслепую не делаются, нужен план от ИТ.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-23</span>
+        <h4>Резервные копии</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Скрипт копирует базу и файлы, шифрует AES-256, чистит старые (<code>deploy/backup.sh</code>); запуск по расписанию описан в шапке.</li><li>Свежесть копий проверяет сторож и сообщает, если копия устарела.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Копии хранятся на том же сервере — требование «в отдельном хранилище» не выполнено.</li><li>Фактическое наличие задания в расписании на действующем сервере надо подтвердить.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный; ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-24</span>
+        <h4>Проверка восстановления</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Команда восстановления записана в шапке скрипта копий.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Восстановление ни разу не проверялось; допустимый простой и допустимая потеря данных не зафиксированы.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-25</span>
+        <h4>Мониторинг</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сторож снаружи раз в 5 минут и сообщение о восстановлении (<code>deploy/monitor.sh</code>). Отдельным скриптом намеренно: упавшее приложение само бы ничего не отправило.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Получение тестового уведомления не подтверждено.</li><li>Адресат для срочного критического инцидента (технический директор) не настроен.</li></ul></div></div>
+      <div class="who">Кто решает: Технический ответственный; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-26</span>
+        <h4>Права, адресаты и вредные инструкции</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Права напарника ограничены кодом, а не промптом; наружу он ничего не отправляет.</li><li>Ограничение частоты: 40 обращений к ИИ в час на сотрудника.</li><li>Отключается мгновенно — удалением ключа из настроек.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Команды внутри входящих писем, файлов и страниц не проверялись (см. 4.9 и ИТ-18).</li><li>Лимита количества действий напарника за раз нет.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; владелец</div>
+    </article>
+    <article class="item ok">
+      <div class="head">
+        <span class="code">ИТ-27</span>
+        <h4>Подтверждение значимых действий</h4>
+        <span class="badge ok">Соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Платежей, проведения документов, договорных условий и прав доступа сервис не меняет.</li><li>ИИ выдаёт черновик, отправляет и сохраняет человек.</li><li>Обход подтверждения при смене стадии исключён: предупреждение приходит с сервера, подтверждение передаётся явным признаком (<code>src/lib/services/deal-stage.ts</code>).</li></ul></div></div>
+      <div class="who">Кто решает: Владелец системы; ИТ</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-28</span>
+        <h4>Контекст, хранение и обучение модели</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Что именно уходит провайдеру, зафиксировано по каждому сценарию: без объявления состава данных вызов ИИ не соберётся (обязательное поле <code>transfer</code> в <code>src/lib/ai.ts</code>).</li><li>Переключение на российского провайдера поддержано кодом и делается одной строкой настроек.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>СЕЙЧАС НАРУШЕНО: в настройках стоит зарубежный провайдер, реальные данные людей ему уходят. Порядок запрещает это полностью и исключений не предусматривает.</li><li>Страны, получатели, хранение, доступ поставщика и обучение модели не зафиксированы.</li><li>Действие: переключить на российский ИИ либо убрать ключ — сегодня, до любых согласований.</li></ul></div></div>
+      <div class="who">Кто решает: ИТ; ответственный за ПДн; операционный директор</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-29</span>
+        <h4>Качество, ошибки и границы пилота</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Есть инструменты проверки ИИ: <code>npm run ai:scan</code> (до каких провайдеров достаёт сеть) и <code>npm run ai:check</code> (один тестовый запрос и вердикт).</li><li>Под ответом видно, в какие данные напарник заглядывал — сразу понятно, сочинял он или смотрел.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Данные, пользователи, действия, срок, критерии пользы, качества и остановки пилота не определены.</li><li>Набор обычных, ошибочных и граничных примеров не пройден.</li></ul></div></div>
+      <div class="who">Кто решает: Владелец; ИТ</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-30</span>
+        <h4>База знаний и эскалация</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Источники разделены: порядок работы напарник берёт из своего руководства, цифры и реквизиты — из базы знаний отдела.</li><li>При нехватке данных отдаётся оглавление базы, а не пустой ответ; если напарник не обращался к данным — предупреждение на экране.</li><li>Клиентам напарник не отвечает: договорных обещаний дать некому.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Владелец актуальности базы знаний не назначен.</li></ul></div></div>
+      <div class="who">Кто решает: Владелец процесса</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-31</span>
+        <h4>Расходы и лимиты</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Технический лимит обращений есть (40 в час на сотрудника).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Денежный лимит не согласован, месячный контроль фактических расходов не назначен, подписка и оплата по API отдельно не учитываются.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; владелец</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-32</span>
+        <h4>Поддержка и запасной способ</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Инструкции по запуску, обновлению и откату есть и написаны для непрограммиста.</li><li>Выгрузка данных в Excel на девять листов работает — при смене решения данные не запираются внутри (<code>/api/export/clients</code>).</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Проверка «другой специалист по инструкции запускает и отключает» не проводилась; поддержка и замена не назначены.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; технический ответственный</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-33</span>
+        <h4>Сообщение об инцидентах и реагирование</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Инструкция на первые минуты и красная строка в меню у всех ролей (<code>/incident</code>).</li><li>Семь тревог уходят ответственному за ИБ сами; одинаковый сигнал глушится на 6 часов, чтобы перебор не превратился в тысячу сообщений.</li><li>История действий сохраняется в журнале.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>В инструкции не названы Telegram технического директора при срочном критическом инциденте и задача на ИТ в Aspro.</li><li>Сроки уведомления РКН 24/72 часа и порядок возобновления работы — за ответственным за ПДн.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; ИТ; технический директор; ПДн</div>
+    </article>
+    <article class="item na">
+      <div class="head">
+        <span class="code">ИТ-34</span>
+        <h4>Публичные условия, рассылки, аналитика</h4>
+        <span class="badge na">Не применимо</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Сервис закрытый служебный: оферты, цен, возвратов и рассылок нет.</li><li>Аналитики и трекеров нет вовсе — ставится ровно одна техническая кука для входа, и об этом честно написано в плашке и в разделе 6 политики.</li><li>Посторонние домены в политику страниц не входят: чужой скрипт не загрузится.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Неприменимость подтверждает операционный директор — как требует Порядок.</li></ul></div></div>
+      <div class="who">Кто решает: Операционный директор; ПДн; владелец</div>
+    </article>
+    <article class="item no">
+      <div class="head">
+        <span class="code">ИТ-35</span>
+        <h4>Решения и подтверждения</h4>
+        <span class="badge no">Не соответствует</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Самоконтроль по всем 36 пунктам — этот документ; он пересобирается командой и не расходится с кодом.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Профильных заключений ИТ и ПДн нет, решение о режиме работы и сроке не оформлено, обязательные замечания не закрыты.</li></ul></div></div>
+      <div class="who">Кто решает: Руководитель; ИТ; ПДн</div>
+    </article>
+    <article class="item part">
+      <div class="head">
+        <span class="code">ИТ-36</span>
+        <h4>Изменение и вывод из эксплуатации</h4>
+        <span class="badge part">Частично</span>
+      </div>
+      <div class="cols"><div class="col"><h5>Что есть в сервисе</h5><ul><li>Изменения приезжают одним путём с проверками, резервной копией и откатом (<code>scripts/deploy.sh</code>, <code>scripts/rollback.sh</code>).</li><li>Что именно приедет — показывает <code>npm run release:notes</code>.</li></ul></div><div class="col todo"><h5>Что осталось</h5><ul><li>Пересмотр условий при смене модели, данных или доступов не формализован.</li><li>Порядок вывода из эксплуатации (отзыв ключей, судьба данных, запись в Реестре) не описан.</li></ul></div></div>
+      <div class="who">Кто решает: Владелец; ИТ; ПДн</div>
+    </article></section>
+
+<footer>
+  <p><b>Как проверить любое утверждение самому.</b> Каждый пункт называет файл — его можно
+  открыть в репозитории. Состояние сервера проверяется командами
+  <code>bash deploy/healthcheck.sh</code> (процесс, порт, сертификат, диск, свежесть копий),
+  <code>npm run security:check</code> (уязвимости), <code>npm run ai:check</code> (куда
+  уходит запрос к ИИ). Куда уходили данные за 30 дней — блок «Куда уходят данные» наверху
+  журнала действий в самом сервисе.</p>
+  <p>Документ — самопроверка автора сервиса, а не заключение ИТ или ответственного за ПДн.
+  Их проверка по Приложению 1 ведётся в Реестре, вкладка «Проверки ИТ»; «не применимо»
+  требует обоснования профильного ответственного.</p>
+</footer>
+
+</div></body></html>
