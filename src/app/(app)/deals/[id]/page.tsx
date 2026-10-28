@@ -14,6 +14,7 @@ import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { AiDraftDsButton } from "@/components/ai/AiButtons";
 import { RequestButtons } from "@/components/deals/RequestButtons";
+import { MoreMenu } from "@/components/ui/MoreMenu";
 import { PlacementButton } from "@/components/deals/PlacementButton";
 import { AsproLink } from "@/components/ui/AsproLink";
 import { formatMoney, formatDate } from "@/lib/format";
@@ -89,17 +90,22 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         actions={
           <>
             <UrgencyBadge urgency={deal.urgency} />
-            {/* Порядок кнопок = порядок работы: сначала договор, потом макеты. */}
+            {/* На виду — то, чем пользуются каждый день: два конструктора
+                запросов (порядок кнопок = порядок работы: сначала договор,
+                потом макеты) и правка. Редкое и опасное — под «Ещё»: шесть
+                равнозначных кнопок в два ряда не читались вовсе. */}
             <RequestButtons deal={deal} stage={deal.stage} />
-            <AsproLink url={deal.asproUrl} />
-            <AiDraftDsButton dealId={deal.id} />
             <EditDealButton deal={deal} />
-            <DeleteButton
-              endpoint={`/api/deals/${deal.id}`}
-              what={`сделку «${deal.title}»`}
-              redirectTo="/deals"
-              variant="button"
-            />
+            <MoreMenu>
+              <AiDraftDsButton dealId={deal.id} />
+              <AsproLink url={deal.asproUrl} />
+              <DeleteButton
+                endpoint={`/api/deals/${deal.id}`}
+                what={`сделку «${deal.title}»`}
+                redirectTo="/deals"
+                variant="button"
+              />
+            </MoreMenu>
           </>
         }
       />

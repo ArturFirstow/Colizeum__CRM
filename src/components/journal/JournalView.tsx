@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Sparkles, Wand2, CheckCircle2, AlertTriangle, Copy, Send } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Sparkles, CheckCircle2, AlertTriangle, Copy, Send, Search, Mic, NotebookPen } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
-import { JOURNAL_SOURCES, JOURNAL_ROUTES } from "@/lib/enums";
 import { FileCell } from "@/components/ui/FileCell";
+import { JournalNew } from "@/components/journal/JournalNew";
 import { formatDateTime } from "@/lib/format";
 
 // Недельное ИИ-саммари: собирает прогресс по каждому партнёру за 7 дней.
@@ -34,8 +33,8 @@ function WeeklyAiSummary() {
 
   return (
     <>
-      <button className="btn btn-primary" onClick={generate}>
-        <Sparkles size={15} /> Недельное ИИ-саммари
+      <button className="btn btn-ghost" onClick={generate}>
+        <Sparkles size={15} /> Недельное саммари
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Недельное саммари" subtitle="ИИ собрал прогресс по партнёрам за 7 дней" size="lg">
         {loading && (
@@ -76,22 +75,36 @@ type Entry = {
   exportError?: string | null;
 };
 
-// Продолжительность с шагом 0,5 часа — как требует таблица учёта.
-function durationFromTimes(start: string, end: string): number | null {
-  if (!start || !end) return null;
-  const toMin = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + m;
-  };
-  let minutes = toMin(end) - toMin(start);
-  if (Number.isNaN(minutes)) return null;
-  if (minutes < 0) minutes += 24 * 60;
-  if (minutes <= 0) return null;
-  return Math.max(0.5, Math.round(minutes / 30) / 2);
-}
-
 type AdvOpt = { id: string; nameRu: string };
 
+/** Заголовок дня в ленте: «Сегодня», «Вчера», «7 октября». */
+function dayLabel(d: Date): string {
+  const today = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (same(d, today)) return "Сегодня";
+  if (same(d, yesterday)) return "Вчера";
+  return d.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    ...(d.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}),
+  });
+}
+
+type Filter = "Все" | "Встречи" | "Итоги дня";
+const FILTERS: Filter[] = ["Все", "Встречи", "Итоги дня"];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Дневник: сначала читаем, потом пишем.
+//
+// Раньше страница была пополам: слева всегда открытая анкета на девять полей,
+// справа — узкая лента. Человек заходит сюда в основном ПОЧИТАТЬ («что мы
+// решили на встрече во вторник»), а экран был занят формой.
+//
+// Теперь лента во всю ширину и сгруппирована по дням, сверху — поиск и три
+// фильтра, а запись заводится кнопкой «+ Новая запись» в окне (JournalNew).
+// ─────────────────────────────────────────────────────────────────────────────
 export function JournalView({
   entries,
   advertisers = [],
@@ -101,336 +114,158 @@ export function JournalView({
   advertisers?: AdvOpt[];
   sheetConfigured?: boolean;
 }) {
-  const router = useRouter();
-  const [source, setSource] = useState<string>("Транскрипт");
-  const [routedTo, setRoutedTo] = useState<string>("Трекер");
-  const [rawText, setRawText] = useState("");
-  const [meetingWith, setMeetingWith] = useState("");
-  const [advertiserId, setAdvertiserId] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // Показатели встречи — то, что уходит строкой в таблицу учёта.
-  const [meetingDate, setMeetingDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [participants, setParticipants] = useState("");
-  const [protocolUrl, setProtocolUrl] = useState("");
-  const [meetingUrl, setMeetingUrl] = useState("");
-  const [summary, setSummary] = useState("");
-  const [parsing, setParsing] = useState(false);
-  // Блок показателей свёрнут: новичок видит два поля и кнопку, а не анкету.
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("Все");
 
-  const duration = durationFromTimes(startTime, endTime);
-  // Сколько показателей уже заполнено — короткая сводка на свёрнутом блоке.
-  const filledCount = [meetingDate, startTime, endTime, participants, protocolUrl, summary].filter(
-    (v) => v.trim() !== "",
-  ).length;
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return entries.filter((e) => {
+      if (filter === "Встречи" && e.source !== "Транскрипт") return false;
+      if (filter === "Итоги дня" && e.source === "Транскрипт") return false;
+      if (!q) return true;
+      return [e.rawText, e.parsedSummary, e.meetingWith, e.participants]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [entries, filter, query]);
 
-  // Кнопка «Разобрать транскрипт»: ИИ достаёт дату, время, участников и ссылки.
-  async function parseTranscript() {
-    setError(null);
-    setNotice(null);
-    setParsing(true);
-    try {
-      const d = (await apiFetch("/api/journal/parse-meeting", {
-        method: "POST",
-        body: JSON.stringify({ transcript: rawText }),
-      })) as Record<string, string | null>;
-      if (d.meetingDate) setMeetingDate(d.meetingDate);
-      if (d.startTime) setStartTime(d.startTime);
-      if (d.endTime) setEndTime(d.endTime);
-      if (d.participants) setParticipants(d.participants);
-      if (d.meetingWith && !meetingWith) setMeetingWith(d.meetingWith);
-      if (d.protocolUrl) setProtocolUrl(d.protocolUrl);
-      if (d.meetingUrl) setMeetingUrl(d.meetingUrl);
-      if (d.summary) setSummary(d.summary);
-      setDetailsOpen(true);
-      setNotice("Поля заполнены — проверьте и сохраните");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
-    } finally {
-      setParsing(false);
+  // Группировка по дням: без неё лента читается как сплошной поток карточек.
+  const days = useMemo(() => {
+    const map = new Map<string, Entry[]>();
+    for (const e of visible) {
+      const d = new Date(e.date);
+      const key = d.toDateString();
+      const list = map.get(key);
+      if (list) list.push(e);
+      else map.set(key, [e]);
     }
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSaving(true);
-    try {
-      const res = (await apiFetch("/api/journal", {
-        method: "POST",
-        body: JSON.stringify({
-          source,
-          routedTo,
-          rawText,
-          meetingWith: meetingWith.trim() || undefined,
-          advertiserId: advertiserId || undefined,
-          parsedSummary: summary.trim() || undefined,
-          meetingDate: meetingDate || undefined,
-          startTime: startTime || undefined,
-          endTime: endTime || undefined,
-          durationHours: duration ?? undefined,
-          participants: participants.trim() || undefined,
-          protocolUrl: protocolUrl.trim() || undefined,
-          meetingUrl: meetingUrl.trim() || undefined,
-        }),
-      })) as { exported?: { ok: boolean; error?: string } | null };
-      setNotice(
-        res.exported?.ok
-          ? "Запись сохранена и строка ушла в таблицу отчётности"
-          : res.exported
-            ? `Запись сохранена, но в таблицу не ушла: ${res.exported.error ?? "ошибка"}`
-            : null,
-      );
-      setRawText("");
-      setMeetingWith("");
-      setMeetingDate("");
-      setStartTime("");
-      setEndTime("");
-      setParticipants("");
-      setProtocolUrl("");
-      setMeetingUrl("");
-      setSummary("");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
-    } finally {
-      setSaving(false);
-    }
-  }
+    return [...map.entries()].map(([key, items]) => ({ key, date: new Date(key), items }));
+  }, [visible]);
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-700 bg-ink-800/60 text-xl">
             ✎
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-ink-50">Дневник</h1>
+            <h1 className="font-display text-2xl font-semibold uppercase tracking-wide text-ink-50">
+              Дневник
+            </h1>
+            {/* Подзаголовок говорит, ЧТО ЗДЕСЬ ДЕЛАЮТ, а не чем раздел является. */}
             <p className="mt-0.5 text-sm text-ink-300">
-              Транскрипты встреч и итоги дня. Всё, что прозвучало голосом, фиксируется здесь и не теряется.
+              Вставьте расшифровку встречи — ИИ разложит её по полям, а строка уйдёт в таблицу
+              отчётности.
             </p>
           </div>
         </div>
-        <WeeklyAiSummary />
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <WeeklyAiSummary />
+          <JournalNew advertisers={advertisers} sheetConfigured={sheetConfigured} />
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        {/* Новая запись */}
-        <form onSubmit={submit} className="card h-fit min-w-0 p-5">
-          <h2 className="mb-1 text-lg font-bold text-ink-50">Новая запись</h2>
-          <p className="mb-4 text-xs text-ink-500">
-            Вставьте текст расшифровки встречи или прикрепите файл — запись останется в вашем кабинете.
-          </p>
-          <div className="mb-3 grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Что за запись</label>
-              <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
-                {JOURNAL_SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Маршрут</label>
-              <select className="input" value={routedTo} onChange={(e) => setRoutedTo(e.target.value)}>
-                {JOURNAL_ROUTES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {source === "Транскрипт" && (
-            <>
-              <div className="mb-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="label">С кем встреча</label>
-                  <input
-                    className="input"
-                    value={meetingWith}
-                    onChange={(e) => setMeetingWith(e.target.value)}
-                    placeholder="Например: Мария, МТС Оплата"
-                  />
-                </div>
-                <div>
-                  <label className="label">По какому клиенту</label>
-                  <select className="input" value={advertiserId} onChange={(e) => setAdvertiserId(e.target.value)}>
-                    <option value="">— не важно —</option>
-                    {advertisers.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.nameRu}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Показатели для таблицы учёта. Свёрнуты по умолчанию: заполняет их
-                  кнопка «Разобрать транскрипт», руками лезут только на проверку. */}
-              <div className="mb-3 rounded-xl border border-ink-800 bg-ink-900/40">
-                <button
-                  type="button"
-                  onClick={() => setDetailsOpen((v) => !v)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-xs font-medium uppercase tracking-wide text-ink-500">
-                      Показатели встречи для таблицы
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs text-ink-400">
-                      {filledCount === 0
-                        ? "Заполнит кнопка «Разобрать транскрипт» — трогать не обязательно"
-                        : `заполнено ${filledCount} из 6${duration != null ? ` · ${duration.toFixed(1).replace(".", ",")} ч` : ""}`}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-xs text-ink-500">{detailsOpen ? "свернуть ▲" : "проверить ▼"}</span>
-                </button>
-                {detailsOpen && (
-                <div className="border-t border-ink-800 p-3">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className="label">Дата встречи</label>
-                    <input className="input" type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="label">Начало</label>
-                    <input className="input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="label">Окончание</label>
-                    <input className="input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="label">Участники встречи</label>
-                  <input
-                    className="input"
-                    value={participants}
-                    onChange={(e) => setParticipants(e.target.value)}
-                    placeholder="через запятую"
-                  />
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="label">Ссылка на протокол</label>
-                    <input className="input" value={protocolUrl} onChange={(e) => setProtocolUrl(e.target.value)} placeholder="https://…" />
-                  </div>
-                  <div>
-                    <label className="label">Ссылка на встречу</label>
-                    <input className="input" value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} placeholder="https://…" />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="label">Итоги встречи</label>
-                  <textarea
-                    className="input min-h-[56px]"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    placeholder="Договорённости в 1–3 предложениях"
-                  />
-                </div>
-                <p className="mt-2 text-xs text-ink-500">
-                  {sheetConfigured
-                    ? "При сохранении строка уйдёт в таблицу отчётности автоматически."
-                    : "Выгрузка в таблицу пока не настроена — строку можно будет скопировать из ленты."}
-                </p>
-                </div>
-                )}
-              </div>
-            </>
-          )}
-
-          <textarea
-            className="input min-h-[180px]"
-            placeholder={
-              source === "Транскрипт"
-                ? "Вставьте расшифровку встречи целиком — договорённости, сроки, кто что обещал…"
-                : "Что важного за сегодня…"
-            }
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            required
-          />
-          {source === "Транскрипт" && (
-            <p className="mt-2 text-xs text-ink-500">
-              Достаточно вставить расшифровку и нажать «Разобрать транскрипт» — дату, время,
-              участников и ссылки ИИ вытащит сам.
-            </p>
-          )}
-          <div className="mt-3">
-            <FormError message={error} />
-          </div>
-          {notice && (
-            <p className="mt-2 rounded-lg bg-ink-900/60 px-3 py-2 text-xs text-brand-100">{notice}</p>
-          )}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            {source === "Транскрипт" ? (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={parseTranscript}
-                disabled={parsing || rawText.trim().length < 20}
-                title="ИИ достанет дату, время, участников и ссылки из расшифровки"
-              >
-                <Wand2 size={14} /> {parsing ? "Разбираю…" : "Разобрать транскрипт"}
-              </button>
-            ) : (
-              <span className="text-xs text-ink-500">Итоги дня попадут в недельный отчёт</span>
-            )}
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "…" : "Добавить"}
+      {entries.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`rounded-full px-3.5 py-1.5 text-sm transition ${
+                filter === f
+                  ? "bg-brand text-ink-950 font-semibold"
+                  : "border border-ink-700 text-ink-300 hover:border-ink-600 hover:text-ink-100"
+              }`}
+            >
+              {f}
             </button>
+          ))}
+          <div className="relative ml-auto">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-500" />
+            <input
+              className="input h-10 w-64 pl-9"
+              placeholder="Поиск по записям…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
           </div>
-        </form>
-
-        {/* Лента */}
-        <div className="min-w-0 space-y-3">
-          {entries.length === 0 ? (
-            <div className="card p-10 text-center text-ink-400">Записей пока нет</div>
-          ) : (
-            entries.map((e) => (
-              <div key={e.id} className="card p-4">
-                <div className="mb-2 flex items-center gap-2 text-xs text-ink-500">
-                  <span className="badge badge-muted">{e.source}</span>
-                  {e.routedTo && <span className="badge badge-brand">→ {e.routedTo}</span>}
-                  <span className="ml-auto">{formatDateTime(e.date)}</span>
-                  <DeleteButton endpoint={`/api/journal/${e.id}`} what="запись журнала" />
-                </div>
-                {e.meetingWith && (
-                  <div className="mb-1.5 text-xs text-ink-400">🎙 встреча с {e.meetingWith}</div>
-                )}
-                {e.meetingDate && <MeetingRow entry={e} />}
-                {e.parsedSummary && (
-                  <p className="mb-2 rounded-lg bg-ink-900/60 px-3 py-2 text-sm text-brand-100">
-                    {e.parsedSummary}
-                  </p>
-                )}
-                {/* Расшифровка встречи — это стена текста. В ленте показываем
-                    только начало, полностью открывается по клику. */}
-                <RawText text={e.rawText} />
-                <div className="mt-3">
-                  <FileCell
-                    ownerType="journal"
-                    ownerId={e.id}
-                    kind="Запись встречи"
-                    advertiserId={e.advertiserId ?? undefined}
-                    label="Прикрепить запись или расшифровку"
-                    compact
-                  />
-                </div>
-              </div>
-            ))
-          )}
         </div>
-      </div>
+      )}
+
+      {entries.length === 0 ? (
+        // Пустое состояние объясняет смысл раздела — это первое, что видит
+        // человек, открывший «Дневник» впервые.
+        <div className="card p-10 text-center">
+          <div className="text-3xl">🎙</div>
+          <h2 className="mt-3 text-lg font-semibold text-ink-50">Записей пока нет</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-400">
+            Сюда складывают расшифровки встреч и короткие итоги дня. Из них собирается недельный
+            отчёт, а встречи попадают в историю клиента и в таблицу учёта.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <JournalNew advertisers={advertisers} sheetConfigured={sheetConfigured} />
+          </div>
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="card p-8 text-center text-sm text-ink-400">
+          Ничего не нашлось. Измените запрос или фильтр.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {days.map((day) => (
+            <section key={day.key}>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+                {dayLabel(day.date)}
+              </div>
+              <div className="space-y-3">
+                {day.items.map((e) => (
+                  <article key={e.id} className="card p-4">
+                    <div className="mb-2 flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        {/* Заголовок карточки — человеческий: с кем встречались
+                            или «Итог дня», а не технический тип записи. */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-ink-400">
+                            {e.source === "Транскрипт" ? <Mic size={15} /> : <NotebookPen size={15} />}
+                          </span>
+                          <h3 className="truncate text-base font-semibold text-ink-50">
+                            {e.source === "Транскрипт"
+                              ? e.meetingWith
+                                ? `Встреча с ${e.meetingWith}`
+                                : "Встреча"
+                              : "Итог дня"}
+                          </h3>
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-xs text-ink-500">{formatDateTime(e.date)}</span>
+                      <DeleteButton endpoint={`/api/journal/${e.id}`} what="запись журнала" />
+                    </div>
+
+                    {e.meetingDate && <MeetingRow entry={e} />}
+                    {e.parsedSummary && (
+                      <p className="mb-2 rounded-lg bg-ink-900/60 px-3 py-2 text-sm text-brand-100">
+                        {e.parsedSummary}
+                      </p>
+                    )}
+                    <RawText text={e.rawText} />
+                    <div className="mt-3">
+                      <FileCell
+                        ownerType="journal"
+                        ownerId={e.id}
+                        kind="Запись встречи"
+                        advertiserId={e.advertiserId ?? undefined}
+                        label="Прикрепить запись или расшифровку"
+                        compact
+                      />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

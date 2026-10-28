@@ -14,7 +14,16 @@ export function UserMenu({
   onChangePassword,
   onTwoFactor,
 }: {
-  user: { id: string; name: string; email: string; roleLabel: string; avatarUrl?: string | null; totpEnabled?: boolean };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    roleLabel: string;
+    avatarUrl?: string | null;
+    totpEnabled?: boolean;
+    /** Вход по коду ОБЯЗАТЕЛЕН этой роли и ещё не включён. */
+    twoFactorPending?: boolean;
+  };
   onChangePassword: () => void;
   onTwoFactor: () => void;
 }) {
@@ -76,14 +85,26 @@ export function UserMenu({
         className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-ink-800/60"
         title="Профиль"
       >
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-ink-950">
-            {initials}
-          </span>
-        )}
+        {/* Точка на аватарке — незакрытое дело по своему профилю (сейчас это
+            невключённый вход по коду). Полосу-напоминание наверху страницы
+            можно закрыть, а дело при этом остаётся на виду — но занимает
+            точку, а не первый экран. */}
+        <span className="relative shrink-0">
+          {user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-ink-950">
+              {initials}
+            </span>
+          )}
+          {user.twoFactorPending && (
+            <span
+              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-ink-900 bg-amber-400"
+              title="Вход по коду не включён"
+            />
+          )}
+        </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-ink-100">{user.name}</span>
           <span className="block truncate text-xs text-ink-500">{user.roleLabel}</span>

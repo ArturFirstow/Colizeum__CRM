@@ -90,10 +90,10 @@ export default async function DashboardPage() {
       take: 6,
     }),
     prisma.journalEntry.findMany({ where: myTask, orderBy: { date: "desc" }, take: 4 }),
+    // Считаем ровно то, что показываем: плитки «Рекламодатели» и «Документы»
+    // убраны, и два запроса в базу вместе с ними.
     Promise.all([
       prisma.deal.count({ where: notArchived }),
-      prisma.advertiser.count({ where: { archived: false, ...ownScope(session) } }),
-      prisma.document.count({ where: { advertiser: ownScope(session) } }),
       prisma.task.count({ where: { status: { not: "Готова" }, ...myTask } }),
     ]),
     prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const [dealCount, advCount, docCount, activeTasks] = counts;
+  const [dealCount, activeTasks] = counts;
   const hour = now.getHours();
   const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
 
@@ -132,31 +132,32 @@ export default async function DashboardPage() {
         icon="◆"
       />
 
-      {/* Бенто-метрики: живые цифры досчитываются на глазах */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:grid-rows-2">
-        <Link href="/finances" className="col-span-2 row-span-2">
+      {/* Цифры дня.
+          ⚠️ Плиток было пять — добавились «Рекламодатели» и «Документы».
+          По ним никто не принимал решений: знать, что клиентов шесть, а
+          документов два, незачем — за этим идут в сами разделы. Остались две,
+          которые отвечают на вопрос «чем заняться»: сделки и задачи.
+          Строка одна, а не две: так блок не съедает полэкрана. */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Link href="/finances" className="col-span-2">
           <div className="card card-hover flex h-full flex-col justify-center !border-brand/30 p-6">
             <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
               {BUDGET_LABEL}
             </div>
             {/* Как и везде: крупно сумма с НДС, чистая — подписью. В базе
                 суммы лежат чистыми, поэтому крупную цифру домножаем. */}
-            <div className="mt-3 font-display text-4xl font-semibold text-brand lg:text-5xl">
+            <div className="mt-2 font-display text-4xl font-semibold text-brand lg:text-5xl">
               <CountUp value={portfolio.gross} suffix=" ₽" duration={1100} />
             </div>
+            {/* Три подписи сложились в одну: пояснение, откуда берётся сумма,
+                раскрывается в самих «Оплатах» — здесь оно только шумело. */}
             <div className="mt-2 text-sm text-ink-400">
               без НДС ≈ {formatMoney(portfolio.net)} · {activeDeals.length} активных сделок
             </div>
-            <div className="mt-1 text-xs text-ink-500">
-              {BUDGET_HINT}
-            </div>
-            <div className="mt-2 text-xs text-brand/80">Та же цифра — в разделе «Оплаты» →</div>
           </div>
         </Link>
         <StatCard label="Активные сделки" value={<CountUp value={dealCount} />} href="/deals" />
         <StatCard label="Задачи в работе" value={<CountUp value={activeTasks} />} href="/tasks" accent={activeTasks > 0} />
-        <StatCard label="Рекламодатели" value={<CountUp value={advCount} />} href="/advertisers" />
-        <StatCard label="Документы" value={<CountUp value={docCount} />} href="/documents" />
       </div>
 
       {/* Решения, которые ждут */}
@@ -169,24 +170,24 @@ export default async function DashboardPage() {
 
         {/* Слева — кнопка вопроса, справа — статусы уже отправленных: раньше
             правая половина этой области пустовала. */}
+        {/* ⚠️ Пустая карточка «Отправленные вопросы появятся здесь» убрана.
+            Она занимала половину ширины ради фразы, которая ничего не меняет,
+            и шла сразу перед второй надписью о том же самом («Решать сейчас
+            нечего»). Пока вопросов нет — кнопка просто занимает всю строку. */}
         {!leader && (
-          <div className="mb-3 grid gap-3 md:grid-cols-2">
+          <div className={`mb-3 grid gap-3 ${decisionItems.length > 0 ? "md:grid-cols-2" : ""}`}>
             <AskLeaderButton
               advertisers={advertisers}
               deals={dealOpts}
               leaderAvatarUrl={leader_?.avatarUrl}
               leaderName={leader_?.name}
             />
-            {decisionItems.length > 0 ? (
+            {decisionItems.length > 0 && (
               <div className="card p-4">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
                   Мои вопросы
                 </div>
                 <MyDecisionRequests items={decisionItems.slice(0, 3)} />
-              </div>
-            ) : (
-              <div className="card flex items-center p-4 text-xs text-ink-500">
-                Отправленные вопросы и ответы на них появятся здесь.
               </div>
             )}
           </div>
@@ -203,13 +204,11 @@ export default async function DashboardPage() {
 
 
 
-        {decisions.length === 0 && (leader ? openRequests.length === 0 : true) ? (
-          <EmptyState
-            compact
-            icon="✅"
-            title="Решать сейчас нечего"
-            hint={leader ? "сотрудники ничего не спрашивали" : "всё под контролем"}
-          />
+        {/* «Решать нечего» показываем только руководителю: ему важно видеть,
+            что очередь вопросов пуста. Сотруднику эта строка шла сразу под
+            кнопкой «Спросить руководителя» и повторяла её смысл. */}
+        {decisions.length === 0 && leader && openRequests.length === 0 ? (
+          <EmptyState compact icon="✅" title="Решать сейчас нечего" hint="сотрудники ничего не спрашивали" />
         ) : decisions.length === 0 ? null : (
           <div className="grid gap-3 md:grid-cols-2">
             {decisions.map((d) => (

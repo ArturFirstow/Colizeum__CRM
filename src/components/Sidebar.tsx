@@ -14,10 +14,21 @@ import { UserMenu } from "@/components/UserMenu";
 import { TwoFactorPanel } from "@/components/security/TwoFactorButton";
 import { LEGAL_DOCS } from "@/lib/legal";
 
+// Короткие подписи правовых документов для низа меню. Полные названия
+// («Какие данные обрабатываются и как защищены») писались в три строки.
+const LEGAL_TINY: Record<string, string> = {
+  polzovatelskoe: "Соглашение",
+  politika: "Политика ПДн",
+  soglasie: "Согласие",
+};
+
 export function Sidebar({
   user,
+  twoFactorPending,
 }: {
   user: { id: string; name: string; email: string; role: string; track: string; avatarUrl?: string | null; totpEnabled?: boolean; position?: string | null };
+  /** Второй фактор ОБЯЗАТЕЛЕН этой роли и ещё не включён — точка у аватарки. */
+  twoFactorPending?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -99,8 +110,12 @@ export function Sidebar({
     </nav>
   );
 
+  // ⚠️ shrink-0: низ меню (профиль, строка про утечку, правовые ссылки) не
+  // должен сжиматься, когда разделов много. Иначе при увеличенном масштабе
+  // интерфейса он обрезался нижним краем экрана — список разделов для этого
+  // и сделан прокручиваемым.
   const userBox = (
-    <div className="border-t border-ink-800 p-3">
+    <div className="shrink-0 border-t border-ink-800 p-3">
       {/* Всё про себя — под аватаркой: фото, пароль, выход */}
       <UserMenu
         user={{
@@ -113,6 +128,7 @@ export function Sidebar({
           roleLabel: user.position ?? ROLE_LABELS[user.role as Role] ?? user.role,
           avatarUrl: user.avatarUrl,
           totpEnabled: user.totpEnabled,
+          twoFactorPending: twoFactorPending,
         }}
         onChangePassword={() => setPasswordSignal((n) => n + 1)}
         onTwoFactor={() => setTwoFactorSignal((n) => n + 1)}
@@ -133,11 +149,21 @@ export function Sidebar({
 
       {/* Правовые документы — те же, что в подвале страницы входа. Нужны и
           после входа: сотрудник должен иметь возможность перечитать их. */}
-      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 px-2 text-[10px] leading-tight text-ink-600">
-        {LEGAL_DOCS.map((d) => (
-          <Link key={d.slug} href={`/legal/${d.slug}`} className="transition hover:text-brand">
-            {d.short}
-          </Link>
+      {/* Одной строкой и короткими словами: полные названия («Какие данные
+          обрабатываются и как защищены») занимали три строки, и низ меню
+          обрезался нижним краем экрана. Полное название — в подсказке. */}
+      <div className="mt-2 flex items-center gap-1.5 px-2 text-[10px] leading-tight text-ink-600">
+        {LEGAL_DOCS.map((d, i) => (
+          <span key={d.slug} className="flex min-w-0 items-center gap-1.5">
+            {i > 0 && <span className="text-ink-700">·</span>}
+            <Link
+              href={`/legal/${d.slug}`}
+              title={d.short}
+              className="truncate transition hover:text-brand"
+            >
+              {LEGAL_TINY[d.slug] ?? d.short}
+            </Link>
+          </span>
         ))}
       </div>
     </div>

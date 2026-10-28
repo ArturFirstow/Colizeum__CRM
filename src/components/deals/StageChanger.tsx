@@ -6,7 +6,6 @@ import { CalendarClock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DEAL_STAGES, STAGE_HINTS } from "@/lib/enums";
-import { stageStyle } from "@/lib/ui-tokens";
 import { celebrate } from "@/lib/celebrate";
 
 export function StageChanger({
@@ -214,21 +213,10 @@ export function StageChanger({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className={`pill ring-1 ring-inset ${stageStyle(current)}`}>{current}</span>
-        <select
-          className="input py-2 text-sm"
-          value={current}
-          onChange={(e) => change(e.target.value)}
-          disabled={saving}
-        >
-          {DEAL_STAGES.map((s, i) => (
-            <option key={s} value={s}>
-              {i + 1}. {s}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* ⚠️ Здесь стоял выпадающий список со стадиями и пилюля с текущей —
+          ровно то же самое, что уже делает линейка выше: по её шагам кликают,
+          текущий подсвечен. Два способа сделать одно и то же на одном экране
+          заставляли гадать, в чём разница. Оставлена линейка. */}
 
       <Modal
         open={!!pending}

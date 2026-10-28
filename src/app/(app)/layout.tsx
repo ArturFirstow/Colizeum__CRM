@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { MobileTabs } from "@/components/MobileTabs";
 import { Notifications } from "@/components/ui/Notifications";
 import { ConsentGate } from "@/components/legal/ConsentGate";
+import { DismissibleNotice } from "@/components/ui/DismissibleNotice";
 import { pendingConsents } from "@/lib/services/consent";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -44,16 +45,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     // содержимым: логотип сжимался в узкую полоску слева, а страница — в
     // остаток экрана. Именно из-за этого сервис «не открывался» с телефона.
     <div className="min-h-screen md:flex">
-      <Sidebar user={user} />
+      <Sidebar user={user} twoFactorPending={needsTwoFactor} />
       <main className="min-w-0 flex-1">
         {/* Отступ снизу на телефоне — под нижнюю панель навигации. */}
         <div className="page-enter mx-auto max-w-7xl px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8 lg:py-8">
           {needsTwoFactor && (
-            <div className="mb-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+            <DismissibleNotice id="totp">
               <b>Включите вход по коду.</b> У вашей роли есть доступ к управлению и к журналу
               действий, поэтому одного пароля мало — это требование по безопасности.
               Откройте меню под своим именем слева внизу → «Вход по коду». Займёт минуту.
-            </div>
+            </DismissibleNotice>
           )}
           {children}
         </div>

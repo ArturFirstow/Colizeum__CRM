@@ -7,10 +7,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { Modal } from "@/components/ui/Modal";
 import { StageBadge, UrgencyBadge } from "@/components/ui/primitives";
-import { Money } from "@/components/ui/Money";
+import { Money, toGross } from "@/components/ui/Money";
+import { formatMoney } from "@/lib/format";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DEAL_STAGES } from "@/lib/enums";
-import { stageStyle } from "@/lib/ui-tokens";
 
 type Deal = {
   id: string;
@@ -159,7 +159,10 @@ export function DealsView({
                     e.preventDefault();
                     moveTo(stage);
                   }}
-                  className={`w-72 shrink-0 rounded-xl transition ${
+                  // Пустая колонка сжимается: пять равных колонок не влезали
+                  // в экран, и доску приходилось листать стрелками, хотя
+                  // сделки стояли в одной-двух стадиях.
+                  className={`${byStage[stage].length === 0 ? "w-40" : "w-72"} shrink-0 rounded-xl transition ${
                     dragOverStage === stage ? "bg-brand/[0.06] outline outline-2 outline-brand/40" : ""
                   }`}
                 >
@@ -180,8 +183,8 @@ export function DealsView({
                       />
                     ))}
                     {byStage[stage].length === 0 && (
-                      <div className="rounded-xl border border-dashed border-ink-800 py-6 text-center text-xs text-ink-500">
-                        перетащите сюда
+                      <div className="rounded-xl border border-dashed border-ink-800 py-6 text-center text-xs leading-tight text-ink-600">
+                        пусто
                       </div>
                     )}
                   </div>
@@ -287,9 +290,9 @@ function KanbanCard({ deal, onDragStart }: { deal: Deal; onDragStart: () => void
       </div>
       <div className="mt-1 text-sm text-ink-400">{deal.advertiser.nameRu}</div>
 
-      <div className={`mt-2.5 inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${stageStyle(deal.stage)}`}>
-        {deal.stage}
-      </div>
+      {/* ⚠️ Пилюля со стадией убрана: карточка лежит В КОЛОНКЕ этой стадии,
+          и подпись повторяла её заголовок. В списке (вторая вкладка) стадия
+          по-прежнему показывается — там колонок нет. */}
 
       {deal.decisionPending && (
         <div className="mt-2.5 rounded-lg bg-brand/10 px-2.5 py-1.5 text-xs text-brand-100">
@@ -302,9 +305,25 @@ function KanbanCard({ deal, onDragStart }: { deal: Deal; onDragStart: () => void
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between border-t border-ink-800 pt-2.5 text-xs text-ink-400">
-        <Money amount={deal.amount} vatIncluded={deal.vatIncluded} />
-        {deal.nextStep && <span className="truncate pl-2 text-ink-500">→ {deal.nextStep}</span>}
+      {/* Одна цифра вместо трёх. Полный вид «с НДС / без НДС» остаётся в
+          карточке сделки и в «Оплатах»: на плитке шириной 288 точек он
+          переносился посреди фразы — «9 955 200 ₽ с / НДС 22%». */}
+      <div className="mt-3 border-t border-ink-800 pt-2.5">
+        <div className="text-sm font-semibold text-ink-100">
+          {deal.amount == null ? (
+            <span className="text-ink-500">сумма не указана</span>
+          ) : (
+            <>
+              {formatMoney(toGross(deal.amount, null, deal.vatIncluded))}{" "}
+              <span className="text-[11px] font-normal text-ink-500">с НДС</span>
+            </>
+          )}
+        </div>
+        {deal.nextStep && (
+          <div className="mt-1 truncate text-xs text-ink-500" title={deal.nextStep}>
+            → {deal.nextStep}
+          </div>
+        )}
       </div>
     </Link>
   );

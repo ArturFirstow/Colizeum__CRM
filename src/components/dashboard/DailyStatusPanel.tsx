@@ -34,6 +34,10 @@ export function DailyStatusPanel({
   const [report, setReport] = useState<{ markdown: string; filename: string } | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Форма свёрнута по умолчанию. Раньше три поля и кнопка занимали блок на
+  // первом экране каждый день, даже когда человек просто смотрит сводку, —
+  // а запись статуса это одно короткое действие раз в день.
+  const [adding, setAdding] = useState(false);
 
   const dealsForAdv = useMemo(
     () => deals.filter((d) => d.advertiserId === advertiserId),
@@ -78,16 +82,26 @@ export function DailyStatusPanel({
 
   return (
     <section className="card p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-ink-50">Статус дня по проектам</h2>
           <p className="mt-0.5 text-xs text-ink-500">Короткая запись за день — из них собирается недельный отчёт</p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={generateReport} disabled={reportLoading}>
-          {reportLoading ? "…" : "📄 Недельный отчёт"}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <button className="btn btn-ghost btn-sm" onClick={generateReport} disabled={reportLoading}>
+            {reportLoading ? "…" : "📄 Недельный отчёт"}
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${adding ? "btn-ghost" : "btn-primary"}`}
+            onClick={() => setAdding((v) => !v)}
+          >
+            {adding ? "Свернуть" : "+ Записать"}
+          </button>
+        </div>
       </div>
 
+      {adding && (
       <form onSubmit={addStatus} className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <select
           className="input py-2"
@@ -126,10 +140,13 @@ export function DailyStatusPanel({
           </button>
         </div>
       </form>
+      )}
       <FormError message={error} />
 
       {today.length === 0 ? (
-        <p className="text-sm text-ink-400">Сегодня статусов ещё нет.</p>
+        <p className="text-sm text-ink-400">
+          {adding ? "Сегодня статусов ещё нет." : "Сегодня статусов ещё нет — нажмите «Записать»."}
+        </p>
       ) : (
         <div className="space-y-2">
           <div className="text-xs font-medium uppercase tracking-wide text-ink-500">Сегодня</div>
