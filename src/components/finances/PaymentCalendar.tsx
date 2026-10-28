@@ -6,9 +6,11 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLANNED_PAYMENT_STATUSES } from "@/lib/enums";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, plural } from "@/lib/format";
 import { toGross } from "@/components/ui/Money";
 import { NetAmountInput } from "@/components/ui/NetAmountInput";
+import { PaymentChart, type PaymentBar } from "@/components/finances/PaymentChart";
+import { compactMoney, currentMonth, monthLabel, monthRange, shiftMonthStr } from "@/lib/month";
 
 type PP = {
   id: string;
@@ -23,24 +25,46 @@ type Adv = { id: string; nameRu: string };
 /** Сделка для расчёта остатка: сумма ЧИСТАЯ, как и суммы плановых платежей. */
 type DealOpt = { id: string; title: string; advertiserId: string; budgetNet: number };
 
-/** Месяц «ГГГГ-ММ» ± N месяцев. */
-function shiftMonthStr(ym: string, delta: number): string {
-  const [y, m] = ym.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+/** Строка плана, который собирается в окне (ещё не в базе). Сумма ЧИСТАЯ. */
+type PlanRow = { key: string; month: string; amount: number; note: string };
+
+/** Текст в число: «1 200 000» и «1200000,5» → 1200000. */
+function parseAmount(text: string): number {
+  return Math.round(Number(String(text).replace(/\s/g, "").replace(",", ".")) || 0);
 }
 
-const MONTHS_RU = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-
-function monthLabel(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
-  return `${MONTHS_RU[(m ?? 1) - 1]} ${String(y).slice(2)}`;
+/**
+ * Разделить сумму на N месяцев равными частями.
+ * ⚠️ Остаток от деления уходит в ПОСЛЕДНИЙ месяц — иначе сумма частей не
+ * сходится с суммой договора, а именно это и приходилось «подбивать руками».
+ */
+function splitAmount(total: number, count: number, from: string, label: (i: number, n: number) => string): PlanRow[] {
+  const n = Math.max(1, Math.min(36, count));
+  const base = Math.floor(total / n);
+  return Array.from({ length: n }, (_, i) => ({
+    key: `${from}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+    month: shiftMonthStr(from, i),
+    amount: i === n - 1 ? total - base * (n - 1) : base,
+    note: label(i + 1, n),
+  }));
 }
 
-function compact(amount: number): string {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(2).replace(".", ",")} млн`;
-  if (amount >= 1_000) return `${Math.round(amount / 1000)} тыс`;
-  return String(amount);
+/** Платежи (как лежат в базе) → столбики графика по месяцам. */
+function toBars(payments: { periodMonth: string; amount: number; status: string }[]): PaymentBar[] {
+  if (payments.length === 0) return [];
+  const sorted = [...payments].map((p) => p.periodMonth).sort();
+  const months = monthRange(sorted[0], sorted[sorted.length - 1]);
+  return months.map((m) => {
+    const inMonth = payments.filter((p) => p.periodMonth === m);
+    return {
+      month: m,
+      paid: inMonth.filter((p) => p.status === "Оплачено").reduce((s, p) => s + p.amount, 0),
+      overdue: inMonth.filter((p) => p.status === "Просрочено").reduce((s, p) => s + p.amount, 0),
+      planned: inMonth
+        .filter((p) => p.status !== "Оплачено" && p.status !== "Просрочено")
+        .reduce((s, p) => s + p.amount, 0),
+    };
+  });
 }
 
 const STATUS_CELL: Record<string, string> = {
@@ -120,6 +144,8 @@ export function PaymentCalendar({
     return advertisers.filter((a) => ids.has(a.id) || (budgets[a.id] ?? 0) > 0);
   }, [advertisers, payments, budgets]);
 
+  const bars = useMemo(() => toBars(payments), [payments]);
+
   function cellPayments(advertiserId: string, month: string) {
     return payments.filter((p) => p.advertiserId === advertiserId && p.periodMonth === month);
   }
@@ -142,12 +168,14 @@ export function PaymentCalendar({
         </button>
       </div>
 
-      {/* Легенда */}
-      <div className="mb-3 flex flex-wrap gap-3 text-xs text-ink-400">
-        <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm bg-emerald-500/60" /> оплачено</span>
-        <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm bg-amber-500/60" /> план</span>
-        <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm bg-red-500/60" /> просрочено</span>
-      </div>
+      {/* Общая картина — сначала график, потом та же цифра по клиентам таблицей.
+          Сам по себе календарь отвечает «кто и когда», а «ровно ли лежат
+          деньги по месяцам» видно только картинкой. */}
+      {payments.length > 0 && (
+        <div className="mb-5 rounded-xl border border-ink-800 bg-ink-900/40 p-4">
+          <PaymentChart bars={bars} />
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-ink-700 py-10 text-center text-sm text-ink-400">
@@ -231,7 +259,7 @@ export function PaymentCalendar({
                               dragOverCell === key ? "outline outline-2 outline-brand/60" : ""
                             }`}
                           >
-                            {compact(toGross(total))}
+                            {compactMoney(toGross(total))}
                           </button>
                         </td>
                       );
@@ -253,7 +281,7 @@ export function PaymentCalendar({
                 </td>
                 {colTotals.map((t, i) => (
                   <td key={i} className="px-1 py-2 text-center text-xs text-ink-300">
-                    {t > 0 ? compact(toGross(t)) : ""}
+                    {t > 0 ? compactMoney(toGross(t)) : ""}
                   </td>
                 ))}
                 <td className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-2 text-right text-sm font-bold text-brand">
@@ -290,24 +318,32 @@ export function PaymentCalendar({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// «Разложить оплату» — окно вместо прежней формы планового платежа.
+// «Разложить оплату» — конструктор плана платежей по сделке.
 //
-// КАК БЫЛО. Форма спрашивала клиента, месяц и сумму, а галочка «распределить
-// равными частями» просила ещё и последний месяц. Сколько по этому клиенту
-// уже разложено и сколько осталось до суммы договора, человек считал сам,
-// глядя на таблицу выше, — и потому в сервисе регулярно оказывалось разложено
-// БОЛЬШЕ, чем сумма договоров (экран честно ругался, но сходилось это руками).
+// КАК БЫЛО. Форма спрашивала клиента, месяц и сумму. Всю арифметику человек
+// держал в голове: сколько по договору, сколько уже разложено, сколько
+// осталось, — и в сервисе регулярно оказывалось разложено БОЛЬШЕ суммы
+// договора. Сходилось это руками, «подбиванием».
 //
-// КАК СТАЛО. Окно само знает математику:
-//   • выбрал сделку — видно «договор / уже разложено / осталось»;
-//   • кнопка «Весь остаток» подставляет сумму, которую осталось покрыть;
-//   • два способа: одним платежом или N месяцев равными частями;
-//   • до нажатия видно, что получится: сколько платежей, по сколько и с
-//     какого по какой месяц.
+// КАК СТАЛО. Окно считает само и ведёт за руку до остатка 0:
+//   1. выбрал сделку — видно «договор / уже разложено / осталось»;
+//   2. нажал схему оплаты — план собрался целиком;
+//   3. строки правятся: месяц, сумма, подпись; остаток пересчитывается на ходу;
+//   4. остаток не 0 — одна кнопка «добавить платёж на остаток» или
+//      «разбить остаток на N месяцев»;
+//   5. под строками — тот же график, что на странице: видно, ровно ли легли
+//      деньги по месяцам, ДО сохранения.
+//
+// ТРИ СХЕМЫ — те, которыми работают в агентстве (список дал пользователь, не
+// выдумывать): 100 % предоплата; 50 % предоплата + 50 % постоплата с ВЫБОРОМ
+// месяца; равными частями по месяцам. Четвёртая кнопка — «своя схема»: под
+// смешанные случаи вроде «50 % предоплатой за первые три месяца, остальное
+// тремя равными частями». Схема — это заготовка строк, а не отдельная сущность
+// в базе: любую можно поправить после нажатия.
 //
 // ⚠️ Суммы плановых платежей лежат в базе ЧИСТЫМИ (без НДС) — как и везде по
-// правилу сервиса. Поэтому «осталось» тоже считается в чистых, а на экране
-// рядом показывается сумма с НДС: NetAmountInput делает это сам.
+// правилу сервиса. Поэтому и остаток считается в чистых, а на экране рядом
+// показывается сумма с НДС.
 // ─────────────────────────────────────────────────────────────────────────────
 function AddPaymentModal({
   open,
@@ -330,15 +366,16 @@ function AddPaymentModal({
   presetAdvertiserId?: string;
   presetMonth?: string;
 }) {
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonth = currentMonth();
   const [advertiserId, setAdvertiserId] = useState(presetAdvertiserId ?? "");
   const [dealId, setDealId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [mode, setMode] = useState<"once" | "spread">("once");
-  const [month, setMonth] = useState(presetMonth ?? thisMonth);
-  const [monthsCount, setMonthsCount] = useState(3);
+  const [baseInput, setBaseInput] = useState("");
+  const [startMonth, setStartMonth] = useState(presetMonth ?? thisMonth);
+  const [term, setTerm] = useState(3);
+  const [scheme, setScheme] = useState<string | null>(null);
+  const [rows, setRows] = useState<PlanRow[]>([]);
+  const [spreadCount, setSpreadCount] = useState(3);
   const [status, setStatus] = useState("План");
-  const [note, setNote] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -346,36 +383,115 @@ function AddPaymentModal({
   const dealsOfClient = deals.filter((d) => !advertiserId || d.advertiserId === advertiserId);
   const deal = deals.find((d) => d.id === dealId);
 
-  // Сколько уже разложено: по сделке — её платежи, иначе по всему клиенту.
+  // Сколько уже разложено ранее: по сделке — её платежи, иначе по всему клиенту.
   const already = payments
     .filter((p) => (dealId ? p.dealId === dealId : advertiserId && p.advertiserId === advertiserId))
     .reduce((s, p) => s + p.amount, 0);
-  const planned = deal?.budgetNet ?? 0;
-  const left = Math.max(0, planned - already);
-  const over = Math.max(0, already - planned);
+  const contract = deal?.budgetNet ?? 0;
+  const leftByContract = Math.max(0, contract - already);
+  const over = Math.max(0, already - contract);
 
-  const parts = useMemo(() => {
-    const total = Math.round(Number(amount.replace(/\s/g, "").replace(",", ".")) || 0);
-    if (total <= 0 || !month) return [];
-    const count = mode === "once" ? 1 : Math.max(1, Math.min(36, monthsCount));
-    const base = Math.floor(total / count);
-    return Array.from({ length: count }, (_, i) => ({
-      month: shiftMonthStr(month, i),
-      // Копейки от деления уходят в последний месяц, иначе сумма частей не
-      // сойдётся с тем, что ввёл человек.
-      amount: i === count - 1 ? total - base * (count - 1) : base,
-    }));
-  }, [amount, month, mode, monthsCount]);
+  // Распределяем не «сумму договора», а то, что стоит в поле: обычно это
+  // остаток по договору, но клиент может платить и часть — тогда цифру правят.
+  const base = parseAmount(baseInput);
+  const distributed = rows.reduce((s, r) => s + r.amount, 0);
+  const remaining = base - distributed;
+  const lastMonth = rows.length > 0 ? rows[rows.length - 1].month : null;
+  const nextMonth = lastMonth ? shiftMonthStr(lastMonth, 1) : startMonth;
+
+  // Предпросмотр строится из строк плана и показывает пустые месяцы внутри
+  // периода: «в декабре не платят» — это тоже часть картины.
+  const previewBars = useMemo(
+    () =>
+      toBars(
+        rows
+          .filter((r) => r.amount > 0 && /^\d{4}-\d{2}$/.test(r.month))
+          .map((r) => ({ periodMonth: r.month, amount: r.amount, status })),
+      ),
+    [rows, status],
+  );
+
+  function pickDeal(id: string) {
+    setDealId(id);
+    const d = deals.find((x) => x.id === id);
+    if (d) {
+      setAdvertiserId(d.advertiserId);
+      const rest = Math.max(0, d.budgetNet - payments.filter((p) => p.dealId === id).reduce((s, p) => s + p.amount, 0));
+      setBaseInput(rest > 0 ? String(rest) : "");
+      setRows([]);
+      setScheme(null);
+    }
+  }
+
+  function applyScheme(id: string) {
+    setScheme(id);
+    setError(null);
+    if (id === "custom") {
+      setRows([]);
+      return;
+    }
+    if (base <= 0) {
+      setError("Сначала укажите сумму, которую нужно распределить");
+      return;
+    }
+    if (id === "prepay") {
+      setRows([
+        { key: `p-${Date.now()}`, month: startMonth, amount: base, note: "Предоплата 100 %" },
+      ]);
+      return;
+    }
+    if (id === "half") {
+      const half = Math.round(base / 2);
+      setRows([
+        { key: `h1-${Date.now()}`, month: startMonth, amount: half, note: "Предоплата 50 %" },
+        {
+          key: `h2-${Date.now()}`,
+          // Постоплата по умолчанию — последний месяц срока услуг; месяц
+          // остаётся в поле строки, его и правят, если договорились иначе.
+          month: shiftMonthStr(startMonth, Math.max(1, term - 1)),
+          amount: base - half,
+          note: "Постоплата 50 %",
+        },
+      ]);
+      return;
+    }
+    if (id === "equal") {
+      setRows(splitAmount(base, term, startMonth, (i, n) => `Платёж ${i} из ${n}`));
+    }
+  }
+
+  function addRemainderRow() {
+    if (remaining <= 0) return;
+    setRows((rs) => [
+      ...rs,
+      { key: `r-${Date.now()}`, month: nextMonth, amount: remaining, note: "" },
+    ]);
+    setScheme("custom");
+  }
+
+  function spreadRemainder() {
+    if (remaining <= 0) return;
+    setRows((rs) => [
+      ...rs,
+      ...splitAmount(remaining, spreadCount, nextMonth, (i, n) => `Платёж ${i} из ${n}`),
+    ]);
+    setScheme("custom");
+  }
+
+  function patchRow(key: string, patch: Partial<PlanRow>) {
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
 
   function reset() {
     setAdvertiserId(presetAdvertiserId ?? "");
     setDealId("");
-    setAmount("");
-    setMode("once");
-    setMonth(presetMonth ?? thisMonth);
-    setMonthsCount(3);
+    setBaseInput("");
+    setStartMonth(presetMonth ?? thisMonth);
+    setTerm(3);
+    setScheme(null);
+    setRows([]);
+    setSpreadCount(3);
     setStatus("План");
-    setNote("");
     setDetailsOpen(false);
     setError(null);
   }
@@ -383,22 +499,23 @@ function AddPaymentModal({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (parts.length === 0) {
-      setError("Укажите сумму и месяц");
+    const ready = rows.filter((r) => r.amount > 0 && /^\d{4}-\d{2}$/.test(r.month));
+    if (ready.length === 0) {
+      setError("План пустой: выберите схему оплаты или добавьте платёж");
       return;
     }
     setSaving(true);
     try {
-      for (let i = 0; i < parts.length; i++) {
+      for (const r of ready) {
         await apiFetch("/api/planned-payments", {
           method: "POST",
           body: JSON.stringify({
             advertiserId,
             dealId: dealId || undefined,
-            periodMonth: parts[i].month,
-            amount: parts[i].amount,
+            periodMonth: r.month,
+            amount: r.amount,
             status,
-            note: note || (parts.length > 1 ? `часть ${i + 1} из ${parts.length}` : undefined),
+            note: r.note || undefined,
           }),
         });
       }
@@ -412,15 +529,16 @@ function AddPaymentModal({
     }
   }
 
-  const total = parts.reduce((s, p) => s + p.amount, 0);
+  const fits = Math.abs(remaining) <= 1; // копейки от деления ошибкой не считаем
+  const progress = base > 0 ? Math.min(100, Math.round((distributed / base) * 100)) : 0;
 
   return (
     <Modal
       open={open}
       onClose={onClose}
       title="Разложить оплату"
-      subtitle="Сумма, которую платит клиент, — одним платежом или по месяцам"
-      size="md"
+      subtitle="Сумма договора → месяцы, в которых её ждём. Остаток считается сам"
+      size="lg"
     >
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -432,6 +550,8 @@ function AddPaymentModal({
               onChange={(e) => {
                 setAdvertiserId(e.target.value);
                 setDealId("");
+                setRows([]);
+                setScheme(null);
               }}
               required
             >
@@ -448,12 +568,7 @@ function AddPaymentModal({
             <select
               className="input"
               value={dealId}
-              onChange={(e) => {
-                const id = e.target.value;
-                setDealId(id);
-                const d = deals.find((x) => x.id === id);
-                if (d) setAdvertiserId(d.advertiserId);
-              }}
+              onChange={(e) => pickDeal(e.target.value)}
               disabled={!advertiserId}
             >
               <option value="">— не привязывать —</option>
@@ -471,10 +586,10 @@ function AddPaymentModal({
           <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5 text-sm">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
               <span className="text-ink-300">
-                Договор <b className="text-ink-50">{formatMoney(toGross(planned))}</b>
+                Договор <b className="text-ink-50">{formatMoney(toGross(contract))}</b>
               </span>
               <span className="text-ink-300">
-                Разложено <b className="text-ink-50">{formatMoney(toGross(already))}</b>
+                Было разложено <b className="text-ink-50">{formatMoney(toGross(already))}</b>
               </span>
               {over > 0 ? (
                 <span className="text-amber-300">
@@ -482,44 +597,81 @@ function AddPaymentModal({
                 </span>
               ) : (
                 <span className="text-brand">
-                  Осталось <b>{formatMoney(toGross(left))}</b>
+                  Осталось разложить <b>{formatMoney(toGross(leftByContract))}</b>
                 </span>
               )}
             </div>
-            {left > 0 && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm mt-2.5"
-                onClick={() => setAmount(String(left))}
-              >
-                Взять весь остаток
-              </button>
-            )}
             {over > 0 && (
               <p className="mt-2 text-xs text-amber-200/80">
-                По этой сделке уже разложено больше, чем сумма договора. Лишние строки удаляются в
+                По этой сделке уже разложено больше суммы договора. Лишние строки удаляются в
                 календаре — нажмите на месяц с суммой.
               </p>
             )}
           </div>
         )}
 
-        <NetAmountInput label="Сумма" value={amount} onChange={setAmount} required />
-
-        {/* Два способа — двумя кнопками, а не галочкой: так видно, что выбор есть. */}
-        <div>
-          <label className="label">Как платят</label>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {([
-              ["once", "Одним платежом", "вся сумма в один месяц"],
-              ["spread", "По месяцам", "равными частями, пока не покроем всю сумму"],
-            ] as const).map(([value, title, hint]) => (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <NetAmountInput
+              label="Сумма к распределению"
+              value={baseInput}
+              onChange={(v) => setBaseInput(v)}
+              required
+            />
+            {deal && leftByContract > 0 && parseAmount(baseInput) !== leftByContract && (
               <button
-                key={value}
                 type="button"
-                onClick={() => setMode(value)}
+                className="btn btn-ghost btn-sm mt-2"
+                onClick={() => setBaseInput(String(leftByContract))}
+              >
+                Взять весь остаток по договору
+              </button>
+            )}
+          </div>
+          <div>
+            <label className="label">Первый месяц *</label>
+            <input
+              className="input"
+              type="month"
+              value={startMonth}
+              onChange={(e) => setStartMonth(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Схемы оплаты — те, которыми работают в агентстве. */}
+        <div>
+          <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+            <label className="label !mb-0">Схема оплаты</label>
+            <label className="flex items-center gap-2 text-xs text-ink-400">
+              срок услуг
+              <input
+                className="input h-9 w-16 text-center"
+                type="number"
+                min={1}
+                max={36}
+                value={term}
+                onChange={(e) => setTerm(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
+              />
+              мес.
+            </label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                ["prepay", "100 % предоплата", "вся сумма в первый месяц"],
+                ["half", "50 % / 50 %", `предоплата + постоплата в ${monthLabel(shiftMonthStr(startMonth, Math.max(1, term - 1)))}`],
+                ["equal", "Равными по месяцам", `${term} ${plural(term, "платёж", "платежа", "платежей")} подряд`],
+                ["custom", "Своя схема", "собрать строки руками"],
+              ] as const
+            ).map(([id, title, hint]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => applyScheme(id)}
                 className={`rounded-xl border p-3 text-left transition ${
-                  mode === value
+                  scheme === id
                     ? "border-brand bg-brand/10"
                     : "border-ink-700 bg-ink-900/40 hover:border-ink-600"
                 }`}
@@ -531,123 +683,185 @@ function AddPaymentModal({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">{mode === "once" ? "Месяц платежа *" : "Первый месяц *"}</label>
-            <input
-              className="input"
-              type="month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              required
-            />
-          </div>
-          {mode === "spread" && (
-            <div>
-              <label className="label">На сколько месяцев *</label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setMonthsCount((n) => Math.max(2, n - 1))}
-                  aria-label="Меньше месяцев"
-                >
-                  −
-                </button>
-                <input
-                  className="input w-20 text-center"
-                  type="number"
-                  min={2}
-                  max={36}
-                  value={monthsCount}
-                  onChange={(e) => setMonthsCount(Number(e.target.value) || 2)}
-                />
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setMonthsCount((n) => Math.min(36, n + 1))}
-                  aria-label="Больше месяцев"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Предпросмотр: видно, что именно появится в календаре. */}
-        {parts.length > 0 && (
-          <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3.5">
-            <div className="text-xs font-medium uppercase tracking-wide text-ink-500">
-              Получится
-            </div>
-            <div className="mt-1.5 text-sm text-ink-100">
-              {parts.length === 1 ? (
-                <>
-                  один платёж {formatMoney(toGross(total))} в {monthLabel(parts[0].month)}
-                </>
+        {/* Полоса остатка — главный прибор этого окна: заполняем, пока не 0. */}
+        {base > 0 && (
+          <div
+            className={`rounded-xl border p-3.5 ${
+              fits ? "border-emerald-500/40 bg-emerald-500/[0.07]" : "border-ink-700 bg-ink-900/60"
+            }`}
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+              <span className="text-ink-300">
+                Распределено <b className="text-ink-50">{formatMoney(toGross(distributed))}</b>{" "}
+                <span className="text-ink-500">из {formatMoney(toGross(base))}</span>
+              </span>
+              {fits ? (
+                <span className="font-semibold text-emerald-300">Остаток 0 — сходится</span>
+              ) : remaining > 0 ? (
+                <span className="font-semibold text-amber-300">
+                  Осталось {formatMoney(toGross(remaining))}
+                </span>
               ) : (
-                <>
-                  {parts.length} платежей с {monthLabel(parts[0].month)} по{" "}
-                  {monthLabel(parts[parts.length - 1].month)} — по{" "}
-                  {formatMoney(toGross(parts[0].amount))}
-                  {parts[parts.length - 1].amount !== parts[0].amount && (
-                    <>, последний {formatMoney(toGross(parts[parts.length - 1].amount))}</>
-                  )}
-                </>
+                <span className="font-semibold text-red-300">
+                  Перебор {formatMoney(toGross(-remaining))}
+                </span>
               )}
             </div>
-            <div className="mt-1 text-xs text-ink-500">
-              всего {formatMoney(toGross(total))} с НДС · {formatMoney(total)} без НДС
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-800">
+              <div
+                className={`h-full rounded-full transition-[width] duration-300 ${
+                  remaining < -1 ? "bg-red-500" : fits ? "bg-emerald-500" : "bg-brand"
+                }`}
+                style={{ width: `${progress}%` }}
+              />
             </div>
-            {deal && total > left && over === 0 && (
-              <div className="mt-2 text-xs text-amber-200">
-                Это больше остатка по договору на {formatMoney(toGross(total - left))} — проверьте
-                сумму, иначе календарь разойдётся с договором.
+            {remaining > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={addRemainderRow}>
+                  + Платёж на остаток в {monthLabel(nextMonth)}
+                </button>
+                <span className="flex items-center gap-1.5 text-xs text-ink-400">
+                  или разбить остаток на
+                  <input
+                    className="input h-9 w-14 text-center"
+                    type="number"
+                    min={2}
+                    max={36}
+                    value={spreadCount}
+                    onChange={(e) =>
+                      setSpreadCount(Math.max(2, Math.min(36, Number(e.target.value) || 2)))
+                    }
+                  />
+                  мес.
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={spreadRemainder}>
+                    Разбить
+                  </button>
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* Статус и заметка нужны редко — под «Подробностями». */}
+        {/* Сами строки плана — правятся как в таблице. */}
+        {rows.length > 0 && (
+          <div className="rounded-xl border border-ink-800">
+            <div className="grid grid-cols-[8.75rem_1fr_1.4fr_2.5rem] gap-2 border-b border-ink-800 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-ink-500">
+              <span>Месяц</span>
+              <span>Сумма без НДС</span>
+              <span>Подпись</span>
+              <span />
+            </div>
+            <div className="divide-y divide-ink-800/70">
+              {rows.map((r) => (
+                <div key={r.key} className="grid grid-cols-[8.75rem_1fr_1.4fr_2.5rem] items-center gap-2 px-3 py-2">
+                  <input
+                    className="input h-9 px-2 text-xs"
+                    type="month"
+                    value={r.month}
+                    onChange={(e) => patchRow(r.key, { month: e.target.value })}
+                  />
+                  <div>
+                    <input
+                      className="input h-9 tabular-nums"
+                      type="number"
+                      min={0}
+                      value={r.amount}
+                      onChange={(e) => patchRow(r.key, { amount: Math.max(0, Number(e.target.value) || 0) })}
+                    />
+                    <div className="mt-0.5 text-[11px] text-ink-500">
+                      с НДС {formatMoney(toGross(r.amount))}
+                    </div>
+                  </div>
+                  <input
+                    className="input h-9 text-xs"
+                    placeholder="например, предоплата"
+                    value={r.note}
+                    onChange={(e) => patchRow(r.key, { note: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="btn-icon text-ink-500 hover:text-red-400"
+                    title="Убрать строку"
+                    onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-ink-800 px-3 py-2 text-sm">
+              <span className="text-ink-400">
+                {rows.length} {plural(rows.length, "платёж", "платежа", "платежей")} ·{" "}
+                {monthLabel(rows[0].month)} — {monthLabel(rows[rows.length - 1].month)}
+              </span>
+              <span className="font-semibold text-ink-50">
+                {formatMoney(toGross(distributed))}
+                <span className="ml-2 text-xs font-normal text-ink-500">
+                  без НДС {formatMoney(distributed)}
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Та же картинка, что на странице, — но ещё до сохранения. */}
+        {previewBars.length > 0 && (
+          <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3.5">
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-500">
+              Как ляжет по месяцам
+            </div>
+            <PaymentChart bars={previewBars} summary={false} height={110} />
+          </div>
+        )}
+
+        {/* Статус и подробности нужны редко — под кнопкой. */}
         <div>
           <button
             type="button"
             className="text-sm text-ink-400 transition hover:text-brand"
             onClick={() => setDetailsOpen((v) => !v)}
           >
-            {detailsOpen ? "Скрыть подробности" : "Подробности: статус, заметка"}
+            {detailsOpen ? "Скрыть подробности" : "Подробности: статус платежей"}
           </button>
           {detailsOpen && (
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Статус</label>
-                <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
-                  {PLANNED_PAYMENT_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label">Заметка</label>
-                <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
-              </div>
+            <div className="mt-3 max-w-xs">
+              <label className="label">Статус всех строк</label>
+              <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+                {PLANNED_PAYMENT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-ink-500">
+                Потом статус меняется у каждого платежа отдельно — в календаре по клику на месяц.
+              </p>
             </div>
           )}
         </div>
+
+        {!fits && rows.length > 0 && (
+          <p className="text-xs text-amber-200">
+            {remaining > 0
+              ? `План покрывает не всю сумму: не разложено ${formatMoney(toGross(remaining))}. Так тоже можно — остальное добавите позже.`
+              : `Разложено больше суммы на ${formatMoney(toGross(-remaining))} — проверьте строки, иначе календарь разойдётся с договором.`}
+          </p>
+        )}
 
         <FormError message={error} />
         <div className="flex justify-end gap-2">
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Отмена
           </button>
-          <button type="submit" className="btn btn-primary" disabled={saving || !advertiserId}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={saving || !advertiserId || rows.length === 0}
+          >
             {saving
               ? "Создаю…"
-              : parts.length > 1
-                ? `Создать ${parts.length} платежей`
+              : rows.length > 1
+                ? `Создать ${rows.length} ${plural(rows.length, "платёж", "платежа", "платежей")}`
                 : "Создать платёж"}
           </button>
         </div>
