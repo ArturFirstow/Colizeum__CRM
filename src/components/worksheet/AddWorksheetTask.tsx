@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { TASK_KINDS } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 // Постановка задачи прямо в строке клиента: руководитель проекта пишет, на кого
 // и к какому сроку. Группа («Документы», «Креативы») — тот самый подзаголовок,
@@ -114,11 +115,10 @@ export function AddWorksheetTask({
             </div>
             <div>
               <label className="label">Срок</label>
-              <input
-                type="date"
+              <DateInput
                 className="input"
                 value={f.dueDate}
-                onChange={(e) => set("dueDate", e.target.value)}
+                onChange={(v) => set("dueDate", v)}
               />
             </div>
           </div>

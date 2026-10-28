@@ -5,7 +5,7 @@ import { ownScope } from "@/lib/scope";
 import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { NewPromoButton } from "@/components/promo/NewPromoButton";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatMoney, formatNumber, plural } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +50,15 @@ export default async function PromoPage() {
                     <DeleteButton endpoint={`/api/promo/${b.id}`} what="партию промокодов" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-ink-50">
-                  {b.qty ?? "?"} <span className="text-base font-normal text-ink-400">× {b.nominal ?? "?"} ₽</span>
+                {/* Главная цифра партии — её стоимость: номинал × количество.
+                    Раньше на карточке стояло «30000 × 700 ₽» без разделителей
+                    разрядов и без итога, а именно итог и обсуждают с клиентом. */}
+                <div className="font-display text-2xl font-bold text-brand">
+                  {b.qty != null && b.nominal != null ? formatMoney(b.qty * b.nominal) : "сумма не указана"}
+                </div>
+                <div className="mt-0.5 text-sm text-ink-300">
+                  {formatNumber(b.qty)} {plural(b.qty ?? 0, "код", "кода", "кодов")} ×{" "}
+                  {formatMoney(b.nominal)}
                 </div>
                 {adv && (
                   <Link href={`/advertisers/${adv.id}`} className="mt-1 block text-sm text-ink-300 hover:text-brand">

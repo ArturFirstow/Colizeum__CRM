@@ -8,6 +8,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { formatMoney } from "@/lib/format";
 import { INCOME_SOURCES, EXPENSE_CATEGORIES, EXPENSE_PERIODICITY, PAY_FORMATS } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 import {
   netOfExpense, needsJustification, weekOfMonth, monthSummary,
   type ExpenseRow,
@@ -608,7 +609,7 @@ function ExpenseModal({
           </div>
           <div>
             <label className="label">Когда платим</label>
-            <input className="input" type="date" value={f.payDate} onChange={(e) => set("payDate", e.target.value)} />
+            <DateInput className="input" value={f.payDate} onChange={(v) => set("payDate", v)} />
             <p className="mt-1 text-xs text-ink-500">Дата списания — по ней расход попадёт в нужную неделю.</p>
           </div>
         </div>
@@ -710,7 +711,7 @@ function ExpenseModal({
                 </div>
                 <div>
                   <label className="label">Когда получим товар/услугу</label>
-                  <input className="input" type="date" value={f.deliveryDate} onChange={(e) => set("deliveryDate", e.target.value)} />
+                  <DateInput className="input" value={f.deliveryDate} onChange={(v) => set("deliveryDate", v)} />
                 </div>
               </div>
               <div>
@@ -727,7 +728,7 @@ function ExpenseModal({
               </div>
               <div>
                 <label className="label">Дата закрытия актом</label>
-                <input className="input" type="date" value={f.actClosedDate} onChange={(e) => set("actClosedDate", e.target.value)} />
+                <DateInput className="input" value={f.actClosedDate} onChange={(v) => set("actClosedDate", v)} />
               </div>
               <div>
                 <label className="label">Комментарий</label>

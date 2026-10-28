@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftRight, Sparkles, Undo2 } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 import { FormError } from "@/components/ui/Modal";
-import { formatDate } from "@/lib/format";
+import { formatDate, plural } from "@/lib/format";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Adv = { id: string; nameRu: string; _count: { deals: number; documents: number } };
 type UserOpt = { id: string; name: string };
@@ -184,7 +185,7 @@ export function HandoverView({
           </div>
           <div>
             <label className="label">Вернуть до</label>
-            <input className="input" type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
+            <DateInput className="input" value={endsAt} onChange={(v) => setEndsAt(v)} />
           </div>
         </div>
 
@@ -212,7 +213,8 @@ export function HandoverView({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-ink-100">{a.nameRu}</span>
                     <span className="block text-xs text-ink-500">
-                      {a._count.deals} сделок · {a._count.documents} док.
+                      {a._count.deals} {plural(a._count.deals, "сделка", "сделки", "сделок")} ·{" "}
+                      {a._count.documents} {plural(a._count.documents, "документ", "документа", "документов")}
                     </span>
                   </span>
                 </label>

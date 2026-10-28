@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { TASK_KINDS } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Client = { id: string; nameRu: string };
 
@@ -117,7 +118,7 @@ export function AssignTaskButton({
           <div>
             <label className="label">Срок</label>
             <div className="flex flex-wrap items-center gap-2">
-              <input className="input max-w-[200px]" type="date" value={f.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+              <DateInput className="input max-w-[200px]" value={f.dueDate} onChange={(v) => set("dueDate", v)} />
               <button type="button" className="pill bg-ink-800/60 text-ink-200 ring-1 ring-inset ring-ink-700 hover:bg-ink-800" onClick={() => set("dueDate", isoInDays(0))}>
                 Сегодня
               </button>

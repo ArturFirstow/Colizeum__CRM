@@ -9,6 +9,7 @@ import { Ring, Field } from "@/components/ui/primitives";
 import { apiFetch } from "@/lib/client";
 import { formatMoney, formatDate } from "@/lib/format";
 import { tournamentStatusStyle } from "@/lib/ui-tokens";
+import { DateInput } from "@/components/ui/DateInput";
 import {
   TOURNAMENT_BUDGET_LINES,
   TOURNAMENT_DISCIPLINES,
@@ -413,11 +414,11 @@ function EditTournamentModal({
           </div>
           <div>
             <label className="label">Начало</label>
-            <input className="input" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} />
+            <DateInput className="input" value={f.startDate} onChange={(v) => set("startDate", v)} />
           </div>
           <div>
             <label className="label">Конец</label>
-            <input className="input" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} />
+            <DateInput className="input" value={f.endDate} onChange={(v) => set("endDate", v)} />
           </div>
         </div>
         <div>

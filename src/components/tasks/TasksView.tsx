@@ -21,6 +21,7 @@ const PRIORITY_BAR: Record<string, string> = {
 };
 import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { formatDate } from "@/lib/format";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Task = {
   id: string;
@@ -387,7 +388,7 @@ function EditTaskModal({
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="label">Дедлайн</label>
-            <input className="input" type="date" value={f.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+            <DateInput className="input" value={f.dueDate} onChange={(v) => set("dueDate", v)} />
           </div>
           <div>
             <label className="label">Приоритет</label>
@@ -619,7 +620,7 @@ function NewTaskModal({
           </div>
           <div>
             <label className="label">Дедлайн</label>
-            <input className="input" type="date" value={f.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+            <DateInput className="input" value={f.dueDate} onChange={(v) => set("dueDate", v)} />
           </div>
           <div>
             <label className="label">Приоритет</label>

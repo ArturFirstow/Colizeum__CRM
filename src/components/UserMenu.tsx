@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Camera, LogOut, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,14 +131,29 @@ export function UserMenu({
           >
             Сменить пароль
           </MenuItem>
+          {/* ⚠️ Полоса-напоминание про вход по коду раньше висела НАВЕРХУ КАЖДОЙ
+              страницы и съедала первый экран. Напоминание осталось, но живёт
+              там, где дело и делается: точка на аватарке + подсвеченный пункт
+              здесь. */}
           <MenuItem
             icon={<ShieldCheck size={14} />}
             onClick={() => {
               setOpen(false);
               onTwoFactor();
             }}
+            accent={user.twoFactorPending}
           >
-            {user.totpEnabled ? "Вход по коду ✓" : "Вход по коду"}
+            {user.totpEnabled
+              ? "Вход по коду ✓"
+              : user.twoFactorPending
+                ? "Включить вход по коду"
+                : "Вход по коду"}
+          </MenuItem>
+          {/* ⚠️ Ссылка «что делать при утечке» переехала сюда из низа меню, где
+              она накладывалась на правовые ссылки. Доступна по-прежнему всем
+              ролям — меню профиля есть у каждого. */}
+          <MenuItem icon={<AlertTriangle size={14} />} href="/incident" onClick={() => setOpen(false)}>
+            Данные могли утечь
           </MenuItem>
           <MenuItem icon={<LogOut size={14} />} onClick={logout} danger>
             Выйти
@@ -164,19 +180,31 @@ function MenuItem({
   onClick,
   children,
   danger,
+  accent,
+  href,
 }: {
   icon: React.ReactNode;
   onClick: () => void;
   children: React.ReactNode;
   danger?: boolean;
+  /** Незакрытое дело — пункт подсвечивается фирменным жёлтым. */
+  accent?: boolean;
+  /** Пункт-ссылка (переход на страницу), а не действие. */
+  href?: string;
 }) {
+  const cls = `flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition hover:bg-ink-800 ${
+    danger ? "text-red-300" : accent ? "bg-brand/10 font-medium text-brand" : "text-ink-200"
+  }`;
+  if (href) {
+    return (
+      <Link href={href} onClick={onClick} className={cls}>
+        {icon}
+        {children}
+      </Link>
+    );
+  }
   return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition hover:bg-ink-800 ${
-        danger ? "text-red-300" : "text-ink-200"
-      }`}
-    >
+    <button onClick={onClick} className={cls}>
       {icon}
       {children}
     </button>

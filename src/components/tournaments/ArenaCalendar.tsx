@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
+import { DateInput } from "@/components/ui/DateInput";
 import {
   ARENA_BOOKING_STATUSES,
   ARENA_TIME_SLOTS,
@@ -386,11 +387,11 @@ function BookingModal({
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="label">Начало *</label>
-            <input className="input" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} required />
+            <DateInput className="input" value={f.startDate} onChange={(v) => set("startDate", v)} required />
           </div>
           <div>
             <label className="label">Конец</label>
-            <input className="input" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} />
+            <DateInput className="input" value={f.endDate} onChange={(v) => set("endDate", v)} />
           </div>
           <div>
             <label className="label">Статус</label>

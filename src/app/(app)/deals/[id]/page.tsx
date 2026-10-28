@@ -444,7 +444,12 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 <Field label="Ответственный">{deal.assignee?.name}</Field>
               </div>
             </div>
-            {deal.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-ink-400">{deal.notes}</p>}
+            {/* ⚠️ Из заметки прячется служебная пометка, которую оставил перевод
+                сделок на пять стадий («[стадия до перевода: …]»): в базе она
+                нужна как след миграции, а на карточке читалась как мусор. */}
+            {cleanNotes(deal.notes) && (
+              <p className="mt-3 whitespace-pre-wrap text-sm text-ink-400">{cleanNotes(deal.notes)}</p>
+            )}
           </section>
 
           {/* Отправленные запросы. Конструктор выдаёт текст, человек копирует
@@ -637,6 +642,11 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 }
 
 /** Строка сверки: всегда сумма с НДС, под ней — чистая. */
+/** Убирает из заметки след миграции стадий — на экране он не нужен. */
+function cleanNotes(notes?: string | null): string {
+  return (notes ?? "").replace(/\[стадия до перевода:[^\]]*\]/g, "").trim();
+}
+
 function MoneyRow({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">

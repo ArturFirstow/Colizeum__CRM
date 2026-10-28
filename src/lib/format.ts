@@ -18,6 +18,13 @@ export function formatMoney(amount?: number | null, currency = "RUB"): string {
   return rub.format(amount);
 }
 
+/** Число с разделителями разрядов: 30000 → «30 000». */
+const num = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+export function formatNumber(value?: number | null): string {
+  if (value == null) return "—";
+  return num.format(value);
+}
+
 /** Чистая сумма без НДС из суммы с НДС (по умолчанию 22 %). */
 export function netOfVat(gross?: number | null, ratePercent = 22): number | null {
   if (gross == null) return null;

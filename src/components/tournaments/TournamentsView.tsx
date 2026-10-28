@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/client";
 import { formatMoney, formatDate } from "@/lib/format";
 import { tournamentStatusStyle } from "@/lib/ui-tokens";
 import { TOURNAMENT_DISCIPLINES, TOURNAMENT_FORMATS, TOURNAMENT_STATUSES } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Row = {
   id: string;
@@ -206,11 +207,11 @@ function TournamentModal({
           </div>
           <div>
             <label className="label">Начало</label>
-            <input className="input" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} />
+            <DateInput className="input" value={f.startDate} onChange={(v) => set("startDate", v)} />
           </div>
           <div>
             <label className="label">Конец</label>
-            <input className="input" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} />
+            <DateInput className="input" value={f.endDate} onChange={(v) => set("endDate", v)} />
           </div>
         </div>
         <FormError message={error} />

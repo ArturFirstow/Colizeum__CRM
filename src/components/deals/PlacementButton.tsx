@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { PLACEMENT_SLOT_GROUPS, PLACEMENT_STATUSES, DEAL_STAGES } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Бронь размещения прямо из сделки (просьба коллег И-13).
@@ -116,23 +117,21 @@ export function PlacementButton({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Начало</label>
-              <input
-                type="date"
+              <DateInput
                 className="input"
                 required
                 value={startDate}
-                onChange={(e) => setStart(e.target.value)}
+                onChange={(v) => setStart(v)}
               />
             </div>
             <div>
               <label className="label">Конец</label>
-              <input
-                type="date"
+              <DateInput
                 className="input"
                 required
                 min={startDate || undefined}
                 value={endDate}
-                onChange={(e) => setEnd(e.target.value)}
+                onChange={(v) => setEnd(v)}
               />
             </div>
           </div>

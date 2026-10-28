@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { apiFetch, ApiError } from "@/lib/client";
 import { DEAL_STAGES, STAGE_HINTS } from "@/lib/enums";
 import { celebrate } from "@/lib/celebrate";
+import { DateInput } from "@/components/ui/DateInput";
 
 export function StageChanger({
   dealId,
@@ -248,11 +249,10 @@ export function StageChanger({
             <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-3">
               <label className="label">Уточню — поставить задачу на</label>
               <div className="flex flex-wrap items-center gap-2">
-                <input
+                <DateInput
                   className="input h-9 w-44"
-                  type="date"
                   value={clarifyDate}
-                  onChange={(e) => setClarifyDate(e.target.value)}
+                  onChange={(v) => setClarifyDate(v)}
                 />
                 <button
                   className="btn btn-ghost btn-sm"

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Wand2, Mic, NotebookPen } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 import { Modal, FormError } from "@/components/ui/Modal";
+import { DateInput } from "@/components/ui/DateInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Новая запись дневника — окно вместо формы, открытой всегда.
@@ -291,7 +292,7 @@ export function JournalNew({
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <div>
                     <label className="label">Дата</label>
-                    <input className="input" type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} />
+                    <DateInput className="input" value={meetingDate} onChange={(v) => setMeetingDate(v)} />
                   </div>
                   <div>
                     <label className="label">Начало</label>

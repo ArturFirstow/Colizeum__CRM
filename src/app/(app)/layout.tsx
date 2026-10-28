@@ -5,7 +5,6 @@ import { Sidebar } from "@/components/Sidebar";
 import { MobileTabs } from "@/components/MobileTabs";
 import { Notifications } from "@/components/ui/Notifications";
 import { ConsentGate } from "@/components/legal/ConsentGate";
-import { DismissibleNotice } from "@/components/ui/DismissibleNotice";
 import { pendingConsents } from "@/lib/services/consent";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -48,14 +47,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar user={user} twoFactorPending={needsTwoFactor} />
       <main className="min-w-0 flex-1">
         {/* Отступ снизу на телефоне — под нижнюю панель навигации. */}
-        <div className="page-enter mx-auto max-w-7xl px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8 lg:py-8">
-          {needsTwoFactor && (
-            <DismissibleNotice id="totp">
-              <b>Включите вход по коду.</b> У вашей роли есть доступ к управлению и к журналу
-              действий, поэтому одного пароля мало — это требование по безопасности.
-              Откройте меню под своим именем слева внизу → «Вход по коду». Займёт минуту.
-            </DismissibleNotice>
-          )}
+        {/* ⚠️ Ширина поднята с 1280 до 1600 px: на рабочих мониторах страница
+            упиралась в середину экрана, а по краям оставались пустые поля.
+            Таблицы, канбан и календари живут плотно — им нужна вся ширина. */}
+        <div className="page-enter mx-auto max-w-[1600px] px-4 pb-24 pt-5 sm:px-6 md:pb-8 lg:px-8 lg:py-8">
+          {/* ⚠️ Полосы-напоминания наверху страниц больше нет. Она висела на
+              КАЖДОМ экране и забирала первый экран у работы; само напоминание
+              никуда не делось — точка на аватарке и подсвеченный пункт «Включить
+              вход по коду» в меню профиля. */}
           {children}
         </div>
       </main>

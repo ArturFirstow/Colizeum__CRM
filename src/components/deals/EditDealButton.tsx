@@ -6,6 +6,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { NetAmountInput } from "@/components/ui/NetAmountInput";
 import { apiFetch } from "@/lib/client";
 import { URGENCIES } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Deal = {
   id: string;
@@ -163,7 +164,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
             </div>
             <div>
               <label className="label">Дата запуска</label>
-              <input className="input" type="date" value={f.launchDate} onChange={(e) => set("launchDate", e.target.value)} />
+              <DateInput className="input" value={f.launchDate} onChange={(v) => set("launchDate", v)} />
             </div>
           </div>
           <div>
@@ -177,7 +178,7 @@ export function EditDealButton({ deal }: { deal: Deal }) {
             </div>
             <div>
               <label className="label">Дата следующего шага</label>
-              <input className="input" type="date" value={f.nextStepDate} onChange={(e) => set("nextStepDate", e.target.value)} />
+              <DateInput className="input" value={f.nextStepDate} onChange={(v) => set("nextStepDate", v)} />
             </div>
           </div>
           <div>

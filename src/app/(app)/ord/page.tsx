@@ -39,7 +39,7 @@ export default async function OrdPage() {
         <EmptyState icon="❖" title="Маркировок нет" hint="ЕРИД добавляются в карточке сделки." />
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="border-b border-ink-800 text-left text-xs uppercase tracking-wide text-ink-500">
                 <th className="px-4 py-3 font-medium">Сделка</th>
@@ -87,7 +87,10 @@ export default async function OrdPage() {
                       <span className="text-xs text-ink-500">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  {/* ⚠️ Колонка действий сжималась и обрезалась правым краем
+                      карточки: кнопки было видно наполовину. Фиксированная
+                      ширина + запрет переноса — таблица лучше прокрутится. */}
+                  <td className="w-28 whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <EditOrdButton ord={m} />
                       <OrdRowActions ord={m} />

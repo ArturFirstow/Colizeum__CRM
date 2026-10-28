@@ -42,7 +42,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[]; leadershipOnly?: boo
       { href: "/worksheet", label: "Рабочий лист", icon: "▤", hint: "Дела по клиентам на неделю", track: "Ads" },
       { href: "/deals", label: "Сделки", icon: "⑂", hint: "Воронка от лида до закрытия", track: "Ads" },
       { href: "/messenger", label: "Мессенджер", icon: "✉", hint: "Чат отдела и личные сообщения" },
-      { href: "/assistant", label: "Напарник ИИ", icon: "✦", hint: "Спросить про клиентов и сделки" },
+      { href: "/assistant", label: "ИИ-ассистент", icon: "✦", hint: "Спросить про клиентов и сделки" },
       { href: "/journal", label: "Дневник", icon: "✎", hint: "Итоги дня и заметки" },
     ],
   },

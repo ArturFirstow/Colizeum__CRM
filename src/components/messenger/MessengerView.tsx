@@ -293,7 +293,7 @@ export function MessengerView({
                   )}
                   {!active.isGeneral && !active.isDm && (
                     <button
-                      className="btn-icon h-8 w-8 border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400"
                       title="Удалить канал"
                       onClick={() => {
                         if (confirm(`Удалить канал «${active.name}» со всеми сообщениями?`)) deleteChannel(active.id);

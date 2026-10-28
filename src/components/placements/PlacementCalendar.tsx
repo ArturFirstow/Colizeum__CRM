@@ -6,6 +6,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { PLACEMENT_STATUSES, PLACEMENT_SLOTS, PLACEMENT_SLOT_GROUPS } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Placement = {
   id: string;
@@ -132,12 +133,12 @@ export function PlacementCalendar({
   return (
     <section className="card p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-ink-50">Календарь размещений</h2>
-          <p className="mt-0.5 text-xs text-ink-500">
-            Июль 2026 — июль 2027 · перетаскивайте полосы мышкой по датам и слотам · клик — правка
-          </p>
-        </div>
+        {/* ⚠️ Заголовок карточки убран: он слово в слово повторял название
+            страницы, и два одинаковых заголовка подряд съедали первый экран.
+            Осталась строка-подсказка, как пользоваться календарём. */}
+        <p className="text-xs text-ink-500">
+          Июль 2026 — июль 2027 · перетаскивайте полосы мышкой по датам и слотам · клик — правка
+        </p>
         <button className="btn btn-primary btn-sm" onClick={() => setAddOpen(true)}>
           + Бронь
         </button>
@@ -342,11 +343,11 @@ function PlacementModal({
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="label">Начало *</label>
-            <input className="input" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} required />
+            <DateInput className="input" value={f.startDate} onChange={(v) => set("startDate", v)} required />
           </div>
           <div>
             <label className="label">Конец *</label>
-            <input className="input" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} required />
+            <DateInput className="input" value={f.endDate} onChange={(v) => set("endDate", v)} required />
           </div>
           <div>
             <label className="label">Статус</label>
@@ -431,11 +432,11 @@ function EditPlacementModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Начало</label>
-            <input className="input" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} />
+            <DateInput className="input" value={f.startDate} onChange={(v) => set("startDate", v)} />
           </div>
           <div>
             <label className="label">Конец</label>
-            <input className="input" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} />
+            <DateInput className="input" value={f.endDate} onChange={(v) => set("endDate", v)} />
           </div>
         </div>
         <div>

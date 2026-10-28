@@ -42,7 +42,15 @@ export function DeleteButton({
     }
   }
 
-  // Корзина считывается сразу: красный акцент уже в покое, ярче — при наведении (ТЗ р.2, п.0).
+  // ⚠️ Корзина БОЛЬШЕ НЕ КРАСНАЯ В ПОКОЕ. Прежний вид (красная рамка + красная
+  // заливка) делал удаление самым ярким элементом каждого списка: на доске
+  // задач корзина читалась громче названия задачи. Удаление нужно — материалы
+  // устаревают, данные вносят с ошибкой, — но это не главное действие строки.
+  //
+  // Правило на весь сервис: в покое — нейтральная серая иконка, красной она
+  // становится ТОЛЬКО под курсором (и при фокусе с клавиатуры), то есть ровно
+  // в тот момент, когда человек на неё нацелился. Кнопка при этом видна всегда:
+  // прятать её до наведения уже пробовали — невидимую кнопку не находят.
   const trigger =
     variant === "icon" ? (
       <button
@@ -55,7 +63,7 @@ export function DeleteButton({
         aria-label="Удалить"
         className={
           className ??
-          "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
+          "inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400 focus-visible:bg-red-500/10 focus-visible:text-red-400"
         }
       >
         <Trash2 size={15} strokeWidth={2.2} />
@@ -87,10 +95,11 @@ export function DeleteButton({
   return (
     <>
       {trigger}
-      <Modal open={open} onClose={() => setOpen(false)} title="Удалить?" size="sm">
+      <Modal open={open} onClose={() => setOpen(false)} title={`Удалить ${what}?`} size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-ink-200">
-            Удалить {what}? Это действие нельзя отменить.
+          <p className="text-sm text-ink-300">
+            Запись исчезнет из сервиса. Отменить это нельзя — если сомневаетесь, лучше закройте
+            окно.
           </p>
           <FormError message={error} />
           <div className="flex justify-end gap-2">

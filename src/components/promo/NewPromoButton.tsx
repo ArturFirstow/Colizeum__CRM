@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { PROMO_MECHANICS, MONETIZATIONS } from "@/lib/enums";
+import { DateInput } from "@/components/ui/DateInput";
 
 type Adv = { id: string; nameRu: string };
 
@@ -118,11 +119,11 @@ export function NewPromoButton({ advertisers }: { advertisers: Adv[] }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Действует с</label>
-              <input className="input" type="date" value={f.validFrom} onChange={(e) => set("validFrom", e.target.value)} />
+              <DateInput className="input" value={f.validFrom} onChange={(v) => set("validFrom", v)} />
             </div>
             <div>
               <label className="label">по</label>
-              <input className="input" type="date" value={f.validTo} onChange={(e) => set("validTo", e.target.value)} />
+              <DateInput className="input" value={f.validTo} onChange={(v) => set("validTo", v)} />
             </div>
           </div>
           <div>

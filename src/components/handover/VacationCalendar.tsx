@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { apiFetch } from "@/lib/client";
 import { ABSENCE_KINDS, type AbsenceKind } from "@/lib/enums";
 import { ABSENCE_BAR } from "@/lib/absence";
+import { DateInput } from "@/components/ui/DateInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Календарь отпусков.
@@ -513,21 +514,19 @@ function AbsenceModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Первый день *</label>
-            <input
+            <DateInput
               className="input"
-              type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(v) => setStartDate(v)}
               required
             />
           </div>
           <div>
             <label className="label">Последний день *</label>
-            <input
+            <DateInput
               className="input"
-              type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(v) => setEndDate(v)}
               required
             />
           </div>
