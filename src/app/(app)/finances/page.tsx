@@ -6,8 +6,8 @@ import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { PaymentCalendar } from "@/components/finances/PaymentCalendar";
 import { QuickAdd } from "@/components/deals/QuickAdd";
 import { formatMoney, formatDate, netOfVat } from "@/lib/format";
-import { sumMoney, toGross } from "@/components/ui/Money";
-import { BUDGET_HINT, BUDGET_LABEL, budgetRows, isActiveForBudget } from "@/lib/budget";
+import { sumMoney, toGross, toNet } from "@/components/ui/Money";
+import { BUDGET_HINT, BUDGET_LABEL, budgetRows, dealBudgetAmount, isActiveForBudget } from "@/lib/budget";
 import { ORG } from "@/lib/org";
 import { CLOSING_KINDS } from "@/lib/enums";
 
@@ -181,6 +181,14 @@ export default async function FinancesPage() {
         <PaymentCalendar
           advertisers={advertisers}
           payments={plannedPayments}
+          // Сделки с ЧИСТОЙ суммой договора: окно «Разложить оплату» считает
+          // по ним остаток, а суммы плановых платежей тоже лежат чистыми.
+          deals={deals.filter(isActiveForBudget).map((d) => ({
+            id: d.id,
+            title: d.title,
+            advertiserId: d.advertiserId,
+            budgetNet: toNet(dealBudgetAmount(d) ?? 0, d.contractDate, d.vatIncluded),
+          }))}
           budgets={Object.fromEntries(byClient.map((r) => [r.id, r.contract]))}
         />
       </div>

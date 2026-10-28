@@ -55,7 +55,7 @@ export function DeleteButton({
         aria-label="Удалить"
         className={
           className ??
-          "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
+          "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
         }
       >
         <Trash2 size={15} strokeWidth={2.2} />
@@ -67,7 +67,7 @@ export function DeleteButton({
           e.stopPropagation();
           setOpen(true);
         }}
-        className={className ?? "inline-flex items-center gap-1 text-xs font-medium text-red-400 transition hover:text-red-300"}
+        className={className ?? "inline-flex items-center gap-1.5 text-sm font-medium text-red-400 transition hover:text-red-300"}
       >
         <Trash2 size={13} strokeWidth={2.2} /> Удалить
       </button>

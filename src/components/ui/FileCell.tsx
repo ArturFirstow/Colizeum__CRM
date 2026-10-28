@@ -114,30 +114,30 @@ export function FileCell({
           {files.map((f) => (
             <div
               key={f.id}
-              className="group flex items-center gap-2 rounded-lg bg-ink-900/60 px-2.5 py-1.5 text-xs ring-1 ring-inset ring-ink-800"
+              className="group flex items-center gap-2 rounded-lg bg-ink-900/60 px-3 py-2 text-sm ring-1 ring-inset ring-ink-800"
             >
-              <Paperclip size={12} className="shrink-0 text-brand/70" />
+              <Paperclip size={14} className="shrink-0 text-brand/70" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-ink-100">{f.title}</span>
-                <span className="block truncate text-[10px] text-ink-500">
+                <span className="block truncate text-xs text-ink-500">
                   {f.fileName} · {formatBytes(f.sizeBytes)}
                   {f.uploadedByName ? ` · ${f.uploadedByName}` : ""}
                 </span>
               </span>
               <a
                 href={`/api/files/${f.id}`}
-                className="shrink-0 rounded-md p-1 text-ink-400 hover:text-brand"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-400 transition hover:bg-ink-800 hover:text-brand"
                 title="Скачать"
               >
-                <Download size={13} />
+                <Download size={16} />
               </a>
               <button
                 onClick={() => remove(f)}
                 disabled={busy}
-                className="shrink-0 rounded-md p-1 text-ink-600 opacity-0 transition group-hover:opacity-100 hover:text-red-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-600 transition hover:bg-ink-800 hover:text-red-400"
                 title="Удалить"
               >
-                <Trash2 size={13} />
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
@@ -148,11 +148,11 @@ export function FileCell({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className={`flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 text-xs transition ${
-          dragOver ? "border-brand/60 text-brand" : "border-ink-700 text-ink-500 hover:border-brand/40 hover:text-brand-200"
-        } ${compact ? "py-1.5" : "py-2.5"}`}
+        className={`flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 text-sm transition ${
+          dragOver ? "border-brand/60 text-brand" : "border-ink-700 text-ink-400 hover:border-brand/40 hover:text-brand-200"
+        } ${compact ? "py-2.5" : "py-3"}`}
       >
-        <Upload size={13} /> {busy ? "Загружаю…" : label}
+        <Upload size={15} /> {busy ? "Загружаю…" : label}
       </button>
       <input ref={inputRef} type="file" multiple hidden onChange={(e) => upload(e.target.files)} />
 

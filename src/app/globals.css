@@ -76,17 +76,21 @@
     background: linear-gradient(90deg, transparent, rgba(252, 223, 59, 0.22), transparent);
   }
   /* «Кинетика»: карточки пружинят к курсору */
-  /* ⚠️ Карточки БОЛЬШЕ НЕ ПРЫГАЮТ. Раньше при наведении карточка поднималась
-     на 3 px, получала жёлтую кромку и тень. На одной карточке это красиво, а
-     на плотной странице (двадцать карточек подряд) превращается в рябь:
-     курсор идёт по списку — экран шевелится.
-     Осталось то, что действительно нужно: подсказка «сюда можно нажать» —
-     чуть светлее фон и граница. */
+  /* Карточка откликается на курсор — но СВЕТОМ, а не движением.
+     Подъём на 3 px заставлял список из двадцати карточек дёргаться под
+     курсором; подсветка же читается сразу и ничего не сдвигает.
+     Остаётся фирменная жёлтая кромка, мягкая тень и чуть более светлый фон. */
   .card-hover {
     transition:
       border-color 0.2s ease,
-      background-color 0.2s ease;
+      background-color 0.2s ease,
+      box-shadow 0.25s ease;
     @apply hover:border-ink-600 hover:bg-ink-800;
+  }
+  .card-hover:hover {
+    box-shadow:
+      0 0 0 1px rgba(252, 223, 59, 0.2),
+      0 12px 32px -20px rgba(0, 0, 0, 0.7);
   }
   .card-hover:active {
     transform: scale(0.997);
@@ -96,8 +100,11 @@
   }
 
   /* Кнопки: нажатие ощущается физически */
+  /* Размеры кнопок подняты по замечанию «мелкие и неочевидные»:
+     обычная кнопка ≈40 px в высоту, маленькая ≈34, значок — 40×40.
+     Это не косметика: в мелкую кнопку промахиваются мышью и пальцем. */
   .btn {
-    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
       focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60
       disabled:cursor-not-allowed disabled:opacity-50;
     transition:
@@ -135,15 +142,18 @@
   .btn-ghost {
     @apply border border-ink-700 bg-ink-800/60 text-ink-100 hover:bg-ink-700 hover:border-ink-600;
   }
+  .btn-ghost:hover:not(:disabled) {
+    box-shadow: 0 0 0 1px rgba(252, 223, 59, 0.18);
+  }
   .btn-danger {
     @apply border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20;
   }
   .btn-sm {
-    @apply px-3 py-1.5 text-xs rounded-lg;
+    @apply px-3.5 py-2 text-sm rounded-lg;
   }
   .btn-icon {
-    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ink-700
-      bg-ink-800/60 text-ink-200 transition hover:bg-ink-700;
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg border border-ink-700
+      bg-ink-800/60 text-ink-200 transition hover:bg-ink-700 hover:border-ink-600;
   }
 
   /* Поля ввода */
