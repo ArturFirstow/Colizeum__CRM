@@ -168,15 +168,17 @@ export function LeadsTable({
         />
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-ink-700/70 text-left text-xs uppercase tracking-wide text-ink-400">
-                <th className="px-4 py-3 font-medium">Дата</th>
-                <th className="px-4 py-3 font-medium">Кто обратился</th>
-                <th className="px-4 py-3 font-medium">Контакт</th>
+                {/* Имя и контакт — одна колонка: раньше они делили ширину
+                    с текстом обращения, из-за чего телефон переносился на две
+                    строки, а почта обрывалась посреди слова. */}
+                <th className="w-[112px] px-4 py-3 font-medium">Дата</th>
+                <th className="w-[230px] px-4 py-3 font-medium">Кто обратился</th>
                 <th className="px-4 py-3 font-medium">Суть заявки</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
-                <th className="px-4 py-3 font-medium">Ответственный</th>
+                <th className="w-[150px] px-4 py-3 font-medium">Статус</th>
+                <th className="w-[190px] px-4 py-3 font-medium">Ответственный</th>
               </tr>
             </thead>
             <tbody>
@@ -195,11 +197,18 @@ export function LeadsTable({
                     <td className="px-4 py-3">
                       <div className="font-medium text-ink-50">{l.name || "—"}</div>
                       {l.company && <div className="mt-0.5 text-xs text-ink-400">{l.company}</div>}
+                      {l.contact && (
+                        // Телефон не переносим, почту обрезаем с подсказкой:
+                        // и то и другое читают целиком, а не по слогам.
+                        <div
+                          className="mt-1 truncate whitespace-nowrap text-xs text-ink-300"
+                          title={l.contact}
+                        >
+                          {l.contact}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-ink-200">
-                      <span className="break-all">{l.contact || "—"}</span>
-                    </td>
-                    <td className="max-w-md px-4 py-3 text-ink-200">
                       {l.message ? (
                         <>
                           <div className={open ? "whitespace-pre-wrap" : "line-clamp-2"}>{l.message}</div>

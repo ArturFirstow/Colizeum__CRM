@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { TypeBadge } from "@/components/ui/primitives";
+import { plural } from "@/lib/format";
 import { apiFetch } from "@/lib/client";
-import { DeleteButton } from "@/components/ui/DeleteButton";
 import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserButton";
 import { ExportButton } from "@/components/advertisers/ExportButton";
 import { ADVERTISER_TYPES } from "@/lib/enums";
@@ -119,23 +119,41 @@ export function AdvertisersView({ initial }: { initial: Advertiser[] }) {
                       <div className="mt-0.5 truncate text-xs text-ink-400">{a.legalEntity}</div>
                     )}
                   </div>
-                  <TypeBadge type={a.type} />
+                  {/* Бейдж типа — только когда тип ОТЛИЧАЕТСЯ от обычного:
+                      «Рекламодатель» стоял на каждой карточке подряд и не
+                      различал ничего, а место занимал. */}
+                  {a.type !== "Рекламодатель" && <TypeBadge type={a.type} />}
                 </div>
-                {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику. */}
+                {/* На «лицевой» стороне — только суть; детали раскрываются в карточке по клику.
+                    Нули не показываем: «0 сделок · 0 док. · 0» — это три цифры
+                    о том, что смотреть нечего. */}
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-800 pt-3 text-xs text-ink-400">
-                  <span>⑂ {a._count.deals} сделок</span>
-                  <span>❐ {a._count.documents} док.</span>
-                  <span>☎ {a._count.contacts}</span>
+                  {a._count.deals > 0 && (
+                    <span>
+                      ⑂ {a._count.deals} {plural(a._count.deals, "сделка", "сделки", "сделок")}
+                    </span>
+                  )}
+                  {a._count.documents > 0 && (
+                    <span>
+                      ❐ {a._count.documents} {plural(a._count.documents, "документ", "документа", "документов")}
+                    </span>
+                  )}
+                  {a._count.contacts > 0 && (
+                    <span>
+                      ☎ {a._count.contacts} {plural(a._count.contacts, "контакт", "контакта", "контактов")}
+                    </span>
+                  )}
+                  {a._count.deals + a._count.documents + a._count.contacts === 0 && (
+                    <span className="text-ink-500">пока пусто</span>
+                  )}
                 </div>
               </Link>
-              {/* Правка и удаление — прямо в списке, без захода в карточку */}
+              {/* ⚠️ «Удалить» с лицевой стороны списка убрано: шесть карточек
+                  на экране = шесть кнопок удаления рядом с обычной правкой.
+                  Удаление живёт в карточке клиента, под «Ещё» — там человек
+                  видит, что именно сносит. */}
               <div className="mt-auto flex items-center justify-end gap-4 border-t border-ink-800 pt-2.5">
                 <EditAdvertiserButton advertiser={a} variant="text" />
-                <DeleteButton
-                  endpoint={`/api/advertisers/${a.id}`}
-                  what={`клиента «${a.nameRu}» со всеми сделками и документами`}
-                  variant="text"
-                />
               </div>
             </div>
           ))}

@@ -10,6 +10,8 @@ import { EditAdvertiserButton } from "@/components/advertisers/EditAdvertiserBut
 import { AsproLink } from "@/components/ui/AsproLink";
 import { AgencyClients } from "@/components/advertisers/AgencyClients";
 import { ArchiveButton } from "@/components/advertisers/ArchiveButton";
+import { MoreMenu } from "@/components/ui/MoreMenu";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 import { Creatives } from "@/components/advertisers/Creatives";
 import { ClientTimeline } from "@/components/advertisers/ClientTimeline";
 import { buildClientTimeline } from "@/lib/services/client-timeline";
@@ -121,8 +123,19 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
             <AiSummaryButton advertiserId={advertiser.id} />
             <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
-            {/* «Удаление» карточки = перемещение в Архив (v2, п.1.2), данные не теряются. */}
-            <ArchiveButton advertiserId={advertiser.id} archived={advertiser.archived} />
+            {/* Редкое и опасное — под «Ещё». «Удаление» карточки обычно = Архив
+                (v2, п.1.2), данные при этом не теряются; насовсем — отдельной
+                красной кнопкой там же, и только из карточки: в списке она
+                стояла на каждой плитке рядом с правкой. */}
+            <MoreMenu>
+              <ArchiveButton advertiserId={advertiser.id} archived={advertiser.archived} />
+              <DeleteButton
+                endpoint={`/api/advertisers/${advertiser.id}`}
+                what={`клиента «${advertiser.nameRu}» со всеми сделками и документами`}
+                redirectTo="/advertisers"
+                variant="button"
+              />
+            </MoreMenu>
           </>
         }
       />

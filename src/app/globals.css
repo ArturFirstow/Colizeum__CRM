@@ -76,22 +76,20 @@
     background: linear-gradient(90deg, transparent, rgba(252, 223, 59, 0.22), transparent);
   }
   /* «Кинетика»: карточки пружинят к курсору */
+  /* ⚠️ Карточки БОЛЬШЕ НЕ ПРЫГАЮТ. Раньше при наведении карточка поднималась
+     на 3 px, получала жёлтую кромку и тень. На одной карточке это красиво, а
+     на плотной странице (двадцать карточек подряд) превращается в рябь:
+     курсор идёт по списку — экран шевелится.
+     Осталось то, что действительно нужно: подсказка «сюда можно нажать» —
+     чуть светлее фон и граница. */
   .card-hover {
     transition:
-      transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-      border-color 0.25s ease,
-      background-color 0.25s ease,
-      box-shadow 0.3s ease;
+      border-color 0.2s ease,
+      background-color 0.2s ease;
     @apply hover:border-ink-600 hover:bg-ink-800;
   }
-  .card-hover:hover {
-    transform: translateY(-3px);
-    box-shadow:
-      0 18px 40px -18px rgba(0, 0, 0, 0.75),
-      0 0 0 1px rgba(252, 223, 59, 0.14);
-  }
   .card-hover:active {
-    transform: translateY(-1px) scale(0.995);
+    transform: scale(0.997);
   }
   .surface {
     @apply rounded-xl border border-ink-700/60 bg-ink-900/60;
@@ -186,16 +184,14 @@
   }
 
   /* Навигация в сайдбаре */
+  /* Пункт меню при наведении больше не съезжает вбок и не раздувает значок:
+     курсор по списку разделов — и меню шевелилось всё целиком. */
   .nav-link {
     @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-300
       hover:bg-ink-800 hover:text-ink-100;
     transition:
       background-color 0.2s ease,
-      color 0.2s ease,
-      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .nav-link:hover {
-    transform: translateX(2px);
+      color 0.2s ease;
   }
   .nav-link-active {
     @apply text-brand;
@@ -209,10 +205,10 @@
     animation: nav-mark 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
   .nav-link .nav-icon {
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: opacity 0.2s ease;
   }
   .nav-link:hover .nav-icon {
-    transform: scale(1.18);
+    opacity: 1;
   }
 
   .stat-chip {

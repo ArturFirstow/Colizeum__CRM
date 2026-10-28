@@ -14,6 +14,9 @@ import { UserMenu } from "@/components/UserMenu";
 import { TwoFactorPanel } from "@/components/security/TwoFactorButton";
 import { LEGAL_DOCS } from "@/lib/legal";
 
+// Группы меню, свёрнутые при первом входе.
+const DEFAULT_COLLAPSED = ["Соответствие"];
+
 // Короткие подписи правовых документов для низа меню. Полные названия
 // («Какие данные обрабатываются и как защищены») писались в три строки.
 const LEGAL_TINY: Record<string, string> = {
@@ -36,6 +39,30 @@ export function Sidebar({
   // Счётчик-сигнал: увеличиваем — открывается окно смены пароля из меню.
   const [passwordSignal, setPasswordSignal] = useState(0);
   const [twoFactorSignal, setTwoFactorSignal] = useState(0);
+  // Свёрнутые группы меню. «Соответствие» (журнал действий, запросы по ПДн,
+  // сроки хранения) рядовому менеджеру не нужно каждый день — три пункта
+  // висели в меню постоянно. Теперь группа свёрнута, а разворачивается
+  // кликом по заголовку; выбор запоминается в браузере.
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("colizeum_nav_collapsed");
+      setCollapsed(saved ? (JSON.parse(saved) as string[]) : DEFAULT_COLLAPSED);
+    } catch {
+      setCollapsed(DEFAULT_COLLAPSED);
+    }
+  }, []);
+  function toggleGroup(title: string) {
+    setCollapsed((prev) => {
+      const next = prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title];
+      try {
+        localStorage.setItem("colizeum_nav_collapsed", JSON.stringify(next));
+      } catch {
+        // приватный режим — свернём только до перезагрузки
+      }
+      return next;
+    });
+  }
 
   // Кнопка «Ещё» в нижней панели просит открыть эту же шторку.
   useEffect(() => {
@@ -84,12 +111,23 @@ export function Sidebar({
 
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-      {groups.map((group) => (
+      {groups.map((group) => {
+        // Группу с открытой страницей не сворачиваем: иначе человек не видит,
+        // где он находится.
+        const hasActive = group.items.some((it) => isActive(it.href));
+        const isCollapsed = collapsed.includes(group.title) && !hasActive;
+        return (
         <div key={group.title}>
-          <div className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">
-            {group.title}
-          </div>
-          <div className="space-y-0.5">
+          <button
+            type="button"
+            onClick={() => toggleGroup(group.title)}
+            className="mb-1.5 flex w-full items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500 transition hover:text-ink-300"
+            title={isCollapsed ? "Показать раздел" : "Свернуть раздел"}
+          >
+            <span>{group.title}</span>
+            <span className="text-[9px] opacity-70">{isCollapsed ? "▸" : "▾"}</span>
+          </button>
+          <div className={`space-y-0.5 ${isCollapsed ? "hidden" : ""}`}>
             {group.items.map((item) => (
               <Link
                 key={item.href}
@@ -106,7 +144,8 @@ export function Sidebar({
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
     </nav>
   );
 
