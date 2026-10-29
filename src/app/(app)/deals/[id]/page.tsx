@@ -12,7 +12,7 @@ import { QuickAdd } from "@/components/deals/QuickAdd";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { BlockerToggle } from "@/components/deals/BlockerToggle";
 import { DeleteButton } from "@/components/ui/DeleteButton";
-import { AiDraftDsButton } from "@/components/ai/AiButtons";
+import { AiMenu } from "@/components/ai/AiMenu";
 import { RequestButtons } from "@/components/deals/RequestButtons";
 import { MoreMenu } from "@/components/ui/MoreMenu";
 import { PlacementButton } from "@/components/deals/PlacementButton";
@@ -95,9 +95,15 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 потом макеты) и правка. Редкое и опасное — под «Ещё»: шесть
                 равнозначных кнопок в два ряда не читались вовсе. */}
             <RequestButtons deal={deal} stage={deal.stage} />
+            {/* ИИ — отдельной кнопкой, а не пунктом под «Ещё»: про него
+                спрашивали «а где это?», потому что способность пряталась. */}
+            <AiMenu
+              actions={["draft-ds"]}
+              dealId={deal.id}
+              askContext={`по сделке «${deal.title}»`}
+            />
             <EditDealButton deal={deal} />
             <MoreMenu>
-              <AiDraftDsButton dealId={deal.id} />
               <AsproLink url={deal.asproUrl} />
               <DeleteButton
                 endpoint={`/api/deals/${deal.id}`}
@@ -162,28 +168,50 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Основное */}
         <div className="min-w-0 space-y-6 lg:col-span-2">
-          {/* Документы */}
-          <Section
-            title="Документы"
-            action={
+          {/* ⚠️ Три зоны загрузки подряд («прикрепить документ», «прикрепить
+              медиаплан», «прикрепить счёт») собраны в ОДИН блок с корзинами —
+              как в «Документах». Для человека это одно действие: приложить
+              файл; куда он ляжет, решает корзина, а не три разные карточки. */}
+          <section className="card p-5">
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-ink-50">Файлы сделки</h2>
+                <p className="mt-0.5 text-xs text-ink-500">
+                  Перетащите в нужную корзину — файл будет виден и в карточке клиента, и в
+                  «Документах».
+                </p>
+              </div>
               <Link href={`/documents?advertiser=${deal.advertiserId}`} className="btn btn-ghost btn-sm">
                 Хранилище →
               </Link>
-            }
-          >
-            <div className="mb-3">
-              <FileCell
-                ownerType="deal"
-                ownerId={deal.id}
-                kind="Документ"
-                advertiserId={deal.advertiserId}
-                dealId={deal.id}
-                label="Прикрепить документ"
-              />
             </div>
-            {deal.documents.length === 0 ? (
-              <EmptyState compact icon="❐" title="Документов с версиями нет" hint="файлы выше видны и в «Документах» клиента" />
-            ) : (
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { kind: "Документ", title: "Документы", hint: "договор, приложение, ДС" },
+                { kind: "Медиаплан", title: "Медиапланы и КП", hint: "xlsx, pdf" },
+                { kind: "Счёт", title: "Счета и платёжки", hint: "счёт, ПП, УПД" },
+              ].map((b) => (
+                <div key={b.kind} className="min-w-0 rounded-2xl border border-ink-800 bg-ink-900/30 p-3">
+                  <div className="truncate text-sm font-semibold text-ink-200">{b.title}</div>
+                  <div className="mb-2 truncate text-xs text-ink-600">{b.hint}</div>
+                  <FileCell
+                    ownerType="deal"
+                    ownerId={deal.id}
+                    kind={b.kind}
+                    advertiserId={deal.advertiserId}
+                    dealId={deal.id}
+                    label="Перетащите или нажмите"
+                    compact
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Документы с версиями показываем, только когда они есть: пустая
+              карточка-заготовка ничего не сообщала. */}
+          {deal.documents.length > 0 && (
+            <Section title="Документы с версиями">
               <div className="grid gap-2 sm:grid-cols-2">
                 {deal.documents.map((d) => (
                   <div key={d.id} className="rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3">
@@ -195,8 +223,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   </div>
                 ))}
               </div>
-            )}
-          </Section>
+            </Section>
+          )}
           {/* Медиапланы */}
           <Section
             title="Медиапланы"
@@ -215,18 +243,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
-            <div className="mb-3">
-              <FileCell
-                ownerType="deal"
-                ownerId={deal.id}
-                kind="Медиаплан"
-                advertiserId={deal.advertiserId}
-                dealId={deal.id}
-                label="Прикрепить медиаплан (xlsx, pdf)"
-              />
-            </div>
             {deal.mediaPlans.length === 0 ? (
-              <EmptyState compact icon="📊" title="Медиапланов нет" hint="можно просто приложить файл выше" />
+              <p className="text-sm text-ink-500">
+                Медиапланов нет — файл можно просто положить в корзину «Медиапланы и КП» выше.
+              </p>
             ) : (
               <div className="space-y-3">
                 {deal.mediaPlans.map((mp) => (
@@ -279,18 +299,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
-            <div className="mb-3">
-              <FileCell
-                ownerType="deal"
-                ownerId={deal.id}
-                kind="Счёт"
-                advertiserId={deal.advertiserId}
-                dealId={deal.id}
-                label="Прикрепить счёт или платёжку"
-              />
-            </div>
             {deal.invoices.length === 0 ? (
-              <EmptyState compact icon="₽" title="Счетов нет" hint="можно просто приложить файл выше" />
+              <p className="text-sm text-ink-500">
+                Счетов нет — файл можно положить в корзину «Счета и платёжки» выше.
+              </p>
             ) : (
               <div className="space-y-3">
                 {deal.invoices.map((inv) => (

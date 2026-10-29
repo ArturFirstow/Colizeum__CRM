@@ -17,7 +17,7 @@ import { ClientTimeline } from "@/components/advertisers/ClientTimeline";
 import { buildClientTimeline } from "@/lib/services/client-timeline";
 import { writeAudit } from "@/lib/audit";
 import { NewDealButton } from "@/components/deals/NewDealButton";
-import { AiSummaryButton } from "@/components/ai/AiButtons";
+import { AiMenu } from "@/components/ai/AiMenu";
 import { formatMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +120,15 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
             <TypeBadge type={advertiser.type} />
             {/* Ссылка на процесс в Aspro — рядом с кнопками карточки (И-5). */}
             <AsproLink url={advertiser.asproUrl} />
-            <AiSummaryButton advertiserId={advertiser.id} />
+            {/* Одна кнопка ИИ вместо двух разных: «саммари за месяц» и
+                «пересказать историю» — это один и тот же вопрос к ИИ, просто
+                с разной глубиной. Вторая кнопка жила внутри хронологии, и
+                найти её можно было только пролистав карточку до конца. */}
+            <AiMenu
+              actions={["client-summary", "client-timeline"]}
+              advertiserId={advertiser.id}
+              askContext={`по клиенту «${advertiser.nameRu}»`}
+            />
             <EditAdvertiserButton advertiser={advertiser} />
             <NewDealButton presetAdvertiserId={advertiser.id} />
             {/* Редкое и опасное — под «Ещё». «Удаление» карточки обычно = Архив
@@ -319,7 +327,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           <Creatives advertiserId={advertiser.id} creatives={advertiser.creatives} />
 
           {/* 4. Хронология: всё, что было с клиентом, одной лентой */}
-          <ClientTimeline advertiserId={advertiser.id} events={timeline} />
+          <ClientTimeline events={timeline} />
         </div>
 
         {/* Реквизиты + контакты */}

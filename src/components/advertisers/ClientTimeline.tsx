@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { TIMELINE_KINDS, type TimelineEvent, type TimelineKind } from "@/lib/timeline";
-import { AiTimelineSummaryButton } from "@/components/ai/AiButtons";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Хронология по клиенту: одна лента вместо обхода пяти разделов.
@@ -28,10 +27,8 @@ const ACCENT: Record<TimelineKind, string> = {
 };
 
 export function ClientTimeline({
-  advertiserId,
   events,
 }: {
-  advertiserId: string;
   events: TimelineEvent[];
 }) {
   const [active, setActive] = useState<TimelineKind | null>(null);
@@ -74,7 +71,6 @@ export function ClientTimeline({
                 }`}
           </p>
         </div>
-        {events.length > 0 && <AiTimelineSummaryButton advertiserId={advertiserId} />}
       </div>
 
       {events.length > 0 && (
