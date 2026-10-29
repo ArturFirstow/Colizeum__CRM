@@ -288,7 +288,10 @@ export const SceneMoney: React.FC = () => {
   return (
     <AbsoluteFill>
       <Backdrop />
-      <Shot src="finances" from={0} dur={sec(10.6)} zoom={1.06} />
+      {/* ⚠️ Кадр держит ВЕРХ страницы: ниже на демо-данных висит жёлтое
+          предупреждение «разложено больше суммы договоров» — это нормальная
+          работа сверки, но в ролике читалось бы как ошибка сервиса. */}
+      <Shot src="finances" from={0} dur={sec(10.6)} zoom={1.38} origin="center 20%" />
       <AbsoluteFill style={{ ...center, justifyContent: "flex-start", paddingTop: 170 }}>
         <div
           style={{

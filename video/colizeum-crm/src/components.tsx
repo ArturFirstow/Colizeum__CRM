@@ -26,12 +26,16 @@ export function Shot({
   dur,
   zoom = 1.04,
   pan = 0,
+  origin = "center 38%",
   focus,
 }: {
   src: string;
   from: number;
   dur: number;
   zoom?: number;
+  /** Точка, вокруг которой идёт наезд. Ею же выбирается, какая часть
+      длинного экрана остаётся в кадре. */
+  origin?: string;
   /** Сдвиг по вертикали за сцену, px — «проезд» по длинной странице. */
   pan?: number;
   /** Рамка внимания: доля ширины/высоты кадра. */
@@ -54,7 +58,7 @@ export function Shot({
       <AbsoluteFill
         style={{
           transform: `scale(${scale * (0.96 + 0.04 * inP)}) translateY(${-pan * t}px)`,
-          transformOrigin: "center 38%",
+          transformOrigin: origin,
         }}
       >
         <Img src={staticFile(`shots/${src}.png`)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -266,7 +270,11 @@ export function Counter({
   );
 }
 
-/** Знак «ХО» из брендбука — маска с глазами. */
+/**
+ * Знак «ХО» из брендбука — ровно тот же SVG, что в сервисе
+ * (`src/components/Logo.tsx`). ⚠️ Не рисовать похожий от руки: знак должен
+ * совпадать с тем, что люди видят в интерфейсе, до пикселя.
+ */
 export function XoMark({ size = 220, from = 0 }: { size?: number; from?: number }) {
   const frame = useCurrentFrame();
   const p = interpolate(frame, [from, from + 22], [0, 1], {
@@ -278,13 +286,20 @@ export function XoMark({ size = 220, from = 0 }: { size?: number; from?: number 
     <svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
+      viewBox="0 0 48 48"
       style={{ opacity: p, transform: `scale(${0.9 + p * 0.1})` }}
     >
-      <circle cx="50" cy="50" r="48" fill={C.brand} />
-      <path d="M12 44 Q50 30 88 44 Q50 58 12 44 Z" fill="#111" opacity="0.92" />
-      <path d="M26 38 l10 10 M36 38 l-10 10" stroke={C.brand} strokeWidth="3.4" strokeLinecap="round" />
-      <circle cx="68" cy="43" r="6" fill="none" stroke={C.brand} strokeWidth="3.4" />
+      <defs>
+        <clipPath id="xo-face-video">
+          <circle cx="24" cy="24" r="22.5" />
+        </clipPath>
+      </defs>
+      <circle cx="24" cy="24" r="22.5" fill={C.brand} stroke="#141414" strokeWidth="1.4" />
+      <g clipPath="url(#xo-face-video)">
+        <path d="M0 14.6 H48 V30.8 H27 L24 27.9 L21 30.8 H0 Z" fill="#1A1A1A" />
+      </g>
+      <path d="M11 19.2 L18 26.2 M18 19.2 L11 26.2" stroke="#FFFFFF" strokeWidth="2.7" strokeLinecap="round" />
+      <circle cx="35" cy="22.7" r="5" fill="none" stroke="#FFFFFF" strokeWidth="2.7" />
     </svg>
   );
 }
@@ -325,7 +340,21 @@ export function Lower({
   const frame = useCurrentFrame();
   const s = rise(frame, from, 18, 26);
   return (
-    <div style={{ position: "absolute", left: 96, bottom: 92, maxWidth: 1180, ...s }}>
+    <>
+      {/* ⚠️ Градиент снизу обязателен: подпись ложится поверх интерфейса, а он
+          местами светлый — без подложки текст пропадает на полсекунды. */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 420,
+          background: "linear-gradient(to top, rgba(10,10,11,.92) 12%, rgba(10,10,11,0) 100%)",
+          opacity: s.opacity,
+        }}
+      />
+    <div style={{ position: "absolute", left: 110, bottom: 92, maxWidth: 1180, ...s }}>
       <div
         style={{
           ...display,
@@ -352,6 +381,7 @@ export function Lower({
         </div>
       )}
     </div>
+    </>
   );
 }
 
