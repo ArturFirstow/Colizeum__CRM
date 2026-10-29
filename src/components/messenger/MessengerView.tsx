@@ -385,7 +385,21 @@ function MessageList({
   }
 
   if (loading && messages.length === 0) {
-    return <div className="flex flex-1 items-center justify-center text-sm text-ink-500">Загрузка…</div>;
+    // ⚠️ Вместо слова «Загрузка…» — силуэт будущей переписки: человек видит,
+    // что сейчас появится, и не думает, что чат сломался.
+    return (
+      <div className="flex-1 space-y-4 p-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={`flex gap-2 ${i % 2 ? "flex-row-reverse" : ""}`}>
+            <div className="skeleton h-8 w-8 shrink-0 !rounded-full" />
+            <div className="space-y-1.5">
+              <div className="skeleton h-3 w-24" />
+              <div className="skeleton h-9" style={{ width: `${160 + i * 40}px` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
   if (messages.length === 0) {
     return (

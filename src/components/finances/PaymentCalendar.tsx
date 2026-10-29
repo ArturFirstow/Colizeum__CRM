@@ -11,6 +11,7 @@ import { toGross } from "@/components/ui/Money";
 import { NetAmountInput } from "@/components/ui/NetAmountInput";
 import { PaymentChart, type PaymentBar } from "@/components/finances/PaymentChart";
 import { compactMoney, currentMonth, monthLabel, monthRange, shiftMonthStr } from "@/lib/month";
+import { MonthInput } from "@/components/ui/MonthInput";
 
 type PP = {
   id: string;
@@ -629,13 +630,7 @@ function AddPaymentModal({
           </div>
           <div>
             <label className="label">Первый месяц *</label>
-            <input
-              className="input"
-              type="month"
-              value={startMonth}
-              onChange={(e) => setStartMonth(e.target.value)}
-              required
-            />
+            <MonthInput value={startMonth} onChange={setStartMonth} required />
           </div>
         </div>
 
@@ -708,10 +703,10 @@ function AddPaymentModal({
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-800">
               <div
-                className={`h-full rounded-full transition-[width] duration-300 ${
+                className={`h-full w-full rounded-full transition-transform duration-300 ease-out ${
                   remaining < -1 ? "bg-red-500" : fits ? "bg-emerald-500" : "bg-brand"
                 }`}
-                style={{ width: `${progress}%` }}
+                style={{ transform: `translateX(-${100 - progress}%)` }}
               />
             </div>
             {remaining > 0 && (
@@ -744,7 +739,7 @@ function AddPaymentModal({
         {/* Сами строки плана — правятся как в таблице. */}
         {rows.length > 0 && (
           <div className="rounded-xl border border-ink-800">
-            <div className="grid grid-cols-[8.75rem_1fr_1.4fr_2.5rem] gap-2 border-b border-ink-800 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-ink-500">
+            <div className="grid grid-cols-[11.5rem_1fr_1.4fr_2.5rem] gap-2 border-b border-ink-800 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-ink-500">
               <span>Месяц</span>
               <span>Сумма без НДС</span>
               <span>Подпись</span>
@@ -752,13 +747,8 @@ function AddPaymentModal({
             </div>
             <div className="divide-y divide-ink-800/70">
               {rows.map((r) => (
-                <div key={r.key} className="grid grid-cols-[8.75rem_1fr_1.4fr_2.5rem] items-center gap-2 px-3 py-2">
-                  <input
-                    className="input h-9 px-2 text-xs"
-                    type="month"
-                    value={r.month}
-                    onChange={(e) => patchRow(r.key, { month: e.target.value })}
-                  />
+                <div key={r.key} className="grid grid-cols-[11.5rem_1fr_1.4fr_2.5rem] items-center gap-2 px-3 py-2">
+                  <MonthInput compact value={r.month} onChange={(ym) => patchRow(r.key, { month: ym })} />
                   <div>
                     <input
                       className="input h-9 tabular-nums"

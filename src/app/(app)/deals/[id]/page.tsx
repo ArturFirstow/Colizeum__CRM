@@ -18,6 +18,7 @@ import { MoreMenu } from "@/components/ui/MoreMenu";
 import { PlacementButton } from "@/components/deals/PlacementButton";
 import { AsproLink } from "@/components/ui/AsproLink";
 import { formatMoney, formatDate } from "@/lib/format";
+import { RECURRING_NOTE } from "@/lib/ui-tokens";
 import {
   CLOSING_KINDS,
   CONTRACT_CONSTRUCTIONS,
@@ -600,7 +601,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                   <div key={o.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="badge badge-muted">{o.role}</span>
-                      {o.monthlyClosing && <span className="text-xs text-teal-300">акты ежемесячно</span>}
+                      {o.monthlyClosing && <span className={`text-xs ${RECURRING_NOTE}`}>акты ежемесячно</span>}
                     </div>
                     {o.erid && <div className="mt-1 font-mono text-xs text-ink-300">{o.erid}</div>}
                     {o.finalClient && <div className="text-xs text-ink-400">→ {o.finalClient}</div>}

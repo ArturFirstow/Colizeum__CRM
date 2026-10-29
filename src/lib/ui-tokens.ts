@@ -37,6 +37,52 @@ export const URGENCY_STYLES: Record<string, string> = {
   Разово: "bg-teal-500/15 text-teal-300 ring-teal-500/30",
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Семантические цвета, которые раньше писались прямо в компонентах.
+// ⚠️ Правило: цвет со СМЫСЛОМ живёт здесь, а не в классе на месте. Иначе при
+// смене палитры «у клиента» в задачах и «у клиента» на «Сегодня» разъедутся.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Сторона, на которой сейчас мяч: у нас или у клиента. */
+export const SIDE_STYLES = {
+  Клиент: {
+    column: "border-sky-500/25 bg-sky-500/[0.04]",
+    badge: "bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30",
+  },
+  Мы: {
+    column: "border-ink-700 bg-ink-900/40",
+    badge: "bg-ink-700/60 text-ink-200 ring-1 ring-inset ring-ink-600/50",
+  },
+} as const;
+
+export function sideStyle(side: string | null | undefined, part: "column" | "badge") {
+  return (side === "Клиент" ? SIDE_STYLES["Клиент"] : SIDE_STYLES["Мы"])[part];
+}
+
+/** Повторяющаяся пометка «акты закрываются ежемесячно» (ОРД). */
+export const RECURRING_NOTE = "text-teal-300";
+
+/** Статусы креатива — те же цвета, что у остальных состояний сервиса. */
+export const CREATIVE_STATUS_STYLES: Record<string, string> = {
+  "В работе": "border-sky-500/30 bg-sky-500/10 text-sky-200",
+  "На согласовании": "border-amber-500/30 bg-amber-500/10 text-amber-200",
+  Согласован: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+  Отклонён: "border-red-500/30 bg-red-500/10 text-red-200",
+};
+
+/** Полоса слева в хронологии клиента: тип события считывается без чтения. */
+export const TIMELINE_ACCENT: Record<string, string> = {
+  Сделка: "border-brand/60",
+  Встреча: "border-sky-400/50",
+  Статус: "border-ink-600",
+  Задача: "border-violet-400/50",
+  Документ: "border-emerald-400/50",
+  Деньги: "border-amber-400/60",
+  Размещение: "border-cyan-400/50",
+  ОРД: "border-fuchsia-400/50",
+  Запрос: "border-teal-400/50",
+};
+
 /** Полоса срочности слева на карточке сделки — цвет без текста. */
 export const URGENCY_BAR: Record<string, string> = {
   Максимальная: "bg-red-500",

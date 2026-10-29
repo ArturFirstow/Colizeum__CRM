@@ -19,7 +19,7 @@ const PRIORITY_BAR: Record<string, string> = {
   Обычный: "bg-transparent",
   Низкий: "bg-ink-700",
 };
-import { TASK_KIND_EMOJI, taskStatusStyle } from "@/lib/ui-tokens";
+import { TASK_KIND_EMOJI, sideStyle, taskStatusStyle } from "@/lib/ui-tokens";
 import { formatDate } from "@/lib/format";
 import { DateInput } from "@/components/ui/DateInput";
 
@@ -140,11 +140,9 @@ export function TasksView({
               e.preventDefault();
               moveTo(side.key);
             }}
-            className={`rounded-2xl border p-4 transition ${
-              side.key === "Клиент"
-                ? "border-sky-500/25 bg-sky-500/[0.04]"
-                : "border-ink-700 bg-ink-900/40"
-            } ${dragOverSide === side.key ? "outline outline-2 outline-brand/50" : ""}`}
+            className={`rounded-2xl border p-4 transition ${sideStyle(side.key, "column")} ${
+              dragOverSide === side.key ? "outline outline-2 outline-brand/50" : ""
+            }`}
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <div>

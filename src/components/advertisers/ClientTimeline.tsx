@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { TIMELINE_KINDS, type TimelineEvent, type TimelineKind } from "@/lib/timeline";
+import { TIMELINE_ACCENT } from "@/lib/ui-tokens";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Хронология по клиенту: одна лента вместо обхода пяти разделов.
@@ -14,17 +15,8 @@ import { TIMELINE_KINDS, type TimelineEvent, type TimelineKind } from "@/lib/tim
 const PAGE = 15;
 
 // Цвет полоски слева — чтобы тип события считывался, не читая текст.
-const ACCENT: Record<TimelineKind, string> = {
-  Сделка: "border-brand/60",
-  Встреча: "border-sky-400/50",
-  Статус: "border-ink-600",
-  Задача: "border-violet-400/50",
-  Документ: "border-emerald-400/50",
-  Деньги: "border-amber-400/60",
-  Размещение: "border-cyan-400/50",
-  ОРД: "border-fuchsia-400/50",
-  Запрос: "border-teal-400/50",
-};
+// Сам словарь живёт в ui-tokens.ts: эти же цвета нужны и в других местах.
+const ACCENT = TIMELINE_ACCENT as Record<TimelineKind, string>;
 
 export function ClientTimeline({
   events,

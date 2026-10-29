@@ -62,3 +62,19 @@ export function compactMoney(amount: number): string {
   if (a >= 1_000) return `${sign}${Math.round(a / 1000)} тыс`;
   return `${sign}${a}`;
 }
+
+/** Полные названия — для выпадающего списка, где «окт» читается хуже. */
+export const MONTHS_RU_FULL = [
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
+] as const;

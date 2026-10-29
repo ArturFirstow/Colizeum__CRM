@@ -329,8 +329,8 @@ function MonthMoneyCard({
           <div className="mt-4">
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-ink-800">
               <div
-                className={`h-full rounded-full transition-[width] duration-700 ease-out ${over ? "bg-red-400/80" : "bg-brand"}`}
-                style={{ width: `${usedPct}%` }}
+                className={`h-full w-full rounded-full transition-transform duration-700 ease-out ${over ? "bg-red-400/80" : "bg-brand"}`}
+                style={{ transform: `translateX(-${100 - usedPct}%)` }}
               />
             </div>
             <div className="mt-1.5 text-xs text-ink-500">

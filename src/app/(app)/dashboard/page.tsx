@@ -7,7 +7,7 @@ import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { AskLeaderButton, DecisionRequestCard, MyDecisionRequests, type DecisionItem } from "@/components/dashboard/DecisionRequests";
 import { formatMoney, formatDate, daysBetween } from "@/lib/format";
-import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
+import { TASK_KIND_EMOJI, sideStyle } from "@/lib/ui-tokens";
 import { requireSession } from "@/lib/auth";
 import { ownScope, isLeadership } from "@/lib/scope";
 import { CountUp } from "@/components/ui/CountUp";
@@ -322,7 +322,7 @@ export default async function DashboardPage() {
                       )}
                     </div>
                     {t.side === "Клиент" && (
-                      <span className="badge shrink-0 bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/30">
+                      <span className={`badge shrink-0 ${sideStyle("Клиент", "badge")}`}>
                         🤝 у клиента
                       </span>
                     )}

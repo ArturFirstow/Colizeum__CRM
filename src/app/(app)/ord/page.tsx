@@ -6,6 +6,7 @@ import { PageHeader, EmptyState } from "@/components/ui/primitives";
 import { NewOrdButton, OrdRowActions, EridInline, EditOrdButton } from "@/components/ord/OrdControls";
 import { AsproLink } from "@/components/ui/AsproLink";
 import { formatDate } from "@/lib/format";
+import { RECURRING_NOTE } from "@/lib/ui-tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,7 @@ export default async function OrdPage() {
                   <td className="px-4 py-3 text-ink-300">{m.expiresAt ? formatDate(m.expiresAt) : "—"}</td>
                   <td className="px-4 py-3">
                     {m.monthlyClosing ? (
-                      <span className="text-xs text-teal-300">ежемесячно</span>
+                      <span className={`text-xs ${RECURRING_NOTE}`}>ежемесячно</span>
                     ) : (
                       <span className="text-xs text-ink-500">—</span>
                     )}

@@ -60,9 +60,11 @@ export function DeptFunnel({ deals }: { deals: FunnelDeal[] }) {
               />
               <div className="w-28 shrink-0 text-sm font-medium text-ink-100">{r.label}</div>
               <div className="h-5 flex-1 overflow-hidden rounded bg-ink-800">
+                {/* ⚠️ Анимируется transform, а не width: width — свойство
+                    раскладки, браузер пересчитывает страницу каждый кадр. */}
                 <div
-                  className="h-full rounded bg-brand/70 transition-[width] duration-700"
-                  style={{ width: `${(r.items.length / max) * 100}%` }}
+                  className="h-full w-full rounded bg-brand/70 transition-transform duration-700 ease-out"
+                  style={{ transform: `translateX(-${100 - (r.items.length / max) * 100}%)` }}
                 />
               </div>
               <div className="w-10 shrink-0 text-right text-sm tabular-nums text-ink-200">{r.items.length}</div>
