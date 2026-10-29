@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal, FormError } from "@/components/ui/Modal";
 import { DeleteButton } from "@/components/ui/DeleteButton";
@@ -159,6 +159,17 @@ export function VacationCalendar({
   const gridCols = `${LABEL_W}px repeat(${daysInMonth}, ${DAY_W}px)`;
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+  // Пустой месяц — обычное дело, и сетка на 31 колонку ради него не рисуется.
+  const monthEmpty = byPerson.size === 0;
+  const [showGrid, setShowGrid] = useState(false);
+  useEffect(() => {
+    // Перелистнули месяц — сетка снова сворачивается, если там пусто.
+    setShowGrid(false);
+  }, [year, month]);
+  // Строки коллег без отсутствий в этом месяце не несут информации; их видно,
+  // когда сетку раскрыли целиком (там по клетке заводят новый период).
+  const visiblePeople = monthEmpty || showGrid ? people : people.filter((p) => byPerson.has(p.id));
+
   function shiftMonth(delta: number) {
     setCursor(new Date(year, month + delta, 1));
   }
@@ -242,7 +253,20 @@ export function VacationCalendar({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {monthEmpty ? (
+        /* ⚠️ Пустая сетка «сотрудники × 31 день» занимала пол-экрана ради
+           сообщения «никого нет». Пока в месяце отсутствий нет, показываем
+           строку; сетка открывается кнопкой — она нужна, чтобы кликом по дню
+           завести период. */
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ink-700 px-4 py-3 text-sm text-ink-400">
+          <span>Отсутствий в этом месяце не запланировано.</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowGrid(true)}>
+            Показать сетку месяца
+          </button>
+        </div>
+      ) : null}
+
+      <div className={`overflow-x-auto ${monthEmpty && !showGrid ? "hidden" : ""}`}>
         <div className="min-w-max">
           {/* Шапка: числа и дни недели — без них по сетке нельзя было понять,
               когда именно человек выходит. */}
@@ -266,8 +290,10 @@ export function VacationCalendar({
             })}
           </div>
 
-          {/* Строки сотрудников */}
-          {people.map((p) => {
+          {/* Строки сотрудников. Пока сетку не раскрыли целиком, показываем
+              только тех, у кого в этом месяце что-то есть: пустые строки
+              коллег не несут информации. */}
+          {visiblePeople.map((p) => {
             const rows = byPerson.get(p.id) ?? [];
             const canEditRow = canPlanForOthers || p.id === meId;
             return (
@@ -328,8 +354,16 @@ export function VacationCalendar({
                       }${a.note ? `\n${a.note}` : ""}`}
                     >
                       {a.cutLeft && <span className="opacity-70">←</span>}
-                      {width >= 3 && <span className="truncate">{a.kind}</span>}
-                      {width >= 11 && cover && <span className="truncate opacity-80">· {cover}</span>}
+                      {/* Числа прямо на полосе: «5–12» отвечает на вопрос
+                          «когда именно», не заставляя считать клетки. */}
+                      {width >= 2 && (
+                        <span className="shrink-0 font-semibold">
+                          {a.from}
+                          {a.to > a.from ? `–${a.to}` : ""}
+                        </span>
+                      )}
+                      {width >= 6 && <span className="truncate opacity-90">{a.kind.toLowerCase()}</span>}
+                      {width >= 13 && cover && <span className="truncate opacity-80">· {cover}</span>}
                       {a.cutRight && <span className="ml-auto opacity-70">→</span>}
                     </button>
                   );

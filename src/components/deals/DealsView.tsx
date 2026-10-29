@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NewDealButton } from "@/components/deals/NewDealButton";
 import { Modal } from "@/components/ui/Modal";
 import { StageBadge, UrgencyBadge } from "@/components/ui/primitives";
+import { URGENCY_BAR } from "@/lib/ui-tokens";
 import { Money, toGross } from "@/components/ui/Money";
 import { formatMoney } from "@/lib/format";
 import { apiFetch, ApiError } from "@/lib/client";
@@ -280,15 +281,25 @@ function KanbanCard({ deal, onDragStart }: { deal: Deal; onDragStart: () => void
         // после перетаскивания клик не должен открывать сделку
         if (dragging.current) e.preventDefault();
       }}
-      className={`block cursor-grab rounded-xl border bg-ink-850 p-3.5 shadow-card-dark transition hover:-translate-y-0.5 hover:border-ink-500 active:cursor-grabbing ${
+      className={`relative block cursor-grab overflow-hidden rounded-xl border bg-ink-850 p-3.5 pl-4 shadow-card-dark transition hover:border-ink-500 active:cursor-grabbing ${
         deal.decisionPending ? "border-brand/40" : "border-ink-700/70"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-semibold text-ink-50">{deal.title}</span>
-        <UrgencyBadge urgency={deal.urgency} />
-      </div>
-      <div className="mt-1 text-sm text-ink-400">{deal.advertiser.nameRu}</div>
+      {/* ⚠️ Срочность теперь ПОЛОСОЙ слева, как приоритет у задач. Цветная
+          пилюля «Средняя» стояла у большинства сделок и была самым ярким
+          элементом карточки, ничего при этом не различая. Слово остаётся в
+          подсказке и в карточке сделки. */}
+      <span
+        className={`absolute inset-y-0 left-0 w-1 ${URGENCY_BAR[deal.urgency ?? ""] ?? "bg-ink-700"}`}
+        title={deal.urgency ? `Срочность: ${deal.urgency.toLowerCase()}` : undefined}
+        aria-hidden
+      />
+      {/* Клиент — главное на карточке, название сделки чаще всего его
+          повторяет, поэтому второй строкой и только если отличается. */}
+      <div className="text-sm font-semibold text-ink-50">{deal.advertiser.nameRu}</div>
+      {deal.title !== deal.advertiser.nameRu && (
+        <div className="mt-0.5 text-sm text-ink-400">{deal.title}</div>
+      )}
 
       {/* ⚠️ Пилюля со стадией убрана: карточка лежит В КОЛОНКЕ этой стадии,
           и подпись повторяла её заголовок. В списке (вторая вкладка) стадия

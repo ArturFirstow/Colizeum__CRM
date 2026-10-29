@@ -80,6 +80,16 @@
      Подъём на 3 px заставлял список из двадцати карточек дёргаться под
      курсором; подсветка же читается сразу и ничего не сдвигает.
      Остаётся фирменная жёлтая кромка, мягкая тень и чуть более светлый фон. */
+  /* Клавиатурный фокус виден везде, а не только на кнопках: по сервису ходят
+     и с клавиатуры, и подсветка не должна появляться от обычного клика мышью
+     (поэтому focus-visible, а не focus). */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(252, 223, 59, 0.45);
+    border-radius: 0.75rem;
+  }
   .card-hover {
     transition:
       border-color 0.2s ease,
@@ -198,7 +208,8 @@
      курсор по списку разделов — и меню шевелилось всё целиком. */
   .nav-link {
     @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-300
-      hover:bg-ink-800 hover:text-ink-100;
+      hover:bg-ink-800 hover:text-ink-100
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50;
     transition:
       background-color 0.2s ease,
       color 0.2s ease;

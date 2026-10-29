@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Sparkles, Send, Paperclip, X, Inbox, Search, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/client";
 
@@ -24,6 +25,10 @@ export function AssistantChat() {
   const [uploading, setUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Вопрос, заданный в поиске (Ctrl + K → «Спросить ассистента»), приходит
+  // адресом и отправляется сам — иначе человек набрал бы его дважды.
+  const params = useSearchParams();
+  const askedRef = useRef(false);
 
   // «Входящие» напарника: файлы, которые сотрудник закинул, но ещё не разложил.
   const loadInbox = useCallback(async () => {
@@ -38,6 +43,14 @@ export function AssistantChat() {
   useEffect(() => {
     loadInbox();
   }, [loadInbox]);
+
+  useEffect(() => {
+    const q = params.get("q");
+    if (!q || askedRef.current) return;
+    askedRef.current = true;
+    send(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   async function uploadFiles(list: FileList | File[] | null) {
     const arr = list ? Array.from(list) : [];

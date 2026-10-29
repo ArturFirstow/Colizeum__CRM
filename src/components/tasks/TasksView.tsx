@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
@@ -19,7 +19,7 @@ const PRIORITY_BAR: Record<string, string> = {
   Обычный: "bg-transparent",
   Низкий: "bg-ink-700",
 };
-import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
+import { TASK_KIND_EMOJI, taskStatusStyle } from "@/lib/ui-tokens";
 import { formatDate } from "@/lib/format";
 import { DateInput } from "@/components/ui/DateInput";
 
@@ -247,7 +247,9 @@ function TaskCard({
       )}
       {/* Крупная пометка роли-исполнителя (ТЗ р.2, п.2): видно с первого взгляда, кто делает */}
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand-200 ring-1 ring-inset ring-brand/30">
+        {/* Роль-исполнитель подписана тихо: жёлтым на карточке остаётся только
+            поручение руководителя, иначе на доске кричит каждая плашка. */}
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-ink-300">
           {TASK_KIND_EMOJI[task.kind] ?? "•"} {task.kind}
         </span>
         <button
@@ -272,13 +274,9 @@ function TaskCard({
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs text-ink-500">
-          {(task.priority === "Срочно" || task.priority === "Высокий") && (
-            <span
-              className={`rounded px-1.5 py-0.5 font-semibold ${
-                task.priority === "Срочно" ? "bg-red-500/15 text-red-300" : "bg-amber-500/15 text-amber-200"
-              }`}
-            >
-              {task.priority}
+          {task.priority === "Срочно" && (
+            <span className="rounded bg-red-500/15 px-1.5 py-0.5 font-semibold text-red-300">
+              Срочно
             </span>
           )}
           {/* Текст примечания скрыт: он открывается по клику, иначе доска
@@ -295,22 +293,74 @@ function TaskCard({
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          <select
-            className="rounded-lg border border-ink-700 bg-ink-900 px-2 py-1 text-xs text-ink-200"
-            value={task.status}
-            disabled={busy}
-            onChange={(e) => changeStatus(e.target.value)}
-          >
-            {TASK_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          {/* ⚠️ Был системный выпадающий список — четвёртый элемент про статус
+              на одной карточке (колонка доски, пилюля «у клиента», бейдж и он
+              сам). Теперь статус один и выглядит как статус: цветной бейдж,
+              по клику — три варианта. */}
+          <StatusSwitch status={task.status} busy={busy} onChange={changeStatus} />
           <DeleteButton endpoint={`/api/tasks/${task.id}`} what="задачу" />
         </div>
       </div>
       {editing && <EditTaskModal task={task} users={users} onClose={() => setEditing(false)} />}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Статус задачи: бейдж, по клику — выбор из трёх оставшихся значений.
+// Системный <select> на карточке выглядел как поле формы, а не как состояние.
+// ─────────────────────────────────────────────────────────────────────────────
+function StatusSwitch({
+  status,
+  busy,
+  onChange,
+}: {
+  status: string;
+  busy: boolean;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={boxRef} className="relative">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen((v) => !v)}
+        title="Сменить статус"
+        className={`badge ring-1 ring-inset transition ${taskStatusStyle(status)} ${
+          busy ? "opacity-50" : "hover:brightness-125"
+        }`}
+      >
+        {status}
+      </button>
+      {open && (
+        <div className="absolute bottom-full right-0 z-30 mb-1 w-36 overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-xl">
+          {TASK_STATUSES.filter((s) => s !== status).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onChange(s);
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-ink-200 transition hover:bg-ink-800"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

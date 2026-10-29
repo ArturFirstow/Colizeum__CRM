@@ -37,6 +37,16 @@ export const URGENCY_STYLES: Record<string, string> = {
   Разово: "bg-teal-500/15 text-teal-300 ring-teal-500/30",
 };
 
+/** Полоса срочности слева на карточке сделки — цвет без текста. */
+export const URGENCY_BAR: Record<string, string> = {
+  Максимальная: "bg-red-500",
+  Высокая: "bg-amber-400",
+  Средняя: "bg-sky-500/60",
+  Низкая: "bg-ink-600",
+  "По запросу": "bg-violet-500/60",
+  Разово: "bg-teal-500/60",
+};
+
 export function urgencyStyle(u?: string | null): string {
   return (u && URGENCY_STYLES[u]) || "bg-ink-600/50 text-ink-200 ring-ink-500/50";
 }

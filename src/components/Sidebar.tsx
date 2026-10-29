@@ -12,6 +12,8 @@ import { apiFetch } from "@/lib/client";
 import { ChangePassword } from "@/components/ChangePassword";
 import { UserMenu } from "@/components/UserMenu";
 import { TwoFactorPanel } from "@/components/security/TwoFactorButton";
+import { CommandPalette, SearchTrigger } from "@/components/search/CommandPalette";
+import { Search } from "lucide-react";
 import { LEGAL_DOCS } from "@/lib/legal";
 
 // Группы меню, свёрнутые при первом входе.
@@ -111,6 +113,10 @@ export function Sidebar({
 
   const nav = (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
+      {/* Поиск по всему сервису — первая строка меню и Ctrl + K откуда угодно. */}
+      <div className="!mt-0">
+        <SearchTrigger />
+      </div>
       {groups.map((group) => {
         // Группу с открытой страницей не сворачиваем: иначе человек не видит,
         // где он находится.
@@ -203,6 +209,10 @@ export function Sidebar({
 
   return (
     <>
+      {/* Окно поиска живёт здесь: боковое меню есть на каждой странице, а
+          разделы для подсказок уже отфильтрованы по роли и направлению. */}
+      <CommandPalette nav={groups.flatMap((g) => g.items).map((i) => ({ href: i.href, label: i.label }))} />
+
       {/* мобильная шапка */}
       <div className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-800 bg-ink-950/90 px-4 py-3 backdrop-blur md:hidden">
         <Link href="/dashboard" className="shrink-0">
@@ -212,6 +222,13 @@ export function Sidebar({
         <span className="min-w-0 flex-1 truncate text-right text-sm font-semibold text-ink-300">
           {current?.label ?? ""}
         </span>
+        <button
+          className="btn-icon shrink-0"
+          onClick={() => window.dispatchEvent(new Event("colizeum:open-search"))}
+          aria-label="Поиск"
+        >
+          <Search size={16} />
+        </button>
         <button className="btn-icon shrink-0" onClick={() => setOpen(true)} aria-label="Все разделы">
           ☰
         </button>
