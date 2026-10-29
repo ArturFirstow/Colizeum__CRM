@@ -104,7 +104,7 @@ export function PaymentChart({
       <div className="flex gap-2">
         {/* Левая шкала: три отметки, дальше читается по подсказке и таблице. */}
         <div
-          className="relative w-12 shrink-0 text-right text-[10px] tabular-nums text-ink-600"
+          className="relative w-12 shrink-0 text-right text-[10px] tabular-nums text-ink-500"
           style={{ height }}
           aria-hidden
         >

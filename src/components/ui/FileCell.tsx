@@ -134,7 +134,7 @@ export function FileCell({
               <button
                 onClick={() => remove(f)}
                 disabled={busy}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-600 transition hover:bg-ink-800 hover:text-red-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-500 transition hover:bg-ink-800 hover:text-red-400"
                 title="Удалить"
               >
                 <Trash2 size={16} />

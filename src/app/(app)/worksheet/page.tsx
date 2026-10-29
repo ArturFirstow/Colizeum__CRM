@@ -163,7 +163,7 @@ export default async function WorksheetPage({
                 <li key={t.id}>{t.title}</li>
               ))}
               {sheet.done.length > 8 && (
-                <li className="text-xs text-ink-600">и ещё {sheet.done.length - 8}</li>
+                <li className="text-xs text-ink-500">и ещё {sheet.done.length - 8}</li>
               )}
             </ul>
           )}
@@ -182,7 +182,7 @@ export default async function WorksheetPage({
                   <span className="shrink-0 text-xs text-ink-500">{formatDate(e.date)}</span>
                   <span className="min-w-0">
                     <span className="text-ink-300">{e.clientName}</span>{" "}
-                    <span className={e.status === "Готова" ? "text-ink-600 line-through" : "text-ink-200"}>
+                    <span className={e.status === "Готова" ? "text-ink-500 line-through" : "text-ink-200"}>
                       {e.title}
                     </span>
                   </span>

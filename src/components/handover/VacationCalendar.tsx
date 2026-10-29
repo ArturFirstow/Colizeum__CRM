@@ -279,7 +279,7 @@ export function VacationCalendar({
               return (
                 <div
                   key={d}
-                  className={`pb-1 text-center ${weekend ? "text-ink-600" : "text-ink-400"} ${
+                  className={`pb-1 text-center ${weekend ? "text-ink-500" : "text-ink-400"} ${
                     isToday ? "rounded-t bg-brand/15" : ""
                   }`}
                 >
@@ -402,7 +402,7 @@ export function VacationCalendar({
                   <span className="text-ink-400">
                     {a.kind.toLowerCase()}: {humanRange(a.startDate, a.endDate)}
                   </span>
-                  <span className="text-ink-600">
+                  <span className="text-ink-500">
                     {len} {len === 1 ? "день" : len < 5 ? "дня" : "дней"}
                   </span>
                   {a.coverUser && <span className="text-ink-300">· дела у {a.coverUser.name}</span>}

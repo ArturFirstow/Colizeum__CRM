@@ -193,7 +193,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               ].map((b) => (
                 <div key={b.kind} className="min-w-0 rounded-2xl border border-ink-800 bg-ink-900/30 p-3">
                   <div className="truncate text-sm font-semibold text-ink-200">{b.title}</div>
-                  <div className="mb-2 truncate text-xs text-ink-600">{b.hint}</div>
+                  <div className="mb-2 truncate text-xs text-ink-500">{b.hint}</div>
                   <FileCell
                     ownerType="deal"
                     ownerId={deal.id}
@@ -577,7 +577,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               >
                 ОРД / маркировка
                 {deal.ordMarkings.length === 0 && (
-                  <span className="ml-2 text-xs font-normal text-ink-600">записей нет</span>
+                  <span className="ml-2 text-xs font-normal text-ink-500">записей нет</span>
                 )}
               </h2>
               <QuickAdd
@@ -629,7 +629,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               >
                 Промокоды
                 {deal.promoBatches.length === 0 && (
-                  <span className="ml-2 text-xs font-normal text-ink-600">партий нет</span>
+                  <span className="ml-2 text-xs font-normal text-ink-500">партий нет</span>
                 )}
               </h2>
               <QuickAdd
@@ -678,7 +678,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             >
               Задачи
               {deal.tasks.length === 0 && (
-                <span className="ml-2 text-xs font-normal text-ink-600">по этой сделке нет</span>
+                <span className="ml-2 text-xs font-normal text-ink-500">по этой сделке нет</span>
               )}
             </h2>
             {deal.tasks.length === 0 ? null : (

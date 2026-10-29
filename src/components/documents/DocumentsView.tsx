@@ -158,7 +158,7 @@ export function DocumentsView({
                         ? `клиента «${a.nameRu}» вместе с ${docCount} документами и всеми их версиями`
                         : `клиента «${a.nameRu}» со всеми его сделками и документами`
                     }
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-700 transition hover:bg-red-500/10 hover:text-red-400 group-hover:text-ink-500"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-400"
                   />
                 </div>
               );
@@ -411,7 +411,7 @@ function DocumentRow({
                   v{current.versionNo} · свежая
                 </span>
                 <span className="text-ink-400">{formatDate(current.createdAt)}</span>
-                <span className="w-full truncate text-ink-600" title={current.fileName}>
+                <span className="w-full truncate text-ink-500" title={current.fileName}>
                   {current.fileName} · {formatBytes(current.sizeBytes)}
                 </span>
               </div>
@@ -480,7 +480,7 @@ function DocumentRow({
                       </span>
                       <span className="truncate text-xs text-ink-300">{v.fileName}</span>
                     </div>
-                    <div className="mt-0.5 truncate text-[11px] text-ink-600">
+                    <div className="mt-0.5 truncate text-[11px] text-ink-500">
                       {v.changeNote ? `${v.changeNote} · ` : ""}
                       {formatDateTime(v.createdAt)}
                       {v.uploadedBy ? ` · ${v.uploadedBy.name}` : ""}

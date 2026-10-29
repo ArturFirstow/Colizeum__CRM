@@ -127,7 +127,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => toggleGroup(group.title)}
-            className="mb-1.5 flex w-full items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500 transition hover:text-ink-300"
+            className="mb-1 flex w-full items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500 transition hover:bg-ink-800/60 hover:text-ink-300"
             title={isCollapsed ? "Показать раздел" : "Свернуть раздел"}
           >
             <span>{group.title}</span>
@@ -190,14 +190,17 @@ export function Sidebar({
       {/* Одной строкой и короткими словами: полные названия («Какие данные
           обрабатываются и как защищены») занимали три строки, и низ меню
           обрезался нижним краем экрана. Полное название — в подсказке. */}
-      <div className="mt-2 flex items-center gap-1.5 px-2 text-[10px] leading-tight text-ink-600">
+      {/* ⚠️ Высота строки ссылок была 13 px — ниже минимума WCAG 2.2 (24×24) и
+          просто неудобно: промахиваешься и мышью, и пальцем. Теперь у каждой
+          ссылки свой отступ, цель получается ≥24 px. */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-0.5 gap-y-0 px-1 text-[10px] leading-tight text-ink-500">
         {LEGAL_DOCS.map((d, i) => (
-          <span key={d.slug} className="flex min-w-0 items-center gap-1.5">
+          <span key={d.slug} className="flex min-w-0 items-center gap-0.5">
             {i > 0 && <span className="text-ink-700">·</span>}
             <Link
               href={`/legal/${d.slug}`}
               title={d.short}
-              className="truncate transition hover:text-brand"
+              className="rounded px-1.5 py-1.5 transition hover:bg-ink-800/60 hover:text-brand"
             >
               {LEGAL_TINY[d.slug] ?? d.short}
             </Link>

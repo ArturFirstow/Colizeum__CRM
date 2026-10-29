@@ -174,7 +174,7 @@ export default function LoginPage() {
               </Link>
             ))}
           </div>
-          <p className="mt-4 text-[11px] leading-relaxed text-ink-600">
+          <p className="mt-4 text-[11px] leading-relaxed text-ink-500">
             Выполняя вход, вы принимаете условия пользовательского соглашения и подтверждаете, что
             ознакомлены с политикой обработки персональных данных.
           </p>

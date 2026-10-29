@@ -223,7 +223,7 @@ export function MessengerView({
                     <Plus size={14} />
                   </button>
                 </div>
-                {g.items.length === 0 && <div className="px-3 py-1 text-xs text-ink-600">пусто</div>}
+                {g.items.length === 0 && <div className="px-3 py-1 text-xs text-ink-500">пусто</div>}
                 {g.items.map((c) => {
                   const p = previews[c.id];
                   const activeChat = c.id === activeId;
@@ -247,7 +247,7 @@ export function MessengerView({
                           <span className={`truncate text-sm ${activeChat ? "font-semibold text-brand-200" : "font-medium text-ink-100"}`}>
                             {c.name}
                           </span>
-                          {p && <span className="shrink-0 text-[10px] text-ink-600">{timeHM(p.at)}</span>}
+                          {p && <span className="shrink-0 text-[10px] text-ink-500">{timeHM(p.at)}</span>}
                         </span>
                         <span className="mt-0.5 block truncate text-xs text-ink-500">
                           {p?.text || (c.isDm ? "личный диалог" : c.description || "нет сообщений")}
@@ -293,7 +293,7 @@ export function MessengerView({
                   )}
                   {!active.isGeneral && !active.isDm && (
                     <button
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-400"
                       title="Удалить канал"
                       onClick={() => {
                         if (confirm(`Удалить канал «${active.name}» со всеми сообщениями?`)) deleteChannel(active.id);
@@ -392,7 +392,7 @@ function MessageList({
       <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center">
         <div className="text-3xl opacity-70">💬</div>
         <div className="text-sm text-ink-400">Сообщений пока нет</div>
-        <div className="text-xs text-ink-600">Напишите первое — оно появится у всех мгновенно</div>
+        <div className="text-xs text-ink-500">Напишите первое — оно появится у всех мгновенно</div>
       </div>
     );
   }
@@ -639,7 +639,7 @@ function Composer({ channelId, advertisers, deals, onSent }: { channelId: string
 
         <button
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${
-            body.trim() || files.length ? "bg-brand text-ink-950 hover:brightness-110" : "bg-ink-800 text-ink-600"
+            body.trim() || files.length ? "bg-brand text-ink-950 hover:brightness-110" : "bg-ink-800 text-ink-500"
           }`}
           disabled={sending || (!body.trim() && files.length === 0)}
           onClick={send}

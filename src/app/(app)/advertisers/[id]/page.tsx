@@ -214,7 +214,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
                 {doneTasksCount > 0 && (
                   <span className="text-xs text-ink-500">выполнено: {doneTasksCount}</span>
                 )}
-                <Link href="/tasks" className="text-sm text-brand hover:underline">
+                <Link href="/tasks" className="-my-1 rounded px-1.5 py-1 text-sm text-brand transition hover:bg-brand/10 hover:underline">
                   На доску →
                 </Link>
               </span>
@@ -267,7 +267,7 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
           <section className="card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-ink-50">Документы</h2>
-              <Link href={`/documents?advertiser=${advertiser.id}`} className="text-sm text-brand hover:underline">
+              <Link href={`/documents?advertiser=${advertiser.id}`} className="-my-1 rounded px-1.5 py-1 text-sm text-brand transition hover:bg-brand/10 hover:underline">
                 Открыть в хранилище →
               </Link>
             </div>

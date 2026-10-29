@@ -171,7 +171,7 @@ export function CommandPalette({ nav }: { nav: { href: string; label: string }[]
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Клиент, сделка, документ, задача… или вопрос ассистенту"
-            className="min-w-0 flex-1 bg-transparent text-base text-ink-50 outline-none placeholder:text-ink-600"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink-50 outline-none placeholder:text-ink-500"
           />
           {loading && <span className="shrink-0 text-xs text-ink-500">ищу…</span>}
           <button
@@ -220,7 +220,7 @@ export function CommandPalette({ nav }: { nav: { href: string; label: string }[]
                     onMouseEnter={() => setCursor(i)}
                     onClick={() => go(row)}
                   >
-                    <span className="w-16 shrink-0 text-[11px] uppercase tracking-wide text-ink-600">Раздел</span>
+                    <span className="w-16 shrink-0 text-[11px] uppercase tracking-wide text-ink-500">Раздел</span>
                     <span className="min-w-0 flex-1 truncate text-sm text-ink-100">{row.label}</span>
                     {active && <CornerDownLeft size={14} className="shrink-0 text-ink-500" />}
                   </button>
@@ -234,7 +234,7 @@ export function CommandPalette({ nav }: { nav: { href: string; label: string }[]
                   onMouseEnter={() => setCursor(i)}
                   onClick={() => go(row)}
                 >
-                  <span className="w-16 shrink-0 text-[11px] uppercase tracking-wide text-ink-600">
+                  <span className="w-16 shrink-0 text-[11px] uppercase tracking-wide text-ink-500">
                     {KIND_LABEL[h.kind]}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -248,7 +248,7 @@ export function CommandPalette({ nav }: { nav: { href: string; label: string }[]
           )}
         </div>
 
-        <div className="flex items-center gap-4 border-t border-ink-800 px-4 py-2 text-[11px] text-ink-600">
+        <div className="flex items-center gap-4 border-t border-ink-800 px-4 py-2 text-[11px] text-ink-500">
           <span>↑ ↓ — выбрать</span>
           <span>Enter — открыть</span>
           <span>Esc — закрыть</span>

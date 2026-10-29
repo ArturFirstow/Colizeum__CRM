@@ -170,7 +170,7 @@ export function TasksView({
                 />
               ))}
               {bySide[side.key].length === 0 && (
-                <div className="rounded-xl border border-dashed border-ink-800 py-8 text-center text-xs text-ink-600">
+                <div className="rounded-xl border border-dashed border-ink-800 py-8 text-center text-xs text-ink-500">
                   пусто — перетащите карточку сюда
                 </div>
               )}

@@ -146,7 +146,7 @@ function MaterialTile({ material, onOpen }: { material: Material; onOpen: () => 
               </button>
               <DeleteButton endpoint={`/api/files/${main.id}`} what={`файл «${main.title}»`} />
             </div>
-            <div className="mt-1 truncate text-[11px] text-ink-600" title={main.fileName}>
+            <div className="mt-1 truncate text-[11px] text-ink-500" title={main.fileName}>
               {main.fileName}
               {extra.length > 0 && ` · и ещё ${extra.length}`}
             </div>

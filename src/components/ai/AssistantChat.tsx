@@ -238,7 +238,7 @@ export function AssistantChat() {
           <Send size={16} />
         </button>
       </div>
-      <p className="mt-1.5 text-center text-[11px] text-ink-600">
+      <p className="mt-1.5 text-center text-[11px] text-ink-500">
         Напарник видит только ваш кабинет и раскладывает файлы по разделам. Проверяйте важное — ИИ может ошибаться.
       </p>
     </div>

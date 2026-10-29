@@ -195,7 +195,7 @@ export function PaymentCalendar({
                 ))}
                 <th className="sticky right-0 z-20 bg-ink-850 shadow-[-10px_0_14px_-10px_rgba(0,0,0,0.95)] px-2 py-1 text-right text-xs font-medium uppercase tracking-wide text-ink-500">
                   Разложено<br />
-                  <span className="normal-case text-[10px] text-ink-600">из бюджета</span>
+                  <span className="normal-case text-[10px] text-ink-500">из бюджета</span>
                 </th>
               </tr>
             </thead>

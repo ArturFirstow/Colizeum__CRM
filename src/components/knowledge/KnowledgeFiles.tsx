@@ -63,7 +63,7 @@ export function KnowledgeFiles({ files }: { files: KFile[] }) {
           <h2 className={files.length === 0 ? "text-sm font-semibold text-ink-300" : "font-display text-base font-semibold uppercase tracking-wide text-ink-50"}>
             Файлы и шаблоны
             {files.length === 0 && (
-              <span className="ml-2 text-xs font-normal text-ink-600">
+              <span className="ml-2 text-xs font-normal text-ink-500">
                 договор, прайс, презентация — пока пусто
               </span>
             )}
@@ -100,7 +100,7 @@ export function KnowledgeFiles({ files }: { files: KFile[] }) {
                 <Download size={14} />
               </a>
               <button
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-400"
                 title="Удалить"
                 onClick={() => remove(f)}
               >

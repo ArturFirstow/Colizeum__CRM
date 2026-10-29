@@ -132,7 +132,7 @@ export function StageChanger({
                   <span className="flex items-baseline gap-1.5">
                     <span
                       className={`text-[10px] font-bold ${
-                        isSkipped ? "text-ink-600" : done || isCurrent ? "text-brand" : "text-ink-500"
+                        isSkipped ? "text-ink-500" : done || isCurrent ? "text-brand" : "text-ink-500"
                       }`}
                     >
                       {done ? "✓" : i + 1}
@@ -140,7 +140,7 @@ export function StageChanger({
                     <span
                       className={`truncate text-xs font-semibold leading-tight ${
                         isSkipped
-                          ? "text-ink-600 line-through"
+                          ? "text-ink-500 line-through"
                           : isCurrent
                             ? "text-ink-50"
                             : done
@@ -178,7 +178,7 @@ export function StageChanger({
             {editingSkips ? "Свернуть" : "Какие стадии к этой сделке не относятся"}
           </button>
           {skipped.length > 0 && !editingSkips && (
-            <span className="text-ink-600">не применяются: {skipped.length}</span>
+            <span className="text-ink-500">не применяются: {skipped.length}</span>
           )}
         </div>
 

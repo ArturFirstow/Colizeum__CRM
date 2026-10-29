@@ -63,7 +63,7 @@ export function DeleteButton({
         aria-label="Удалить"
         className={
           className ??
-          "inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400 focus-visible:bg-red-500/10 focus-visible:text-red-400"
+          "inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-400 focus-visible:bg-red-500/10 focus-visible:text-red-400"
         }
       >
         <Trash2 size={15} strokeWidth={2.2} />

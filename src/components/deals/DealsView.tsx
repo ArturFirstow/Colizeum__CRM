@@ -184,7 +184,7 @@ export function DealsView({
                       />
                     ))}
                     {byStage[stage].length === 0 && (
-                      <div className="rounded-xl border border-dashed border-ink-800 py-6 text-center text-xs leading-tight text-ink-600">
+                      <div className="rounded-xl border border-dashed border-ink-800 py-6 text-center text-xs leading-tight text-ink-500">
                         пусто
                       </div>
                     )}

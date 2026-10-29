@@ -219,7 +219,7 @@ function CreativeLink({ id, value }: { id: string; value: string | null }) {
         🔗 {value.replace(/^https?:\/\//, "")}
       </a>
       <button
-        className="shrink-0 text-xs text-ink-600 transition hover:text-ink-300"
+        className="shrink-0 text-xs text-ink-500 transition hover:text-ink-300"
         onClick={() => setEditing(true)}
         title="Изменить ссылку"
       >

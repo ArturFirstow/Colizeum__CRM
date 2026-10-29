@@ -297,7 +297,7 @@ export default async function DashboardPage() {
         <section className="min-w-0 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-ink-50">Ближайшие задачи</h2>
-            <Link href="/tasks" className="text-sm text-brand hover:underline">
+            <Link href="/tasks" className="-my-1 rounded px-1.5 py-1 text-sm text-brand transition hover:bg-brand/10 hover:underline">
               Все задачи →
             </Link>
           </div>
@@ -365,8 +365,10 @@ export default async function DashboardPage() {
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-bold text-ink-50">Журнал</h2>
-              <Link href="/journal" className="text-sm text-brand hover:underline">
-                →
+              {/* ⚠️ Была голая стрелка 15×21 — и непонятно, куда ведёт, и
+                  попасть трудно. Теперь это обычная ссылка со словами. */}
+              <Link href="/journal" className="-my-1 rounded px-1.5 py-1 text-sm text-brand transition hover:bg-brand/10 hover:underline">
+                Все записи →
               </Link>
             </div>
             {recentJournal.length === 0 ? (

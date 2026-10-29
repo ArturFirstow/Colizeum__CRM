@@ -158,7 +158,7 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
           ))}
         </select>
         <button
-          className="shrink-0 text-ink-600 transition hover:text-red-300"
+          className="shrink-0 text-ink-500 transition hover:text-red-300"
           onClick={remove}
           disabled={busy}
           title="Удалить задачу"
@@ -179,7 +179,7 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
               {task.comments.map((c) => (
                 <div key={c.id} className="text-xs">
                   <span className="text-ink-300">{c.authorName ?? "—"}</span>{" "}
-                  <span className="text-ink-600">{formatDate(c.createdAt)}</span>
+                  <span className="text-ink-500">{formatDate(c.createdAt)}</span>
                   <div className="mt-0.5 whitespace-pre-wrap text-ink-200">{c.text}</div>
                 </div>
               ))}
