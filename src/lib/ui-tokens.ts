@@ -70,19 +70,6 @@ export const CREATIVE_STATUS_STYLES: Record<string, string> = {
   Отклонён: "border-red-500/30 bg-red-500/10 text-red-200",
 };
 
-/** Полоса слева в хронологии клиента: тип события считывается без чтения. */
-export const TIMELINE_ACCENT: Record<string, string> = {
-  Сделка: "border-brand/60",
-  Встреча: "border-sky-400/50",
-  Статус: "border-ink-600",
-  Задача: "border-violet-400/50",
-  Документ: "border-emerald-400/50",
-  Деньги: "border-amber-400/60",
-  Размещение: "border-cyan-400/50",
-  ОРД: "border-fuchsia-400/50",
-  Запрос: "border-teal-400/50",
-};
-
 /** Полоса срочности слева на карточке сделки — цвет без текста. */
 export const URGENCY_BAR: Record<string, string> = {
   Максимальная: "bg-red-500",

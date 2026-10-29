@@ -490,7 +490,7 @@ function EditMemberModal({
           <div className="flex items-center gap-3">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+              <img src={avatarUrl} alt="" loading="lazy" decoding="async" className="h-12 w-12 rounded-full object-cover" />
             ) : (
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-800 text-sm text-ink-500">
                 нет

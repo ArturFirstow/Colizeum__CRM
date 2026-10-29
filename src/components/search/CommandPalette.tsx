@@ -156,7 +156,7 @@ export function CommandPalette({ nav }: { nav: { href: string; label: string }[]
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-[12vh]">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />
+      <div className="absolute inset-0 bg-ink-950/75 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />
       <div
         className="card relative w-full max-w-2xl overflow-hidden animate-pop"
         role="dialog"

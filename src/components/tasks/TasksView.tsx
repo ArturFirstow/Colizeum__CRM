@@ -146,10 +146,12 @@ export function TasksView({
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <div>
-                <span className="text-sm font-bold uppercase tracking-wide text-ink-100">
+                {/* Заголовок колонки — настоящий h2: экранный диктор должен
+                    уметь перейти к колонке, а не читать доску сплошняком. */}
+                <h2 className="text-sm font-bold uppercase tracking-wide text-ink-100">
                   {side.key === "Клиент" ? "🤝 " : "🏠 "}
                   {side.title}
-                </span>
+                </h2>
                 <div className="text-xs text-ink-500">{side.hint}</div>
               </div>
               <span className="rounded-md bg-ink-800 px-2 py-0.5 text-xs text-ink-400">

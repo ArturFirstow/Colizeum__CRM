@@ -93,7 +93,7 @@ export function UserMenu({
         <span className="relative shrink-0">
           {user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+            <img src={user.avatarUrl} alt="" loading="lazy" decoding="async" className="h-9 w-9 rounded-full object-cover" />
           ) : (
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-ink-950">
               {initials}

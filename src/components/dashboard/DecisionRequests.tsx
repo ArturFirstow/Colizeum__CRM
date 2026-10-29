@@ -91,6 +91,8 @@ export function AskLeaderButton({
           <img
             src={leaderAvatarUrl}
             alt={leaderName ?? "Руководитель"}
+            loading="lazy"
+            decoding="async"
             className="h-9 w-9 shrink-0 rounded-xl object-cover ring-1 ring-brand/40"
           />
         ) : (

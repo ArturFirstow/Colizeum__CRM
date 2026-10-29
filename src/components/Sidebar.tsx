@@ -251,7 +251,7 @@ export function Sidebar({
       {/* мобильный оверлей */}
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-ink-950/70" onClick={() => setOpen(false)} />
           <aside className="absolute left-0 top-0 flex h-full w-[85%] max-w-xs flex-col border-r border-ink-800 bg-ink-900 animate-fade-in">
             <div className="flex items-center justify-between border-b border-ink-800 px-5 py-5">
               <Logo />

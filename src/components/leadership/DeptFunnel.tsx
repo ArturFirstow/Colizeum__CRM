@@ -151,7 +151,7 @@ export function AttentionWidget({
             <Link
               key={i.id}
               href={i.href}
-              className="block rounded-lg px-2 py-1.5 text-xs transition hover:bg-black/20"
+              className="block rounded-lg px-2 py-1.5 text-xs transition hover:bg-ink-950/40"
             >
               <span className="block truncate font-medium text-ink-50">{i.title}</span>
               <span className="block truncate opacity-80">{i.sub}</span>

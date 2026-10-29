@@ -40,7 +40,7 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+      <div className="fixed inset-0 bg-ink-950/75 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div
         className={`relative my-3 w-full sm:my-8 ${width} card animate-pop`}
         role="dialog"

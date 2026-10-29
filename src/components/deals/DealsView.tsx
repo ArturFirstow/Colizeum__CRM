@@ -168,7 +168,8 @@ export function DealsView({
                   }`}
                 >
                   <div className="mb-3 flex items-center justify-between px-1 pt-1">
-                    <span className="text-sm font-semibold text-ink-200">{stage}</span>
+                    {/* Колонка стадии — заголовок, а не просто жирный текст. */}
+                    <h2 className="text-sm font-semibold text-ink-200">{stage}</h2>
                     <span className="rounded-md bg-ink-800 px-2 py-0.5 text-xs text-ink-400">
                       {byStage[stage].length}
                     </span>

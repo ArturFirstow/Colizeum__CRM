@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { TIMELINE_KINDS, type TimelineEvent, type TimelineKind } from "@/lib/timeline";
-import { TIMELINE_ACCENT } from "@/lib/ui-tokens";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Хронология по клиенту: одна лента вместо обхода пяти разделов.
@@ -16,7 +15,6 @@ const PAGE = 15;
 
 // Цвет полоски слева — чтобы тип события считывался, не читая текст.
 // Сам словарь живёт в ui-tokens.ts: эти же цвета нужны и в других местах.
-const ACCENT = TIMELINE_ACCENT as Record<TimelineKind, string>;
 
 export function ClientTimeline({
   events,
@@ -178,8 +176,10 @@ function EventRow({ event }: { event: TimelineEvent }) {
   const time = new Date(event.date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   const body = (
     <div
-      className={`rounded-xl border-l-2 ${ACCENT[event.kind]} border-y border-r border-y-ink-800 border-r-ink-800 bg-ink-900/50 px-4 py-3 ${
-        event.href ? "transition hover:border-y-ink-600 hover:border-r-ink-600 hover:bg-ink-800" : ""
+      // ⚠️ Цветной торец слева убран: тип события и так написан словом и
+      // показан значком, а девять разных цветов превращали ленту в радугу.
+      className={`rounded-xl border border-ink-800 bg-ink-900/50 px-4 py-3 ${
+        event.href ? "transition hover:border-ink-600 hover:bg-ink-800" : ""
       }`}
     >
       <div className="flex items-start gap-3">
