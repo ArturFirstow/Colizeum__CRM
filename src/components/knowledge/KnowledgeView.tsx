@@ -6,7 +6,7 @@ import { Modal, FormError } from "@/components/ui/Modal";
 import { apiFetch } from "@/lib/client";
 import { KNOWLEDGE_CATEGORIES } from "@/lib/enums";
 import { KnowledgeFiles, type KFile } from "@/components/knowledge/KnowledgeFiles";
-import { FileCell } from "@/components/ui/FileCell";
+import { MaterialBoard } from "@/components/knowledge/MaterialBoard";
 import { formatDate } from "@/lib/format";
 
 type Article = {
@@ -70,39 +70,24 @@ export function KnowledgeView({ articles, files = [] }: { articles: Article[]; f
         </button>
       </div>
 
-      {/* Рабочие файлы: скачать договор, прайс, презентацию */}
+      {/* ⚠️ Три хранилища файлов на одном экране («Файлы и шаблоны», материалы
+          для клиента, вложения статей) спорили друг с другом. Теперь наверху
+          одна ДОСКА материалов — то, что берут и отправляют клиенту, — а общие
+          файлы и шаблоны ушли компактной строкой под ней. */}
+      {clientMaterials.length > 0 && !q && cat === "" && (
+        <section className="mb-5">
+          <div className="mb-2.5 flex items-baseline gap-2">
+            <h2 className="text-sm font-semibold text-ink-200">Материалы для клиента</h2>
+            <span className="text-xs text-ink-500">берём отсюда и отправляем рекламодателю</span>
+          </div>
+          <MaterialBoard materials={clientMaterials} onOpen={(id) => openArticle(id, "Материалы для клиента")} />
+        </section>
+      )}
+
       {!q && cat === "" && (
         <div className="mb-6">
           <KnowledgeFiles files={files} />
         </div>
-      )}
-
-      {/* Материалы, которые отправляются рекламодателю — на видном месте */}
-      {clientMaterials.length > 0 && !q && cat === "" && (
-        <section className="mb-6 rounded-2xl border border-brand/25 bg-brand/[0.05] p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-lg">📮</span>
-            <h2 className="font-display text-base font-semibold uppercase tracking-wide text-brand-200">
-              Материалы для клиента
-            </h2>
-            <span className="text-xs text-ink-400">— отправляем рекламодателю</span>
-          </div>
-          {/* В каждой ячейке — свои файлы: медиакит, исследование, техтребования.
-              Файл можно заменить прямо здесь, когда придёт новая версия. */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {clientMaterials.map((m) => (
-              <div key={m.id} className="rounded-xl border border-ink-700/70 bg-ink-900/60 p-3.5">
-                <button onClick={() => openArticle(m.id, m.category)} className="block w-full text-left">
-                  <div className="text-sm font-semibold text-ink-100 hover:text-brand">{m.title}</div>
-                  {m.notes && <div className="mt-0.5 truncate text-xs text-ink-500">{m.notes}</div>}
-                </button>
-                <div className="mt-2.5">
-                  <FileCell ownerType="knowledge" ownerId={m.id} kind="Материал" label="Загрузить файл" compact />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       )}
 
       <input
@@ -112,15 +97,34 @@ export function KnowledgeView({ articles, files = [] }: { articles: Article[]; f
         onChange={(e) => setQ(e.target.value)}
       />
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        <Chip active={cat === ""} onClick={() => setCat("")}>
-          Все
-        </Chip>
-        {categories.map((c) => (
-          <Chip key={c} active={cat === c} onClick={() => setCat(c)}>
-            {c}
-          </Chip>
-        ))}
+      {/* ⚠️ Тринадцать чипов-фильтров занимали две строки — больше, чем самих
+          статей. Разделы убраны в список: ищут здесь поиском, а раздел нужен
+          редко. */}
+      <div className="mb-5 flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-ink-500">Раздел:</span>
+        <select
+          className="input h-10 w-auto min-w-[14rem]"
+          value={cat}
+          onChange={(e) => setCat(e.target.value)}
+        >
+          <option value="">Все разделы ({articles.length})</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c} ({articles.filter((a) => a.category === c).length})
+            </option>
+          ))}
+        </select>
+        {(cat || q) && (
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              setCat("");
+              setQ("");
+            }}
+          >
+            Сбросить
+          </button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
@@ -128,17 +132,24 @@ export function KnowledgeView({ articles, files = [] }: { articles: Article[]; f
           {filtered.length === 0 ? (
             <p className="p-4 text-sm text-ink-400">Ничего не найдено</p>
           ) : (
-            filtered.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                className={`w-full rounded-xl px-3 py-2.5 text-left transition ${
-                  selected?.id === a.id ? "bg-ink-800" : "hover:bg-ink-800/60"
-                }`}
-              >
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-brand">{a.category}</div>
-                <div className="mt-0.5 text-sm font-medium text-ink-100">{a.title}</div>
-              </button>
+            filtered.map((a, i) => (
+              <div key={a.id}>
+                {/* Раздел пишем ОДИН раз над группой, а не над каждой статьёй:
+                    подряд шло семь одинаковых подписей «Материалы для клиента». */}
+                {(i === 0 || filtered[i - 1].category !== a.category) && (
+                  <div className="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+                    {a.category}
+                  </div>
+                )}
+                <button
+                  onClick={() => setSelectedId(a.id)}
+                  className={`w-full rounded-xl px-3 py-2 text-left transition ${
+                    selected?.id === a.id ? "bg-ink-800 text-brand" : "hover:bg-ink-800/60"
+                  }`}
+                >
+                  <div className="text-sm font-medium text-ink-100">{a.title}</div>
+                </button>
+              </div>
             ))
           )}
         </div>
@@ -183,19 +194,6 @@ export function KnowledgeView({ articles, files = [] }: { articles: Article[]; f
         />
       )}
     </div>
-  );
-}
-
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-        active ? "border-brand/50 bg-brand/15 text-brand-200" : "border-ink-700 bg-ink-800/50 text-ink-300 hover:bg-ink-700"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 

@@ -14,9 +14,12 @@ type DealOpt = { id: string; title: string };
 export function EditDocumentButton({
   doc,
   deals = [],
+  iconOnly,
 }: {
   doc: { id: string; title: string; type: string; dealId?: string | null };
   deals?: DealOpt[];
+  /** В тесной строке документа кнопка нужна значком, без слова. */
+  iconOnly?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -48,9 +51,20 @@ export function EditDocumentButton({
 
   return (
     <>
-      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} title="Редактировать документ">
-        <Pencil size={14} /> Редактировать
-      </button>
+      {iconOnly ? (
+        <button
+          onClick={() => setOpen(true)}
+          title="Переименовать, сменить тип или сделку"
+          aria-label="Редактировать документ"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition hover:bg-ink-800 hover:text-brand"
+        >
+          <Pencil size={15} />
+        </button>
+      ) : (
+        <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} title="Редактировать документ">
+          <Pencil size={14} /> Редактировать
+        </button>
+      )}
       <Modal open={open} onClose={() => setOpen(false)} title="Редактировать документ" size="sm">
         <form onSubmit={submit} className="space-y-4">
           <div>

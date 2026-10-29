@@ -387,17 +387,23 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               <Field label="Конструкция договора">
                 {construction ? `${construction.code} — ${construction.label}` : "—"}
               </Field>
-              <Field label="Сумма из медиаплана">
-                <Money
-                  amount={deal.amount}
-                  vatIncluded={deal.vatIncluded}
-                  date={deal.contractDate}
-                />
-              </Field>
-              {deal.contractTotal != null && (
-                <Field label="Сумма по договору (весь период)">
+              {/* ⚠️ Одна и та же сумма печаталась дважды — «из медиаплана» и
+                  «по договору», а ниже третий раз в сверке. Вторую строку
+                  показываем, только если цифры ДЕЙСТВИТЕЛЬНО разные: тогда
+                  расхождение и есть полезная информация. */}
+              {deal.contractTotal != null && deal.contractTotal !== deal.amount ? (
+                <>
+                  <Field label="Сумма из медиаплана">
+                    <Money amount={deal.amount} vatIncluded={deal.vatIncluded} date={deal.contractDate} />
+                  </Field>
+                  <Field label="Сумма по договору (весь период)">
+                    <Money amount={deal.contractTotal} vatIncluded={deal.vatIncluded} date={deal.contractDate} />
+                  </Field>
+                </>
+              ) : (
+                <Field label={deal.contractTotal != null ? "Сумма по договору" : "Сумма из медиаплана"}>
                   <Money
-                    amount={deal.contractTotal}
+                    amount={deal.contractTotal ?? deal.amount}
                     vatIncluded={deal.vatIncluded}
                     date={deal.contractDate}
                   />
@@ -539,10 +545,29 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             )}
           </section>
 
-          {/* ОРД */}
-          <section className="card p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-ink-50">ОРД / маркировка</h2>
+          {/* ОРД.
+              ⚠️ Пустой модуль больше не разворачивается в полноразмерную
+              карточку: у сделки без маркировок он занимал столько же места,
+              сколько заполненный, и карточка превращалась в стену заготовок.
+              Пусто — одна строка с кнопкой. */}
+          <section className={`card ${deal.ordMarkings.length === 0 ? "px-5 py-3" : "p-5"}`}>
+            <div
+              className={`flex items-center justify-between gap-3 ${
+                deal.ordMarkings.length === 0 ? "" : "mb-4"
+              }`}
+            >
+              <h2
+                className={
+                  deal.ordMarkings.length === 0
+                    ? "text-sm font-semibold text-ink-300"
+                    : "text-lg font-bold text-ink-50"
+                }
+              >
+                ОРД / маркировка
+                {deal.ordMarkings.length === 0 && (
+                  <span className="ml-2 text-xs font-normal text-ink-600">записей нет</span>
+                )}
+              </h2>
               <QuickAdd
                 label="+ ЕРИД"
                 title="Маркировка ЕРИД"
@@ -557,9 +582,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 ]}
               />
             </div>
-            {deal.ordMarkings.length === 0 ? (
-              <p className="text-sm text-ink-400">Записей нет.</p>
-            ) : (
+            {deal.ordMarkings.length === 0 ? null : (
               <div className="space-y-2">
                 {deal.ordMarkings.map((o) => (
                   <div key={o.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-3 text-sm">
@@ -578,10 +601,25 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             )}
           </section>
 
-          {/* Промокоды */}
-          <section className="card p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-ink-50">Промокоды</h2>
+          {/* Промокоды — пустой блок сжимается в строку, как и ОРД. */}
+          <section className={`card ${deal.promoBatches.length === 0 ? "px-5 py-3" : "p-5"}`}>
+            <div
+              className={`flex items-center justify-between gap-3 ${
+                deal.promoBatches.length === 0 ? "" : "mb-4"
+              }`}
+            >
+              <h2
+                className={
+                  deal.promoBatches.length === 0
+                    ? "text-sm font-semibold text-ink-300"
+                    : "text-lg font-bold text-ink-50"
+                }
+              >
+                Промокоды
+                {deal.promoBatches.length === 0 && (
+                  <span className="ml-2 text-xs font-normal text-ink-600">партий нет</span>
+                )}
+              </h2>
               <QuickAdd
                 label="+ Партия"
                 title="Партия промокодов"
@@ -597,9 +635,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 ]}
               />
             </div>
-            {deal.promoBatches.length === 0 ? (
-              <p className="text-sm text-ink-400">Партий нет.</p>
-            ) : (
+            {deal.promoBatches.length === 0 ? null : (
               <div className="space-y-2">
                 {deal.promoBatches.map((p) => (
                   <div key={p.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-3 text-sm">
@@ -620,11 +656,20 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           </section>
 
           {/* Задачи */}
-          <section className="card p-5">
-            <h2 className="mb-4 text-lg font-bold text-ink-50">Задачи</h2>
-            {deal.tasks.length === 0 ? (
-              <p className="text-sm text-ink-400">Задач нет.</p>
-            ) : (
+          <section className={`card ${deal.tasks.length === 0 ? "px-5 py-3" : "p-5"}`}>
+            <h2
+              className={
+                deal.tasks.length === 0
+                  ? "text-sm font-semibold text-ink-300"
+                  : "mb-4 text-lg font-bold text-ink-50"
+              }
+            >
+              Задачи
+              {deal.tasks.length === 0 && (
+                <span className="ml-2 text-xs font-normal text-ink-600">по этой сделке нет</span>
+              )}
+            </h2>
+            {deal.tasks.length === 0 ? null : (
               <div className="space-y-2">
                 {deal.tasks.map((t) => (
                   <div key={t.id} className="flex items-center justify-between rounded-lg bg-ink-900/50 px-3 py-2 text-sm">

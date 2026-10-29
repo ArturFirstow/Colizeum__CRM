@@ -55,11 +55,22 @@ export function KnowledgeFiles({ files }: { files: KFile[] }) {
   }
 
   return (
-    <div className="card p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    // ⚠️ Пока файлов нет, блок сжимается в одну строку: прежде пустое
+    // состояние занимало полкарточки абзацем-объяснением.
+    <div className={`card ${files.length === 0 ? "px-4 py-3" : "p-4"}`}>
+      <div className={`flex flex-wrap items-center justify-between gap-2 ${files.length === 0 ? "" : "mb-3"}`}>
         <div>
-          <h2 className="font-display text-base font-semibold uppercase tracking-wide text-ink-50">Файлы и шаблоны</h2>
-          <p className="mt-0.5 text-xs text-ink-400">Договор, прайс, презентация — всё, что отправляем клиенту</p>
+          <h2 className={files.length === 0 ? "text-sm font-semibold text-ink-300" : "font-display text-base font-semibold uppercase tracking-wide text-ink-50"}>
+            Файлы и шаблоны
+            {files.length === 0 && (
+              <span className="ml-2 text-xs font-normal text-ink-600">
+                договор, прайс, презентация — пока пусто
+              </span>
+            )}
+          </h2>
+          {files.length > 0 && (
+            <p className="mt-0.5 text-xs text-ink-400">Договор, прайс, презентация — всё, что отправляем клиенту</p>
+          )}
         </div>
         <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => inputRef.current?.click()}>
           <Upload size={14} /> {busy ? "Загружаю…" : "Загрузить"}
@@ -69,11 +80,7 @@ export function KnowledgeFiles({ files }: { files: KFile[] }) {
 
       {error && <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{error}</div>}
 
-      {files.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-ink-700 px-4 py-5 text-center text-xs text-ink-500">
-          Файлов пока нет. Загрузите шаблон договора, прайс-лист и презентацию — они будут под рукой у всей команды.
-        </p>
-      ) : (
+      {files.length === 0 ? null : (
         <div className="space-y-1.5">
           {files.map((f) => (
             <div key={f.id} className="group flex items-center gap-3 rounded-xl bg-ink-900/50 px-3 py-2 transition hover:bg-ink-800/60">
@@ -93,7 +100,7 @@ export function KnowledgeFiles({ files }: { files: KFile[] }) {
                 <Download size={14} />
               </a>
               <button
-                className="btn-icon h-8 w-8 text-ink-500 opacity-0 transition group-hover:opacity-100 hover:text-red-400"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-600 transition hover:bg-red-500/10 hover:text-red-400"
                 title="Удалить"
                 onClick={() => remove(f)}
               >

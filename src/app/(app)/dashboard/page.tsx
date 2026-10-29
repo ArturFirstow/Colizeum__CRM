@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { sumMoney, toGross } from "@/components/ui/Money";
 import { BUDGET_HINT, BUDGET_LABEL, budgetRows, isActiveForBudget } from "@/lib/budget";
-import { PageHeader, StatCard, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
+import { PageHeader, EmptyState, StageBadge, UrgencyBadge } from "@/components/ui/primitives";
 import { DecisionButton } from "@/components/deals/DecisionButton";
 import { DailyStatusPanel } from "@/components/dashboard/DailyStatusPanel";
 import { AskLeaderButton, DecisionRequestCard, MyDecisionRequests, type DecisionItem } from "@/components/dashboard/DecisionRequests";
@@ -11,7 +11,6 @@ import { TASK_KIND_EMOJI } from "@/lib/ui-tokens";
 import { requireSession } from "@/lib/auth";
 import { ownScope, isLeadership } from "@/lib/scope";
 import { CountUp } from "@/components/ui/CountUp";
-import { StageRing } from "@/components/ui/StageRing";
 
 const STUCK_DAYS = 7;
 
@@ -90,11 +89,21 @@ export default async function DashboardPage() {
       take: 6,
     }),
     prisma.journalEntry.findMany({ where: myTask, orderBy: { date: "desc" }, take: 4 }),
-    // Считаем ровно то, что показываем: плитки «Рекламодатели» и «Документы»
-    // убраны, и два запроса в базу вместе с ними.
+    // ⚠️ Считаем не «сколько у нас всего», а «что требует решения». Прежние
+    // плитки («бюджет», «активные сделки», «задачи в работе») были витриной:
+    // по ним нельзя было ничего решить, а две из трёх показывали одно и то же
+    // число. Теперь три числа отвечают на три вопроса рабочего утра:
+    // что просрочено, что ждёт меня, что ждёт клиента.
     Promise.all([
-      prisma.deal.count({ where: notArchived }),
-      prisma.task.count({ where: { status: { not: "Готова" }, ...myTask } }),
+      prisma.task.count({
+        where: { status: { not: "Готова" }, dueDate: { lt: todayStart }, ...myTask },
+      }),
+      prisma.task.count({
+        where: { status: { not: "Готова" }, side: { not: "Клиент" }, ...myTask },
+      }),
+      prisma.task.count({
+        where: { status: { not: "Готова" }, side: "Клиент", ...myTask },
+      }),
     ]),
     prisma.advertiser.findMany({ where: { archived: false, ...ownScope(session) }, select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
     prisma.deal.findMany({
@@ -109,7 +118,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const [dealCount, activeTasks] = counts;
+  const [overdueTasks, mySideTasks, clientSideTasks] = counts;
   const hour = now.getHours();
   const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
 
@@ -132,32 +141,46 @@ export default async function DashboardPage() {
         icon="◆"
       />
 
-      {/* Цифры дня.
-          ⚠️ Плиток было пять — добавились «Рекламодатели» и «Документы».
-          По ним никто не принимал решений: знать, что клиентов шесть, а
-          документов два, незачем — за этим идут в сами разделы. Остались две,
-          которые отвечают на вопрос «чем заняться»: сделки и задачи.
-          Строка одна, а не две: так блок не съедает полэкрана. */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Link href="/finances" className="col-span-2">
-          <div className="card card-hover flex h-full flex-col justify-center !border-brand/30 p-6">
-            <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
+      {/* ⚠️ Витрина цифр заменена на три решения. Главная цифра дня — не
+          бюджет (по нему нельзя ничего сделать прямо сейчас), а то, где
+          работа стоит: просрочено / ждёт нас / ждёт клиента. Бюджет остался
+          справа спокойной карточкой — он справочный. */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
+        <DecisionTile
+          label="Просрочено"
+          value={overdueTasks}
+          hint={overdueTasks > 0 ? "сроки уже прошли" : "сроки не нарушены"}
+          href="/tasks"
+          tone={overdueTasks > 0 ? "danger" : "calm"}
+        />
+        <DecisionTile
+          label="Ждут вас"
+          value={mySideTasks}
+          hint="наша сторона: делаем и согласуем мы"
+          href="/tasks"
+          tone={mySideTasks > 0 ? "accent" : "calm"}
+        />
+        <DecisionTile
+          label="Ждём клиента"
+          value={clientSideTasks}
+          hint="ответ, правки, подписание на их стороне"
+          href="/tasks"
+          tone="calm"
+        />
+        <Link href="/finances" className="sm:col-span-3 xl:col-span-1">
+          <div className="card card-hover flex h-full flex-col justify-center p-5">
+            <div className="text-xs font-medium uppercase tracking-wide text-ink-500">
               {BUDGET_LABEL}
             </div>
-            {/* Как и везде: крупно сумма с НДС, чистая — подписью. В базе
-                суммы лежат чистыми, поэтому крупную цифру домножаем. */}
-            <div className="mt-2 font-display text-4xl font-semibold text-brand lg:text-5xl">
-              <CountUp value={portfolio.gross} suffix=" ₽" duration={1100} />
+            {/* Как и везде: крупно сумма с НДС, чистая — подписью. */}
+            <div className="mt-1.5 font-display text-2xl font-semibold text-brand">
+              <CountUp value={portfolio.gross} suffix=" ₽" duration={900} />
             </div>
-            {/* Три подписи сложились в одну: пояснение, откуда берётся сумма,
-                раскрывается в самих «Оплатах» — здесь оно только шумело. */}
-            <div className="mt-2 text-sm text-ink-400">
+            <div className="mt-1 text-xs text-ink-500">
               без НДС ≈ {formatMoney(portfolio.net)} · {activeDeals.length} активных сделок
             </div>
           </div>
         </Link>
-        <StatCard label="Активные сделки" value={<CountUp value={dealCount} />} href="/deals" />
-        <StatCard label="Задачи в работе" value={<CountUp value={activeTasks} />} href="/tasks" accent={activeTasks > 0} />
       </div>
 
       {/* Решения, которые ждут */}
@@ -365,23 +388,11 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      {/* Кольца стадий: где каждый проект на пути из 9 шагов */}
-      {activeDeals.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-lg font-bold text-ink-50">Проекты на пути к закрытию</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {activeDeals.slice(0, 5).map((d) => (
-              <Link key={d.id} href={`/deals/${d.id}`} className="card card-hover flex items-center gap-3 p-4">
-                <StageRing stage={d.stage} />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-ink-100">{d.advertiser.nameRu}</div>
-                  <div className="mt-0.5 truncate text-xs text-ink-400">{d.stage}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* ⚠️ Блок «Проекты на пути к закрытию» (кольца стадий) убран: у всех
+          пяти сделок кольцо выглядело одинаково («2/5 Договор»), решения по
+          нему не принимались, а те же пять сделок уже перечислены ниже в
+          «Зависли дольше 7 дней» и в задачах. Воронка по стадиям живёт в
+          «Сделках» и в обзоре отдела — там она и уместна. */}
 
       {/* Зависшие сделки */}
       {stuckDeals.length > 0 && (
@@ -411,5 +422,52 @@ export default async function DashboardPage() {
         </section>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Плитка решения: крупное число, слово под ним и объяснение одной строкой.
+// Цвет несёт смысл: красный — просрочка, жёлтый — работа на нашей стороне,
+// серый — ждём не мы. Ноль не красится: пустая очередь — это хорошо.
+// ─────────────────────────────────────────────────────────────────────────────
+function DecisionTile({
+  label,
+  value,
+  hint,
+  href,
+  tone,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  href: string;
+  tone: "danger" | "accent" | "calm";
+}) {
+  const border =
+    value === 0
+      ? "!border-ink-800"
+      : tone === "danger"
+        ? "!border-red-500/40"
+        : tone === "accent"
+          ? "!border-brand/35"
+          : "!border-ink-700";
+  const color =
+    value === 0
+      ? "text-ink-500"
+      : tone === "danger"
+        ? "text-red-300"
+        : tone === "accent"
+          ? "text-brand"
+          : "text-ink-100";
+  return (
+    <Link href={href}>
+      <div className={`card card-hover flex h-full flex-col justify-center p-5 ${border}`}>
+        <div className="text-xs font-medium uppercase tracking-wide text-ink-400">{label}</div>
+        <div className={`mt-1 font-display text-4xl font-semibold ${color}`}>
+          <CountUp value={value} duration={700} />
+        </div>
+        <div className="mt-1 text-xs text-ink-500">{hint}</div>
+      </div>
+    </Link>
   );
 }
