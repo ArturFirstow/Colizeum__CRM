@@ -12,11 +12,18 @@ export function WorksheetNote({
   advertiserId,
   text,
   placeholder,
+  compactWhenEmpty,
 }: {
   weekStart: string;
   advertiserId?: string;
   text: string | null;
   placeholder: string;
+  /**
+   * Пустая заметка сжимается в одну строку-кнопку. Включается у клиентов:
+   * длинная подсказка «где мы сейчас по клиенту…» повторялась под каждым из
+   * шести клиентов слово в слово и читалась как стена одинакового текста.
+   */
+  compactWhenEmpty?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,6 +46,18 @@ export function WorksheetNote({
     } finally {
       setSaving(false);
     }
+  }
+
+  if (!open && !text && compactWhenEmpty) {
+    return (
+      <button
+        className="text-sm text-ink-500 transition hover:text-brand"
+        onClick={() => setOpen(true)}
+        title={placeholder}
+      >
+        + заметка по клиенту
+      </button>
+    );
   }
 
   if (!open) {

@@ -25,6 +25,7 @@ export type RowTask = {
   status: string;
   priority: string;
   dueDate: string | null;
+  groupLabel: string | null;
   asproUrl: string | null;
   notes: string | null;
   assigneeName: string | null;
@@ -106,6 +107,10 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
   const done = task.status === "Готова";
 
   return (
+    // ⚠️ Строка живёт в колонке шириной примерно в треть экрана («сделано /
+    // делаем / дальше»), поэтому статус и корзина стоят НЕ справа от текста,
+    // а в нижней строке: иначе на название задачи оставалось сантиметра три
+    // и оно ломалось по слогам.
     <div className="rounded-xl border border-ink-800 bg-ink-900/40">
       <div className="flex items-start gap-3 p-3">
         <span
@@ -117,6 +122,13 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
             <span className={`text-sm ${done ? "text-ink-500 line-through" : "text-ink-100"}`}>
               {task.title}
             </span>
+            {/* Группа («Документы», «Креативы») раньше была заголовком над
+                списком. Теперь внутри клиента три части по сроку, поэтому
+                группа печатается подписью на самой строке — иначе в сверке
+                пришлось бы держать три уровня вложенности. */}
+            {task.groupLabel?.trim() && (
+              <span className="badge badge-muted shrink-0">{task.groupLabel.trim()}</span>
+            )}
             {task.asproUrl && (
               <a
                 href={task.asproUrl}
@@ -134,7 +146,11 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
               {task.dueDate ? `срок ${formatDate(task.dueDate)}` : "без срока"}
             </span>
             {task.assigneeName && <span className="text-ink-400">{task.assigneeName}</span>}
-            {task.dealTitle && <span className="text-ink-500">по сделке «{task.dealTitle}»</span>}
+            {task.dealTitle && (
+              <span className="max-w-full truncate text-ink-500" title={`по сделке «${task.dealTitle}»`}>
+                по сделке «{task.dealTitle}»
+              </span>
+            )}
             <button
               className="inline-flex items-center gap-1 text-ink-400 hover:text-brand"
               onClick={() => setOpen((v) => !v)}
@@ -144,27 +160,30 @@ export function WorksheetTaskRow({ task }: { task: RowTask }) {
             </button>
           </div>
           {task.notes && <p className="mt-1.5 text-xs text-ink-400">{task.notes}</p>}
+          <div className="mt-2 flex items-center gap-2">
+            <select
+              className="input h-8 w-auto py-0 text-xs"
+              value={task.status}
+              disabled={busy}
+              aria-label="Статус задачи"
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              {TASK_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <button
+              className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-300 focus-visible:bg-red-500/10 focus-visible:text-red-300"
+              onClick={remove}
+              disabled={busy}
+              title="Удалить задачу"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
-        <select
-          className="input h-8 w-auto shrink-0 py-0 text-xs"
-          value={task.status}
-          disabled={busy}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          {TASK_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button
-          className="shrink-0 text-ink-500 transition hover:text-red-300"
-          onClick={remove}
-          disabled={busy}
-          title="Удалить задачу"
-        >
-          <Trash2 size={14} />
-        </button>
       </div>
 
       {open && (

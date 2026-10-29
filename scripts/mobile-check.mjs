@@ -29,7 +29,10 @@ const PASSWORD = process.env.CHECK_PASSWORD;
 const PAGES = [
   "/dashboard",
   "/tasks",
-  "/worksheet",
+  // Второй вид того же раздела — недельная сверка по клиентам (бывший
+  // «Рабочий лист»). Проверяем именно адрес с видом: /worksheet теперь
+  // переадресация, и измерять её бессмысленно.
+  "/tasks?view=clients",
   "/deals",
   "/advertisers",
   "/documents",

@@ -4,8 +4,14 @@ import type { SessionPayload } from "@/lib/auth";
 import { isLeadership } from "@/lib/scope";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Рабочий лист: прозрачная постановка дел между руководителем проекта и
-// проектным менеджером.
+// Недельный разбор по клиентам — вид «По клиентам» в разделе «Задачи»
+// (`/tasks?view=clients`). Прозрачная постановка дел между руководителем
+// проекта и проектным менеджером.
+//
+// ⚠️ Раньше это был отдельный раздел «Рабочий лист». Его убрали по решению
+// пользователя: в меню стояли два пункта про ОДИН И ТОТ ЖЕ список задач —
+// доска отвечала «на чьей стороне мяч», лист «что по клиентам на неделю».
+// Данные и так были общие, поэтому разделять пришлось не данные, а экраны.
 //
 // ОТКУДА ВЗЯЛОСЬ. До этого лист вели в Google-документе: по каждому клиенту
 // абзац обстановки и список пунктов, напротив которых менеджер дописывал
@@ -87,8 +93,15 @@ export type WorksheetClient = {
   advertiserId: string;
   name: string;
   note: string | null;
-  /** Группы внутри клиента: «Документы», «Креативы», … «Прочее» в конце. */
-  groups: { label: string; tasks: WorksheetTask[] }[];
+  /**
+   * Три части — ровно те вопросы, которые задают на недельной сверке:
+   * что сделано → что делаем → что дальше. Раньше внутри клиента стояли
+   * группы «Документы»/«Креативы», но разговор идёт не по группам, а по
+   * времени; сама группа осталась подписью на строке задачи.
+   */
+  done: WorksheetTask[];
+  now: WorksheetTask[];
+  next: WorksheetTask[];
   overdue: number;
   openCount: number;
 };
@@ -105,7 +118,6 @@ export type Worksheet = {
   /** Сводка недели — считается, а не пишется руками. */
   done: WorksheetTask[];
   red: WorksheetTask[];
-  timeline: { date: Date; clientName: string; title: string; status: string }[];
 };
 
 const DONE = "Готова";
@@ -216,22 +228,24 @@ export async function buildWorksheet(
   const noteFor = (advertiserId: string | null) =>
     notes.find((n) => (n.advertiserId ?? null) === advertiserId)?.text ?? null;
 
-  const names = new Map(advertisers.map((a) => [a.id, a.nameRu]));
   // Клиент показывается, даже если задач нет: пустая строка в листе — это
   // вопрос «а что у нас с ним?», и его лучше видеть, чем не видеть.
   const clients: WorksheetClient[] = advertisers.map((a) => {
     const list = byAdvertiser.get(a.id) ?? [];
-    const groupNames = [...new Set(list.map((t) => t.groupLabel?.trim() || "Прочее"))].sort((x, y) =>
-      x === "Прочее" ? 1 : y === "Прочее" ? -1 : x.localeCompare(y, "ru"),
-    );
+    // Деление по вопросам недельной сверки:
+    //   сделано  — закрытые (сюда попадают только закрытые на этой неделе);
+    //   делаем   — открытые со сроком до конца недели И без срока: работа,
+    //              которая идёт прямо сейчас, вместе с просрочкой;
+    //   дальше   — открытые со сроком позже недели.
+    // Задача без срока — это «идёт», а не «потом»: иначе половина листа
+    // уезжала бы в «дальше» и на сверке её бы не обсуждали.
     return {
       advertiserId: a.id,
       name: a.nameRu,
       note: noteFor(a.id),
-      groups: groupNames.map((label) => ({
-        label,
-        tasks: list.filter((t) => (t.groupLabel?.trim() || "Прочее") === label).map(shape),
-      })),
+      done: list.filter((t) => t.status === DONE).map(shape),
+      now: list.filter((t) => t.status !== DONE && (!t.dueDate || t.dueDate <= weekEnd)).map(shape),
+      next: list.filter((t) => t.status !== DONE && !!t.dueDate && t.dueDate > weekEnd).map(shape),
       overdue: list.filter((t) => isOverdue(t)).length,
       openCount: list.filter((t) => t.status !== DONE).length,
     };
@@ -241,16 +255,6 @@ export async function buildWorksheet(
   const red = visible
     .filter((t) => isOverdue(t) || (t.status === "Ждёт" && t.priority === "Срочно"))
     .map(shape);
-
-  const timeline = visible
-    .filter((t) => t.dueDate && t.dueDate >= weekStart && t.dueDate <= weekEnd)
-    .sort((a, b) => (a.dueDate as Date).getTime() - (b.dueDate as Date).getTime())
-    .map((t) => ({
-      date: t.dueDate as Date,
-      clientName: names.get(t.advertiserId ?? "") ?? "—",
-      title: t.title,
-      status: t.status,
-    }));
 
   return {
     weekStart,
@@ -262,7 +266,6 @@ export async function buildWorksheet(
     clients,
     done,
     red,
-    timeline,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
@@ -55,11 +55,14 @@ export function TasksView({
   deals,
   advertisers,
   users,
+  viewSwitch,
 }: {
   tasks: Task[];
   deals: Opt[];
   advertisers: AdvOpt[];
   users: UserOpt[];
+  /** Переключатель «Доска / По клиентам» — рисуется страницей. */
+  viewSwitch?: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -107,9 +110,12 @@ export function TasksView({
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(true)}>
-          + Задача
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {viewSwitch}
+          <button className="btn btn-primary" onClick={() => setOpen(true)}>
+            + Задача
+          </button>
+        </div>
       </div>
 
       <div className="mb-5 flex flex-wrap gap-2">

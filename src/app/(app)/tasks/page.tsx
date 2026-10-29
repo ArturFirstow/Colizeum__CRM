@@ -2,10 +2,28 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { ownScope, advertiserScope } from "@/lib/scope";
 import { TasksView } from "@/components/tasks/TasksView";
+import { ClientWeek } from "@/components/tasks/ClientWeek";
+import { ViewSwitch } from "@/components/tasks/ViewSwitch";
 
 export const dynamic = "force-dynamic";
 
-export default async function TasksPage() {
+// Раздел «Задачи» — ОДИН список задач в двух видах:
+//   доска       — на чьей стороне мяч (оперативка в течение дня);
+//   по клиентам — недельная сверка с менеджером (бывший «Рабочий лист»).
+// Вид выбирается адресом (?view=clients), чтобы ссылку можно было отправить
+// коллеге и чтобы прежние закладки на /worksheet никуда не делись.
+
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; week?: string; owner?: string }>;
+}) {
+  const { view, week, owner } = await searchParams;
+
+  if (view === "clients") {
+    return <ClientWeek week={week} owner={owner} viewSwitch={<ViewSwitch view="clients" />} />;
+  }
+
   // Личный кабинет: только свои задачи и справочники своих клиентов.
   const session = await requireSession();
   const [tasks, deals, advertisers, users] = await Promise.all([
@@ -24,5 +42,13 @@ export default async function TasksPage() {
     prisma.user.findMany({ select: { id: true, name: true } }),
   ]);
 
-  return <TasksView tasks={tasks} deals={deals} advertisers={advertisers} users={users} />;
+  return (
+    <TasksView
+      tasks={tasks}
+      deals={deals}
+      advertisers={advertisers}
+      users={users}
+      viewSwitch={<ViewSwitch view="board" />}
+    />
+  );
 }
