@@ -1,3 +1,6 @@
+// ⚠️ pptxgenjs намеренно НЕ в зависимостях проекта: он нужен только для
+// пересборки документов и не должен ехать на боевой сервер. Перед запуском:
+//   npm i --no-save pptxgenjs
 const pptx = require("pptxgenjs");
 const path = require("node:path");
 

@@ -111,7 +111,9 @@ await login(a, { shotLogin: true });
 
 await go(a.page, "/dashboard", "dashboard", 1700);
 await go(a.page, "/tasks", "tasks", 1300);
-await go(a.page, "/worksheet", "worksheet", 1800);
+// Имя снимка оставлено прежним («worksheet»): на него ссылается
+// scripts/gen-training.js. Сам раздел стал видом внутри «Задач».
+await go(a.page, "/tasks?view=clients", "worksheet", 1800);
 await go(a.page, "/deals", "deals", 1300);
 await go(a.page, "/advertisers", "advertisers", 1200);
 await go(a.page, "/documents", "documents", 1400);
@@ -172,7 +174,7 @@ await a.ctx.close();
 if (PW.manager) {
   const k = await session("e.turinova@colizeum.ru", PW.manager);
   await login(k);
-  await go(k.page, "/worksheet", "worksheet-manager", 1800);
+  await go(k.page, "/tasks?view=clients", "worksheet-manager", 1800);
   await go(k.page, "/dashboard", "dashboard-manager", 1500);
   await k.ctx.close();
 }
