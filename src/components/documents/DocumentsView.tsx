@@ -8,6 +8,7 @@ import { DeleteButton } from "@/components/ui/DeleteButton";
 import { EditDocumentButton } from "@/components/documents/EditDocumentButton";
 import { apiFetch, ApiError } from "@/lib/client";
 import { FileCell } from "@/components/ui/FileCell";
+import { MoreMenu } from "@/components/ui/MoreMenu";
 import { DOCUMENT_TYPES, DOCUMENT_SECTIONS, sectionForDocType } from "@/lib/enums";
 import { formatBytes, formatDate, formatDateTime, plural } from "@/lib/format";
 import { advertiserTypeStyle } from "@/lib/ui-tokens";
@@ -151,15 +152,11 @@ export function DocumentsView({
                       </span>
                     )}
                   </button>
-                  <DeleteButton
-                    endpoint={`/api/advertisers/${a.id}`}
-                    what={
-                      docCount > 0
-                        ? `клиента «${a.nameRu}» вместе с ${docCount} документами и всеми их версиями`
-                        : `клиента «${a.nameRu}» со всеми его сделками и документами`
-                    }
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-red-500/10 hover:text-red-400"
-                  />
+                  {/* ⚠️ Кнопки удаления клиента здесь НЕТ намеренно. Она стояла
+                      у каждой из тринадцати строк — тринадцать корзин в списке,
+                      по которому просто выбирают, чьи документы смотреть. И
+                      удаляла она не документ, а клиента со всеми сделками.
+                      Удаление живёт в карточке клиента, под «Ещё». */}
                 </div>
               );
             })}
@@ -184,7 +181,10 @@ export function DocumentsView({
                 </span>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {/* items-start обязателен: без него пустая плитка вытягивается
+                  по высоте соседней заполненной — и снова превращается в
+                  большой пустой прямоугольник, от которого мы ушли. */}
+              <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {sections.map((sec) => (
                   <SectionBasket
                     key={sec.key}
@@ -202,11 +202,17 @@ export function DocumentsView({
               {/* Общее хранилище клиента — отдельно и ниже: это файлы, которые
                   приложили в карточках сделок (счета, макеты, медиапланы).
                   Раньше этот блок стоял первым и спорил с самими документами. */}
-              <div className="mt-6 rounded-2xl border border-ink-800 bg-ink-900/30 p-4">
-                <div className="text-sm font-semibold text-ink-200">Файлы из карточек сделок</div>
-                <p className="mb-2.5 mt-0.5 text-xs text-ink-500">
-                  Сюда попадает всё, что прикрепили в сделках и счетах. Версий здесь нет — это
-                  простое хранилище.
+              {/* ⚠️ Свёрнуто по умолчанию: это не раздел, а запасной ящик.
+                  Развёрнутым он занимал экран наравне с документами. */}
+              <details className="group mt-6 rounded-2xl border border-ink-800 bg-ink-900/30 p-4">
+                <summary className="cursor-pointer list-none text-sm text-ink-400 transition hover:text-ink-200">
+                  <span className="font-semibold text-ink-300">Файлы из карточек сделок</span>
+                  <span className="ml-2 text-xs text-ink-500">
+                    всё, что прикрепили в сделках и счетах · открыть
+                  </span>
+                </summary>
+                <p className="mb-2.5 mt-2 text-xs text-ink-500">
+                  Версий здесь нет — это простое хранилище.
                 </p>
                 <FileCell
                   ownerType="advertiser"
@@ -216,7 +222,7 @@ export function DocumentsView({
                   label="Прикрепить файл с компьютера"
                   compact
                 />
-              </div>
+              </details>
             </>
           )}
         </div>
@@ -298,6 +304,14 @@ function SectionBasket({
     }
   }
 
+  // ⚠️ Пустая корзина — ОДНА СТРОКА, а не карточка с огромной пунктирной
+  // зоной. Раньше из восьми корзин семь были пустыми, и экран на три четверти
+  // состоял из одинаковых надписей «Перетащите файл сюда или нажмите». Это тот
+  // же случай, который мы уже лечили в базе знаний и в карточке сделки:
+  // заготовка не должна занимать места больше, чем содержимое.
+  //
+  // Перетаскивание при этом работает по ВСЕЙ плитке — отдельная зона для него
+  // не нужна, достаточно подсветки под курсором с файлом.
   return (
     <section
       onDragOver={(e) => {
@@ -310,26 +324,36 @@ function SectionBasket({
         setDragOver(false);
         dropFiles(e.dataTransfer.files);
       }}
-      className={`flex flex-col rounded-2xl border p-4 transition ${
+      onClick={empty ? () => inputRef.current?.click() : undefined}
+      className={`flex flex-col rounded-2xl border transition ${empty ? "cursor-pointer p-3" : "p-4"} ${
         dragOver
           ? "border-brand bg-brand/10"
           : empty
-            ? "border-dashed border-ink-700/70 bg-ink-900/20"
+            ? "border-ink-800 bg-ink-900/25 hover:border-ink-700 hover:bg-ink-900/50"
             : "border-ink-700 bg-ink-850"
       }`}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
+      <div className={`flex items-start justify-between gap-2 ${empty ? "" : "mb-3"}`}>
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-ink-100">{sectionKey}</div>
+          <div className={`truncate font-semibold ${empty ? "text-sm text-ink-300" : "text-sm text-ink-100"}`}>
+            {sectionKey}
+          </div>
           <div className="mt-0.5 truncate text-xs text-ink-500" title={types.join(", ")}>
             {docs.length > 0
               ? `${docs.length} ${plural(docs.length, "документ", "документа", "документов")}`
-              : types.join(", ")}
+              : busy
+                ? "загружаю…"
+                : dragOver
+                  ? "отпустите — положу сюда"
+                  : "пусто · бросьте файл"}
           </div>
         </div>
         <button
           type="button"
-          onClick={onAdd}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
           title="Завести карточку документа без файла"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-ink-800 hover:text-brand"
         >
@@ -338,36 +362,39 @@ function SectionBasket({
       </div>
 
       {docs.length > 0 && (
-        <div className="mb-3 space-y-2">
-          {docs.map((doc) => (
-            <DocumentRow
-              key={doc.id}
-              doc={doc}
-              deals={deals}
-              onUpload={() => onUploadVersion(doc)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mb-2 space-y-2">
+            {docs.map((doc) => (
+              <DocumentRow
+                key={doc.id}
+                doc={doc}
+                deals={deals}
+                onUpload={() => onUploadVersion(doc)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+            className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-ink-700 py-2 text-xs text-ink-500 transition hover:border-brand/40 hover:text-brand"
+          >
+            <Upload size={14} />
+            {busy ? "Загружаю…" : "Добавить файл"}
+          </button>
+        </>
       )}
 
-      {/* Зона загрузки. У пустой корзины она и есть всё содержимое — крупная и
-          спокойная; у заполненной — тонкая строка внизу. */}
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={busy}
-        className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl border border-dashed text-sm transition ${
-          dragOver ? "border-brand text-brand" : "border-ink-700 text-ink-500 hover:border-brand/40 hover:text-brand-200"
-        } ${empty ? "py-8" : "py-2.5"}`}
-      >
-        <Upload size={15} />
-        {busy ? "Загружаю…" : empty ? "Перетащите файл сюда или нажмите" : "Добавить файл"}
-      </button>
+      {/* ⚠️ stopPropagation обязателен: поле лежит ВНУТРИ плитки, а у пустой
+          плитки клик открывает выбор файла. Без этого программный клик по полю
+          всплывал обратно в плитку, она открывала выбор заново — и файл не
+          доходил до загрузки. */}
       <input
         ref={inputRef}
         type="file"
         multiple
         hidden
+        onClick={(e) => e.stopPropagation()}
         onChange={(e) => dropFiles(e.target.files)}
       />
       {error && <div className="mt-2 text-xs text-red-300">{error}</div>}
@@ -421,56 +448,74 @@ function DocumentRow({
           </div>
         </div>
 
-        <div className="mt-2 flex items-center gap-0.5">
-          {current && (
+        {/* ⚠️ На виду — ОДНО действие: скачать свежую версию. За этим сюда и
+            приходят в девяти случаях из десяти. Новая версия, правка и
+            удаление ушли под «Ещё»: четыре равнозначные кнопки под каждым
+            документом превращали колонку в панель управления. */}
+        <div className="mt-2 flex items-center gap-2">
+          {current ? (
             <a
               href={`/api/versions/${current.id}/download`}
-              className="btn btn-ghost btn-sm mr-auto"
+              className="btn btn-ghost btn-sm"
               title="Скачать свежую версию"
             >
               <Download size={15} /> Скачать
             </a>
+          ) : (
+            <button onClick={onUpload} className="btn btn-ghost btn-sm">
+              <Upload size={15} /> Загрузить файл
+            </button>
           )}
-          <button
-            onClick={onUpload}
-            title="Загрузить новую версию — прежняя останется в истории"
-            className={`flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition hover:bg-ink-800 hover:text-brand ${
-              current ? "" : "mr-auto"
-            }`}
-          >
-            <Upload size={16} />
-          </button>
-          <EditDocumentButton doc={doc} deals={deals} iconOnly />
-          <DeleteButton endpoint={`/api/documents/${doc.id}`} what={`документ «${doc.title}»`} />
+          <div className="ml-auto flex items-center gap-1">
+            {(older.length > 0 || current) && (
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="rounded-lg px-2 py-1.5 text-xs text-ink-500 transition hover:text-ink-200"
+                title="Прежние версии и файлы рядом"
+              >
+                {open ? "свернуть" : older.length > 0 ? "история" : "подробнее"}
+              </button>
+            )}
+            <MoreMenu label="">
+              {current && (
+                <button onClick={onUpload} className="btn btn-ghost btn-sm">
+                  <Upload size={15} /> Новая версия
+                </button>
+              )}
+              <EditDocumentButton doc={doc} deals={deals} />
+              <DeleteButton
+                endpoint={`/api/documents/${doc.id}`}
+                what={`документ «${doc.title}»`}
+                variant="button"
+              />
+            </MoreMenu>
+          </div>
         </div>
       </div>
 
-      {/* Файлы-спутники одной карточки (два приложения к одному договору,
-          ресайзы макета) — они не версии друг друга. */}
-      <div className="border-t border-ink-800/80 px-3 pb-2 pt-2">
-        <FileCell
-          ownerType="document"
-          ownerId={doc.id}
-          kind={doc.type}
-          dealId={doc.dealId ?? undefined}
-          label="Файлы рядом"
-          compact
-        />
-      </div>
+      {/* Прежние версии и файлы-спутники — под одной свёрткой. По отдельности
+          это были две полосы под КАЖДЫМ документом, и они занимали больше
+          места, чем сам документ. */}
+      {open && (
+        <div className="space-y-2 border-t border-ink-800/80 px-3 pb-3 pt-2">
+          <FileCell
+            ownerType="document"
+            ownerId={doc.id}
+            kind={doc.type}
+            dealId={doc.dealId ?? undefined}
+            label="Файлы рядом"
+            compact
+          />
+        </div>
+      )}
 
-      {older.length > 0 && (
+      {older.length > 0 && open && (
         <div className="border-t border-ink-800/80">
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-3 py-2 text-xs text-ink-500 transition hover:text-ink-200"
-          >
-            <span>
-              История: ещё {older.length} {plural(older.length, "версия", "версии", "версий")}
-            </span>
-            <span>{open ? "▲" : "▼"}</span>
-          </button>
-          {open && (
-            <div className="divide-y divide-ink-800/70 border-t border-ink-800/70">
+          <div className="px-3 pt-2 text-[11px] uppercase tracking-wide text-ink-500">
+            Прежние версии
+          </div>
+          {true && (
+            <div className="divide-y divide-ink-800/70">
               {older.map((v) => (
                 <div key={v.id} className="flex items-center justify-between gap-2 px-3 py-2">
                   <div className="min-w-0">

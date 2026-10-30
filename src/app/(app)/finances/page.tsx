@@ -101,11 +101,23 @@ export default async function FinancesPage() {
       {/* Расшифровка: из чего складывается бюджет и почему календарь ниже
           показывает другую цифру. Одна таблица снимает почти все вопросы
           «а почему тут одно число, а там другое». */}
+      {/* ⚠️ Расшифровка СВЁРНУТА. Это справка «почему тут одно число, а там
+          другое» — её открывают, когда цифры не сошлись, то есть редко. Пока
+          она стояла развёрнутой, таблица на полэкрана повторяла «Итого»
+          календаря, который и так идёт следом. Если расхождение есть, о нём
+          кричит отдельная жёлтая плашка ниже — она не свёрнута. */}
       {byClient.length > 0 && (
-        <div className="card mb-6 overflow-x-auto p-0">
-          <div className="px-5 pt-5">
-            <h2 className="text-lg font-bold text-ink-50">Из чего складывается бюджет</h2>
-            <p className="mt-0.5 text-xs text-ink-500">
+        <details className="card mb-6 overflow-x-auto p-0">
+          <summary className="cursor-pointer list-none px-5 py-4 transition hover:bg-ink-800/40">
+            <span className="text-sm font-semibold text-ink-200">Из чего складывается бюджет</span>
+            <span className="ml-2 text-xs text-ink-500">
+              {formatMoney(budget.gross)} · разложено {formatMoney(scheduledGross)} ·{" "}
+              {notScheduledGross > 1 ? `осталось ${formatMoney(notScheduledGross)}` : "сходится"} ·
+              по клиентам
+            </span>
+          </summary>
+          <div className="px-5">
+            <p className="text-xs text-ink-500">
               Все суммы с НДС. «Разложено» — то же, что «Итого» в календаре ниже.
             </p>
           </div>
@@ -149,7 +161,7 @@ export default async function FinancesPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+        </details>
       )}
 
       {/* Разложено больше, чем сумма договоров — почти всегда задвоенный платёж */}
@@ -205,12 +217,19 @@ export default async function FinancesPage() {
               (a, i) => a + i.payments.reduce((p, x) => p + (x.amount ?? 0), 0),
               0,
             );
+            // Пустая корзина не рисует тело вовсе: строка «счетов нет» ничего
+            // не добавляет к «0 ₽ / 0 ₽», которые и так стоят справа.
+            const empty = d.invoices.length === 0 && d.closingDocs.length === 0;
             return (
-              <div key={d.id} className="card p-5">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div key={d.id} className={empty ? "card px-5 py-3.5" : "card p-5"}>
+                <div className={`flex flex-wrap items-center justify-between gap-2 ${empty ? "" : "mb-3"}`}>
                   <Link href={`/deals/${d.id}`} className="font-semibold text-ink-100 hover:text-brand">
                     {d.advertiser.nameRu}
-                    <span className="ml-2 text-xs text-ink-500">{d.title}</span>
+                    {/* Название сделки печатаем, только если оно отличается от
+                        имени клиента — иначе строка повторяла себя дважды. */}
+                    {d.title !== d.advertiser.nameRu && (
+                      <span className="ml-2 text-xs font-normal text-ink-500">{d.title}</span>
+                    )}
                   </Link>
                   <div className="flex items-center gap-2">
                     <div className="mr-2 text-right">
@@ -247,6 +266,12 @@ export default async function FinancesPage() {
                   </div>
                 </div>
 
+                {/* ⚠️ Пустая корзина сжимается в ОДНУ строку. Пока обе колонки
+                    рисовались всегда, пять сделок без счетов давали десять
+                    одинаковых надписей «Счетов нет» и «Пока нет» — полэкрана
+                    текста, который ничего не сообщает. Кнопки «+ Счёт» и
+                    «+ УПД» стоят выше и никуда не делись. */}
+                {empty ? null : (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-500">
@@ -319,6 +344,7 @@ export default async function FinancesPage() {
                     )}
                   </div>
                 </div>
+                )}
               </div>
             );
           })}
