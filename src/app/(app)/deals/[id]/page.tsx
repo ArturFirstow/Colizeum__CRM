@@ -193,17 +193,24 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 { kind: "Счёт", title: "Счета и платёжки", hint: "счёт, ПП, УПД" },
               ].map((b) => (
                 <div key={b.kind} className="min-w-0 rounded-2xl border border-ink-800 bg-ink-900/30 p-3">
-                  <div className="truncate text-sm font-semibold text-ink-200">{b.title}</div>
-                  <div className="mb-2 truncate text-xs text-ink-500">{b.hint}</div>
-                  <FileCell
-                    ownerType="deal"
-                    ownerId={deal.id}
-                    kind={b.kind}
-                    advertiserId={deal.advertiserId}
-                    dealId={deal.id}
-                    label="Перетащите или нажмите"
-                    compact
-                  />
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-ink-200">{b.title}</div>
+                      <div className="truncate text-xs text-ink-500">{b.hint}</div>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <FileCell
+                      ownerType="deal"
+                      ownerId={deal.id}
+                      kind={b.kind}
+                      advertiserId={deal.advertiserId}
+                      dealId={deal.id}
+                      label="Перетащите или нажмите"
+                      compact
+                      quiet
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -229,6 +236,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           {/* Медиапланы */}
           <Section
             title="Медиапланы"
+            empty={deal.mediaPlans.length === 0}
+            emptyNote="нет — файл кладите в корзину «Медиапланы и КП» выше"
             action={
               <QuickAdd
                 label="+ МП"
@@ -244,11 +253,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
-            {deal.mediaPlans.length === 0 ? (
-              <p className="text-sm text-ink-500">
-                Медиапланов нет — файл можно просто положить в корзину «Медиапланы и КП» выше.
-              </p>
-            ) : (
+            {deal.mediaPlans.length === 0 ? null : (
               <div className="space-y-3">
                 {deal.mediaPlans.map((mp) => (
                   <div key={mp.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-4">
@@ -283,6 +288,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
           {/* Финансовая цепочка */}
           <Section
             title="Финансы"
+            empty={deal.invoices.length === 0 && deal.closingDocs.length === 0}
+            emptyNote="счетов нет — файл кладите в корзину «Счета и платёжки» выше"
             hint="Счёт → Платёж → УПД → Отчёт → Акт сверки"
             action={
               <QuickAdd
@@ -300,11 +307,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               />
             }
           >
-            {deal.invoices.length === 0 ? (
-              <p className="text-sm text-ink-500">
-                Счетов нет — файл можно положить в корзину «Счета и платёжки» выше.
-              </p>
-            ) : (
+            {deal.invoices.length === 0 ? null : (
               <div className="space-y-3">
                 {deal.invoices.map((inv) => (
                   <div key={inv.id} className="rounded-xl border border-ink-800 bg-ink-900/50 p-4">
@@ -721,13 +724,34 @@ function Section({
   title,
   hint,
   action,
+  empty,
+  emptyNote,
   children,
 }: {
   title: string;
   hint?: string;
   action?: React.ReactNode;
+  /** Нечего показывать — блок сжимается в одну строку. */
+  empty?: boolean;
+  emptyNote?: string;
   children: React.ReactNode;
 }) {
+  // ⚠️ Пустой раздел не разворачивается в карточку с заголовком, подписью и
+  // абзацем «пока ничего нет». Так уже сделаны ОРД и промокоды ниже — здесь
+  // то же правило: заготовка занимает места не больше, чем содержимое.
+  if (empty) {
+    return (
+      <section className="card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink-300">
+            {title}
+            {emptyNote && <span className="ml-2 text-xs font-normal text-ink-500">{emptyNote}</span>}
+          </h2>
+          {action}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="card p-5">
       <div className="mb-4 flex items-center justify-between gap-3">

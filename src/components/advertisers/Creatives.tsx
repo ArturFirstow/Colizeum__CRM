@@ -89,7 +89,11 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
         </form>
       )}
 
-      {/* Файлы макетов — можно просто перетащить сюда с компьютера */}
+      {/* Файлы макетов — можно просто перетащить сюда с компьютера.
+          ⚠️ Когда карточки макетов уже есть, зона загрузки сжимается в строку:
+          рядом стоит кнопка «+ Макет», и две одинаково крупные точки входа
+          спорили друг с другом. Пустой список — зона обычная, она тогда и
+          есть главное действие блока. */}
       <div className="mb-3">
         <FileCell
           ownerType="advertiser"
@@ -97,6 +101,8 @@ export function Creatives({ advertiserId, creatives }: { advertiserId: string; c
           kind="Креатив"
           advertiserId={advertiserId}
           label="Прикрепить макет (jpg, png, pdf)"
+          quiet={creatives.length > 0}
+          compact={creatives.length > 0}
         />
       </div>
 

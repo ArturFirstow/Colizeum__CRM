@@ -28,6 +28,7 @@ export function FileCell({
   dealId,
   label = "Прикрепить файл",
   compact,
+  quiet,
 }: {
   ownerType: string;
   ownerId: string;
@@ -36,6 +37,14 @@ export function FileCell({
   dealId?: string;
   label?: string;
   compact?: boolean;
+  /**
+   * Пустая ячейка — тонкая строка «+ файл» вместо высокой пунктирной зоны.
+   * ⚠️ Нужна там, где таких ячеек НЕСКОЛЬКО рядом (три корзины в карточке
+   * сделки): три больших пунктирных прямоугольника читаются как инструкция по
+   * загрузке, а не как место для файлов. Перетаскивание работает так же:
+   * обработчик висит на всей ячейке, а не на кнопке.
+   */
+  quiet?: boolean;
 }) {
   const [files, setFiles] = useState<FileAssetLite[]>([]);
   const [busy, setBusy] = useState(false);
@@ -148,11 +157,18 @@ export function FileCell({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className={`flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 text-sm transition ${
-          dragOver ? "border-brand/60 text-brand" : "border-ink-700 text-ink-400 hover:border-brand/40 hover:text-brand-200"
-        } ${compact ? "py-2.5" : "py-3"}`}
+        className={
+          quiet && files.length === 0
+            ? `flex items-center gap-1.5 rounded-lg px-1 py-1 text-xs transition ${
+                dragOver ? "text-brand" : "text-ink-500 hover:text-brand"
+              }`
+            : `flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 text-sm transition ${
+                dragOver ? "border-brand/60 text-brand" : "border-ink-700 text-ink-400 hover:border-brand/40 hover:text-brand-200"
+              } ${compact ? "py-2.5" : "py-3"}`
+        }
       >
-        <Upload size={15} /> {busy ? "Загружаю…" : label}
+        <Upload size={quiet && files.length === 0 ? 13 : 15} />{" "}
+        {busy ? "Загружаю…" : quiet && files.length === 0 ? "файл" : label}
       </button>
       <input ref={inputRef} type="file" multiple hidden onChange={(e) => upload(e.target.files)} />
 
