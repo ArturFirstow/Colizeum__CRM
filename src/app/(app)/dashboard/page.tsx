@@ -10,6 +10,7 @@ import { formatMoney, formatDate, daysBetween } from "@/lib/format";
 import { TASK_KIND_EMOJI, sideStyle } from "@/lib/ui-tokens";
 import { requireSession } from "@/lib/auth";
 import { ownScope, isLeadership } from "@/lib/scope";
+import { taskScope } from "@/lib/task-scope";
 import { CountUp } from "@/components/ui/CountUp";
 
 const STUCK_DAYS = 7;
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
 
   // Личный кабинет: дашборд считает только своих клиентов; архив скрыт.
   const notArchived = { advertiser: { archived: false, ...ownScope(session) } };
-  const myTask = ownScope(session);
+  const myTask = taskScope(session);
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const leader = isLeadership(session);
@@ -88,7 +89,7 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "asc" },
       take: 6,
     }),
-    prisma.journalEntry.findMany({ where: myTask, orderBy: { date: "desc" }, take: 4 }),
+    prisma.journalEntry.findMany({ where: ownScope(session), orderBy: { date: "desc" }, take: 4 }),
     // ⚠️ Считаем не «сколько у нас всего», а «что требует решения». Прежние
     // плитки («бюджет», «активные сделки», «задачи в работе») были витриной:
     // по ним нельзя было ничего решить, а две из трёх показывали одно и то же
@@ -131,7 +132,7 @@ export default async function DashboardPage() {
   const portfolio = sumMoney(budgetRows(dealOpts));
 
   // Поручения: задачи, которые поставил кто-то другой (руководитель).
-  const assignedToMe = openTasks.filter((t) => t.assignedById && t.assignedById !== session.userId);
+  const assignedToMe = openTasks.filter((t) => t.assigneeId === session.userId && t.assignedById && t.assignedById !== session.userId);
 
   return (
     <div>

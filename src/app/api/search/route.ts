@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok } from "@/lib/api";
 import { ownScope } from "@/lib/scope";
+import { taskScope } from "@/lib/task-scope";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Общий поиск по сервису — то, что открывается по Ctrl + K.
@@ -68,7 +69,7 @@ export async function GET(req: NextRequest) {
         take: 600,
       }),
       prisma.task.findMany({
-        where: { ...ownScope(session), status: { not: "Готова" } },
+        where: { ...taskScope(session), status: { not: "Готова" } },
         select: {
           id: true,
           title: true,

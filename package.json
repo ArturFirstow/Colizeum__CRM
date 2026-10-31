@@ -20,6 +20,7 @@
     "retention": "tsx --conditions=react-server scripts/retention.ts",
     "security:check": "tsx scripts/security-check.ts",
     "api:check": "tsx --conditions=react-server scripts/api-check.ts",
+    "tasks:test": "prisma generate && tsx --conditions=react-server --test scripts/tests/task-flow.test.mts",
     "stages:migrate": "tsx scripts/migrate-stages.ts",
     "release:notes": "bash scripts/release-notes.sh",
     "deploy:check": "bash scripts/deploy.sh --dry",

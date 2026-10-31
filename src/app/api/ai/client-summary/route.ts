@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withSession, ok, fail } from "@/lib/api";
 import { canSeeOwned } from "@/lib/scope";
+import { tasksForAdvertiser } from "@/lib/task-scope";
 import { aiComplete, aiConfigured, AI_NO_KEY_MESSAGE, aiErrorMessage } from "@/lib/ai";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatMoney } from "@/lib/format";
@@ -21,11 +22,11 @@ export async function POST(req: NextRequest) {
       include: {
         deals: { include: { plannedPayments: true }, orderBy: { updatedAt: "desc" } },
         dailyStatuses: { where: { date: { gte: new Date(Date.now() - 35 * 86400000) } }, orderBy: { date: "asc" } },
-        tasks: { where: { status: { not: "Готова" } }, orderBy: { dueDate: "asc" } },
       },
     });
     if (!adv) return fail("not_found", "Клиент не найден", 404);
     if (!canSeeOwned(session, adv.ownerId)) return fail("forbidden", "Нет доступа к клиенту", 403);
+    const tasks = await prisma.task.findMany({ where: { ...tasksForAdvertiser(advertiserId), status: { not: "Готова" } }, orderBy: { dueDate: "asc" } });
 
     const ctx: string[] = [`# Клиент: ${adv.nameRu}${adv.legalEntity ? ` (${adv.legalEntity})` : ""}`];
     if (adv.goals) ctx.push(`Цель: ${adv.goals}`);
@@ -49,8 +50,8 @@ export async function POST(req: NextRequest) {
     for (const s of adv.dailyStatuses) ctx.push(`- ${s.date.toISOString().slice(0, 10)}: ${s.text}`);
 
     ctx.push("\n## Открытые задачи");
-    if (adv.tasks.length === 0) ctx.push("- (нет)");
-    for (const t of adv.tasks) ctx.push(`- ${t.title}${t.dueDate ? ` (до ${t.dueDate.toISOString().slice(0, 10)})` : ""}${t.notes ? ` — ${t.notes}` : ""}`);
+    if (tasks.length === 0) ctx.push("- (нет)");
+    for (const t of tasks) ctx.push(`- ${t.title}${t.dueDate ? ` (до ${t.dueDate.toISOString().slice(0, 10)})` : ""}${t.notes ? ` — ${t.notes}` : ""}`);
 
     try {
       const markdown = await aiComplete({

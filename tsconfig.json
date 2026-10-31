@@ -18,7 +18,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts", ".next/types/**/*.ts"],
   "_comment_exclude": "⚠️ video — отдельный проект ролика со своими зависимостями, на боевой сервер они не ставятся. Без этой строки проверка типов в next build заходит в video/ и падает на '@remotion/cli/config'. Поймано на боевой выкатке.",
   "exclude": ["node_modules", "video", "scripts/*.mjs"]
 }

@@ -1,7 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { SessionPayload } from "@/lib/auth";
-import { isLeadership } from "@/lib/scope";
+import { isLeadership, ownScope } from "@/lib/scope";
+import { PublicError } from "@/lib/errors";
+import { taskAdvertiserId, taskScope } from "@/lib/task-scope";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Недельный разбор по клиентам — вид «По клиентам» в разделе «Задачи»
@@ -124,7 +126,9 @@ const DONE = "Готова";
 
 /** Задача просрочена: срок в прошлом, а работа не закрыта. */
 export function isOverdue(t: { dueDate: Date | null; status: string }, now = new Date()): boolean {
-  return !!t.dueDate && t.status !== DONE && t.dueDate < now;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return !!t.dueDate && t.status !== DONE && t.dueDate < today;
 }
 
 function shape(t: {
@@ -175,7 +179,11 @@ export async function buildWorksheet(
   weekStart: Date,
   forOwnerId?: string,
 ): Promise<Worksheet> {
-  const ownerId = forOwnerId ?? (await worksheetOwnerId(session));
+  const myOwnerId = await worksheetOwnerId(session);
+  const ownerId = forOwnerId ?? myOwnerId;
+  if (session.role === "Security" || (!isLeadership(session) && ownerId !== myOwnerId)) {
+    throw new PublicError("Нет доступа к рабочему списку", { code: "forbidden", status: 404 });
+  }
   const weekEnd = weekEndOf(weekStart);
 
   const owner = await prisma.user.findUnique({
@@ -185,21 +193,26 @@ export async function buildWorksheet(
 
   // Круг людей листа: руководитель проекта и его менеджеры.
   const circle = [ownerId, ...(owner?.projectManagers.map((m) => m.id) ?? [])];
+  // Руководитель смотрит выбранную пару, а не все задачи отдела сразу.
+  const pairSession: SessionPayload = { ...session, userId: ownerId, role: "Manager", teamIds: circle };
 
   const [advertisers, tasks, notes] = await Promise.all([
     prisma.advertiser.findMany({
-      where: { ownerId, archived: false },
+      where: { AND: [{ ownerId: { in: circle }, archived: false }, ownScope(session)] },
       select: { id: true, nameRu: true },
       orderBy: { nameRu: "asc" },
     }),
     prisma.task.findMany({
       where: {
-        advertiserId: { not: null },
-        OR: [{ ownerId: { in: circle } }, { assigneeId: { in: circle } }],
+        AND: [
+          taskScope(pairSession),
+          taskScope(session),
+          { OR: [{ advertiserId: { not: null } }, { dealId: { not: null } }] },
+        ],
       },
       include: {
         assignee: { select: { name: true } },
-        deal: { select: { title: true } },
+        deal: { select: { title: true, advertiserId: true } },
         comments: {
           orderBy: { createdAt: "asc" },
           include: { author: { select: { name: true } } },
@@ -213,16 +226,20 @@ export async function buildWorksheet(
   // Открытые держим целиком — их надо видеть, даже если срок позже. Закрытые
   // оставляем только те, что закрыли на этой неделе: иначе лист через месяц
   // зарастает историей и перестаёт читаться.
-  const visible = tasks.filter(
-    (t) => t.status !== DONE || (t.updatedAt >= weekStart && t.updatedAt <= weekEnd),
-  );
+  const clientIds = new Set(advertisers.map((a) => a.id));
+  const visible = tasks.filter((t) => {
+    const advertiserId = taskAdvertiserId(t);
+    return advertiserId && clientIds.has(advertiserId) &&
+      (t.status !== DONE || (t.updatedAt >= weekStart && t.updatedAt <= weekEnd));
+  });
 
   const byAdvertiser = new Map<string, typeof visible>();
   for (const t of visible) {
-    if (!t.advertiserId) continue;
-    const list = byAdvertiser.get(t.advertiserId) ?? [];
+    const advertiserId = taskAdvertiserId(t);
+    if (!advertiserId) continue;
+    const list = byAdvertiser.get(advertiserId) ?? [];
     list.push(t);
-    byAdvertiser.set(t.advertiserId, list);
+    byAdvertiser.set(advertiserId, list);
   }
 
   const noteFor = (advertiserId: string | null) =>

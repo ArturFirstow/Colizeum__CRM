@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { ownScope, advertiserScope } from "@/lib/scope";
+import { taskScope } from "@/lib/task-scope";
 import { TasksView } from "@/components/tasks/TasksView";
 import { ClientWeek } from "@/components/tasks/ClientWeek";
 import { ViewSwitch } from "@/components/tasks/ViewSwitch";
@@ -28,23 +29,23 @@ export default async function TasksPage({
   const session = await requireSession();
   const [tasks, deals, advertisers, users] = await Promise.all([
     prisma.task.findMany({
-      where: ownScope(session),
+      where: taskScope(session),
       include: {
-        deal: { select: { id: true, title: true } },
+        deal: { select: { id: true, title: true, advertiser: { select: { id: true, nameRu: true } } } },
         advertiser: { select: { id: true, nameRu: true } },
         assignee: { select: { id: true, name: true } },
         assignedBy: { select: { id: true, name: true } },
       },
       orderBy: [{ movedAt: "desc" }, { dueDate: "asc" }],
     }),
-    prisma.deal.findMany({ where: advertiserScope(session), select: { id: true, title: true }, orderBy: { updatedAt: "desc" } }),
+    prisma.deal.findMany({ where: advertiserScope(session), select: { id: true, title: true, advertiserId: true }, orderBy: { updatedAt: "desc" } }),
     prisma.advertiser.findMany({ where: ownScope(session), select: { id: true, nameRu: true }, orderBy: { nameRu: "asc" } }),
-    prisma.user.findMany({ select: { id: true, name: true } }),
+    prisma.user.findMany({ where: { role: { not: "Security" } }, select: { id: true, name: true } }),
   ]);
 
   return (
     <TasksView
-      tasks={tasks}
+      tasks={tasks.map((t) => ({ ...t, advertiser: t.deal?.advertiser ?? t.advertiser }))}
       deals={deals}
       advertisers={advertisers}
       users={users}

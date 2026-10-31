@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { canSeeOwned } from "@/lib/scope";
+import { tasksForAdvertiser } from "@/lib/task-scope";
 import { PageHeader, TypeBadge, StageBadge, UrgencyBadge, Field, EmptyState } from "@/components/ui/primitives";
 import { FileCell } from "@/components/ui/FileCell";
 import { AddContactButton } from "@/components/advertisers/AddContactButton";
@@ -61,12 +62,12 @@ export default async function AdvertiserDetailPage({ params }: { params: Promise
   // искать глазами. Здесь показываем только НЕЗАКРЫТЫЕ: закрытые уже не
   // требуют действий, а карточка нужна для «что сейчас по клиенту».
   const openTasks = await prisma.task.findMany({
-    where: { advertiserId: advertiser.id, status: { not: "Готова" } },
+    where: { ...tasksForAdvertiser(advertiser.id), status: { not: "Готова" } },
     include: { assignee: { select: { name: true } } },
     orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
   });
   const doneTasksCount = await prisma.task.count({
-    where: { advertiserId: advertiser.id, status: "Готова" },
+    where: { ...tasksForAdvertiser(advertiser.id), status: "Готова" },
   });
   const today = new Date();
   today.setHours(0, 0, 0, 0);

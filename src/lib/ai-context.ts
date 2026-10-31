@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatMoney } from "@/lib/format";
 import type { SessionPayload } from "@/lib/auth";
 import { ownScope, isLeadership, isTournaments } from "@/lib/scope";
+import { taskScope } from "@/lib/task-scope";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // «Шапка» разговора с напарником ИИ.
@@ -55,8 +56,8 @@ export async function buildAiContext(session: SessionPayload): Promise<string> {
       where: { advertiser: { ...scope, archived: false } },
       select: { title: true, stage: true, amount: true, contractTotal: true, blocker: true },
     }),
-    prisma.task.count({ where: { ...scope, status: { not: "Готова" } } }),
-    prisma.task.count({ where: { ...scope, status: { not: "Готова" }, dueDate: { lt: startOfToday } } }),
+    prisma.task.count({ where: { ...taskScope(session), status: { not: "Готова" } } }),
+    prisma.task.count({ where: { ...taskScope(session), status: { not: "Готова" }, dueDate: { lt: startOfToday } } }),
     prisma.fileAsset.count({ where: { ownerType: "inbox", ownerId: session.userId } }),
     prisma.decisionRequest.count({ where: { requesterId: session.userId, status: "Открыт" } }),
   ]);
