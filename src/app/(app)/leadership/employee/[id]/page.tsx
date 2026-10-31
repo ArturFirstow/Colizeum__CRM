@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { tasksForEmployee } from "@/lib/task-scope";
 import { requireSession } from "@/lib/auth";
 import { isLeadership } from "@/lib/scope";
 import { PageHeader, StageBadge, UrgencyBadge, EmptyState } from "@/components/ui/primitives";
@@ -27,7 +28,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
       orderBy: { updatedAt: "desc" },
     }),
     prisma.task.findMany({
-      where: { ownerId: id, status: { not: "Готова" } },
+      where: { ...tasksForEmployee(id), status: { not: "Готова" } },
       orderBy: [{ dueDate: "asc" }],
       take: 10,
     }),
@@ -39,7 +40,7 @@ export default async function EmployeePage({ params }: { params: Promise<{ id: s
     }),
     // Поручения, которые этот руководитель поставил данному сотруднику.
     prisma.task.findMany({
-      where: { ownerId: id, assignedById: session.userId },
+      where: { OR: [{ ownerId: id }, { assigneeId: id }], assignedById: session.userId },
       include: { advertiser: { select: { nameRu: true } } },
       orderBy: [{ createdAt: "desc" }],
       take: 20,

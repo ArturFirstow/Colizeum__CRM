@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { tasksForAdvertiser } from "@/lib/task-scope";
 import { formatMoney } from "@/lib/format";
 import { TIMELINE_ICONS, type TimelineEvent, type TimelineKind } from "@/lib/timeline";
 
@@ -39,7 +40,7 @@ export async function buildClientTimeline(advertiserId: string): Promise<Timelin
     await Promise.all([
     prisma.deal.findMany({ where: { advertiserId } }),
     prisma.dailyStatus.findMany({ where: { advertiserId }, include: { deal: { select: { title: true } } } }),
-    prisma.task.findMany({ where: { advertiserId }, include: { deal: { select: { title: true } } } }),
+    prisma.task.findMany({ where: tasksForAdvertiser(advertiserId), include: { deal: { select: { title: true } } } }),
     prisma.journalEntry.findMany({ where: { advertiserId } }),
     prisma.documentVersion.findMany({
       where: { document: { advertiserId } },

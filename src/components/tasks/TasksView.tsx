@@ -38,7 +38,7 @@ type Task = {
   assignedBy: { id: string; name: string } | null;
 };
 
-type Opt = { id: string; title: string };
+type Opt = { id: string; title: string; advertiserId: string };
 type AdvOpt = { id: string; nameRu: string };
 type UserOpt = { id: string; name: string };
 
@@ -208,7 +208,9 @@ function TaskCard({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const overdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "Готова";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const overdue = task.dueDate && new Date(task.dueDate) < today && task.status !== "Готова";
 
   async function changeStatus(status: string) {
     setBusy(true);
@@ -557,11 +559,6 @@ function NewTaskModal({
     setError(null);
     setSaving(true);
     try {
-      // В заголовке сначала бренд, потом суть: в списке задачи разных клиентов
-      // иначе сливаются и приходится открывать каждую.
-      const brand = advertisers.find((a) => a.id === f.advertiserId)?.nameRu;
-      const title = brand && !f.title.startsWith(brand) ? `${brand} — ${f.title}` : f.title;
-
       await apiFetch("/api/tasks", {
         method: "POST",
         body: JSON.stringify({
@@ -599,13 +596,16 @@ function NewTaskModal({
   return (
     <Modal open={open} onClose={onClose} title="Новая задача">
       <form onSubmit={submit} className="space-y-4">
-        {/* Клиент выбирается первым: его название уходит в начало заголовка */}
+        {/* Клиент и сделка — одна связь; повторно выбирать клиента не нужно. */}
         <div>
           <label className="label">По какому клиенту</label>
           <select
             className="input"
             value={f.advertiserId}
-            onChange={(e) => set("advertiserId", e.target.value)}
+            onChange={(e) => {
+              const advertiserId = e.target.value;
+              setF((s) => ({ ...s, advertiserId, dealId: deals.find((d) => d.id === s.dealId)?.advertiserId === advertiserId ? s.dealId : "" }));
+            }}
           >
             <option value="">— выбрать клиента —</option>
             {advertisers.map((a) => (
@@ -626,11 +626,6 @@ function NewTaskModal({
             required
             autoFocus
           />
-          {f.advertiserId && f.advertiserId !== "other" && (
-            <p className="mt-1 text-xs text-ink-500">
-              В заголовок добавится «{advertisers.find((a) => a.id === f.advertiserId)?.nameRu} — »
-            </p>
-          )}
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
@@ -665,9 +660,13 @@ function NewTaskModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Сделка</label>
-            <select className="input" value={f.dealId} onChange={(e) => set("dealId", e.target.value)}>
+            <select className="input" value={f.dealId} disabled={f.advertiserId === "other"} onChange={(e) => {
+              const dealId = e.target.value;
+              const deal = deals.find((d) => d.id === dealId);
+              setF((s) => ({ ...s, dealId, advertiserId: deal?.advertiserId ?? s.advertiserId }));
+            }}>
               <option value="">— нет —</option>
-              {deals.map((d) => (
+              {deals.filter((d) => !f.advertiserId || d.advertiserId === f.advertiserId).map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.title}
                 </option>

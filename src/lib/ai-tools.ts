@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import type { AiTool } from "@/lib/ai";
 import type { SessionPayload } from "@/lib/auth";
 import { ownScope } from "@/lib/scope";
+import { tasksForAdvertiser } from "@/lib/task-scope";
 import { MANUAL, MANUAL_KEYS, MANUAL_TOC } from "@/lib/ai-manual";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -265,7 +266,7 @@ export function makeRunTool(session: SessionPayload) {
           where: { advertiserId: a.id, date: { gte: new Date(Date.now() - 35 * 86400000) } },
           orderBy: { date: "asc" },
         }),
-        prisma.task.findMany({ where: { advertiserId: a.id, status: { not: "Готова" } }, orderBy: { dueDate: "asc" } }),
+        prisma.task.findMany({ where: { ...tasksForAdvertiser(a.id), status: { not: "Готова" } }, orderBy: { dueDate: "asc" } }),
         prisma.fileAsset.findMany({ where: { advertiserId: a.id }, orderBy: { uploadedAt: "desc" }, take: 20 }),
       ]);
       const out: string[] = [`Клиент: ${a.nameRu}${a.legalEntity ? ` (${a.legalEntity})` : ""}`];

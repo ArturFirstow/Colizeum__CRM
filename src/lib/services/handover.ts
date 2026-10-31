@@ -26,7 +26,7 @@ export async function collectClientFacts(advertiserId: string): Promise<string> 
         include: {
           invoices: { include: { payments: true } },
           documents: true,
-          tasks: { where: { status: { not: "Готово" } } },
+          tasks: { where: { status: { not: "Готова" } } },
           plannedPayments: { orderBy: { periodMonth: "asc" } },
           ordMarkings: true,
         },
@@ -47,6 +47,13 @@ export async function collectClientFacts(advertiserId: string): Promise<string> 
   }
   if (a.goals) lines.push(`Цели: ${a.goals}`);
   if (a.notes) lines.push(`Заметки: ${a.notes}`);
+  const clientTasks = await prisma.task.findMany({
+    where: { advertiserId, dealId: null, status: { not: "Готова" } },
+    orderBy: { dueDate: "asc" },
+  });
+  if (clientTasks.length) {
+    lines.push(`Открытые задачи по клиенту: ${clientTasks.map((t) => `${t.title}${t.dueDate ? ` (до ${d(t.dueDate)})` : ""}`).join("; ")}`);
+  }
 
   for (const deal of a.deals) {
     const invoiced = deal.invoices.reduce((s, i) => s + (i.amount ?? 0), 0);

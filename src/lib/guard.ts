@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { SessionPayload } from "@/lib/auth";
 import { canSeeOwned, canSeeTournaments, isLeadership, isSecurity } from "@/lib/scope";
 import { PublicError } from "@/lib/errors";
+import { taskScope } from "@/lib/task-scope";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Проверка «эта запись вообще твоя?» для запросов к API.
@@ -175,27 +176,23 @@ export async function guardAgencyClient(session: SessionPayload, id: string) {
 
 // ── Записи, принадлежащие самому сотруднику ──────────────────────────────────
 
-/** Задача: своя, порученная тебе, или по твоему клиенту. */
+/** Та же область видимости, что на доске и в сводке, включая рабочую пару. */
 export async function guardTask(session: SessionPayload, id: string) {
   denySecurity(session);
-  const t = await prisma.task.findUnique({
-    where: { id },
+  const t = await prisma.task.findFirst({
+    where: { id, ...taskScope(session) },
     select: {
       id: true,
       ownerId: true,
       assigneeId: true,
       assignedById: true,
+      dealId: true,
+      advertiserId: true,
+      deal: { select: { id: true, advertiserId: true } },
       advertiser: { select: { ownerId: true } },
     },
   });
   if (!t) deny();
-  const mine =
-    isLeadership(session) ||
-    t.ownerId === session.userId ||
-    t.assigneeId === session.userId ||
-    t.assignedById === session.userId ||
-    (t.advertiser ? t.advertiser.ownerId === session.userId : false);
-  if (!mine) deny();
   return t;
 }
 

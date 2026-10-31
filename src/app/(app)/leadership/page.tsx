@@ -38,7 +38,7 @@ export default async function LeadershipPage() {
     }),
     prisma.task.findMany({
       where: { status: { not: "Готова" } },
-      select: { id: true, title: true, ownerId: true, dueDate: true, owner: { select: { name: true } }, advertiser: { select: { nameRu: true } } },
+      select: { id: true, title: true, ownerId: true, assigneeId: true, dueDate: true, owner: { select: { name: true } }, assignee: { select: { name: true } }, advertiser: { select: { nameRu: true } } },
     }),
     prisma.plannedPayment.findMany({ select: { amount: true, status: true, advertiser: { select: { ownerId: true } } } }),
     prisma.dailyStatus.findMany({ select: { advertiser: { select: { ownerId: true } }, date: true } }),
@@ -51,7 +51,7 @@ export default async function LeadershipPage() {
   const byUser = users.map((u) => {
     const myAdv = advertisers.filter((a) => a.ownerId === u.id);
     const myDeals = deals.filter((d) => d.advertiser.ownerId === u.id && d.stage !== "Закрытие");
-    const myTasks = tasks.filter((t) => t.ownerId === u.id);
+    const myTasks = tasks.filter((t) => (t.assigneeId ?? t.ownerId) === u.id);
     const myPay = payments.filter((p) => p.advertiser.ownerId === u.id);
     const lastStatus = statuses
       .filter((s) => s.advertiser.ownerId === u.id)
@@ -113,7 +113,7 @@ export default async function LeadershipPage() {
       id: t.id,
       href: "/tasks",
       title: t.title,
-      sub: `${t.advertiser?.nameRu ?? "без клиента"} · ${t.owner?.name ?? "—"} · до ${formatDate(t.dueDate)}`,
+      sub: `${t.advertiser?.nameRu ?? "без клиента"} · ${t.assignee?.name ?? t.owner?.name ?? "—"} · до ${formatDate(t.dueDate)}`,
     }));
   const stuckItems = deals
     .filter((d) => d.stage !== "Закрытие" && new Date(d.updatedAt) < STUCK)

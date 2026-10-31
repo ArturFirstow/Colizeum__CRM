@@ -3,21 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { withSession, ok } from "@/lib/api";
 import { taskUpdateSchema } from "@/lib/validation";
 import { guardTask } from "@/lib/guard";
+import { updateTask } from "@/lib/services/tasks";
+import { writeAudit } from "@/lib/audit";
+import { notifyUser } from "@/lib/services/notify";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   return withSession(async (session) => {
     const { id } = await ctx.params;
-    await guardTask(session, id);
+    const previous = await guardTask(session, id);
     const data = taskUpdateSchema.parse(await req.json());
-    // Перетащили в другую колонку — карточка встаёт первой, иначе теряется
-    // в середине списка и человек её больше не находит.
-    const movedAt = data.status !== undefined ? { movedAt: new Date() } : {};
-    const task = await prisma.task.update({
-      where: { id },
-      data: { ...data, ...movedAt, dueDate: data.dueDate ? new Date(data.dueDate) : undefined },
-    });
+    const task = await updateTask(session, id, data);
+    writeAudit({ userId: session.userId, action: "task.update", entityType: "Task", entityId: id, changedFields: Object.keys(data) });
+    if (task.assigneeId && task.assigneeId !== previous.assigneeId && task.assigneeId !== session.userId) {
+      void notifyUser(task.assigneeId, `🎯 ${session.name} передал вам задачу: ${task.title}`).catch(() => {});
+    }
     return ok(task);
   });
 }
